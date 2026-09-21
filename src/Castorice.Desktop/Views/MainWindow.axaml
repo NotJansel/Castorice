@@ -5,12 +5,12 @@
         xmlns:vm="clr-namespace:Castorice.Desktop.ViewModels"
         xmlns:views="clr-namespace:Castorice.Desktop.Views"
         mc:Ignorable="d"
-        d:DesignWidth="1280" d:DesignHeight="800"
+        d:DesignWidth="1400" d:DesignHeight="880"
         x:Class="Castorice.Desktop.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="{Binding WindowTitle}"
-        Width="1280" Height="800"
-        MinWidth="980" MinHeight="620"
+        Width="1400" Height="880"
+        MinWidth="1100" MinHeight="660"
         Background="{DynamicResource CastoriceBackgroundBrush}">
 
   <Window.Resources>
@@ -28,77 +28,139 @@
     </DataTemplate>
   </Window.Resources>
 
-  <Grid RowDefinitions="Auto,*,Auto">
+  <Grid ColumnDefinitions="220,*">
 
-    <!-- Top bar: page switcher and connection control -->
-    <Border Grid.Row="0"
-            Background="{DynamicResource CastoriceSurfaceBrush}"
+    <!-- ==================== Navigation rail ==================== -->
+    <Border Grid.Column="0"
+            Background="{DynamicResource CastoriceRailBrush}"
             BorderBrush="{DynamicResource CastoriceBorderBrush}"
-            BorderThickness="0,0,0,1"
-            Padding="12,8">
-      <Grid ColumnDefinitions="Auto,*,Auto">
+            BorderThickness="0,0,1,0">
+      <Grid RowDefinitions="Auto,*,Auto">
 
-        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2">
-          <TextBlock Text="Castorice"
-                     Classes="h2"
-                     Foreground="{DynamicResource CastoriceAccentBrush}"
-                     VerticalAlignment="Center"
-                     Margin="4,0,16,0" />
-
-          <Button Classes="nav" Classes.active="{Binding IsChatPage}" Content="Chat"
-                  Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppPage.Chat}" />
-          <Button Classes="nav" Classes.active="{Binding IsTournamentPage}" Content="Tournament"
-                  Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppPage.Tournament}" />
-          <Button Classes="nav" Classes.active="{Binding IsProfilePage}" Content="Profile"
-                  Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppPage.Profile}" />
-          <Button Classes="nav" Classes.active="{Binding IsSettingsPage}" Content="Settings"
-                  Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppPage.Settings}" />
+        <!-- Wordmark -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="20,22,16,20">
+          <Border Width="28" Height="28"
+                  CornerRadius="{StaticResource RadiusMedium}"
+                  Background="{StaticResource CastoriceAccentGradient}">
+            <TextBlock Text="C" FontSize="16" FontWeight="Bold"
+                       Foreground="{DynamicResource CastoriceOnAccentBrush}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="Castorice" FontSize="15" FontWeight="Bold" />
+            <TextBlock Classes="faint" Text="osu! tournament client" />
+          </StackPanel>
         </StackPanel>
 
-        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-          <Ellipse Width="9" Height="9" VerticalAlignment="Center"
-                   Fill="{DynamicResource CastoriceDangerBrush}"
-                   IsVisible="{Binding !IsConnected}" />
-          <Ellipse Width="9" Height="9" VerticalAlignment="Center"
-                   Fill="{DynamicResource CastoriceSuccessBrush}"
-                   IsVisible="{Binding IsConnected}" />
-          <TextBlock Text="{Binding ConnectionStatus}" VerticalAlignment="Center" Classes="muted" />
-          <Button Classes="accent" Content="Connect"
-                  Command="{Binding ConnectCommand}"
-                  IsVisible="{Binding !IsConnected}" />
-          <Button Content="Disconnect"
-                  Command="{Binding DisconnectCommand}"
-                  IsVisible="{Binding IsConnected}" />
+        <!-- Pages -->
+        <StackPanel Grid.Row="1" Spacing="0">
+          <Grid ColumnDefinitions="Auto,*">
+            <Border Grid.Column="0" Classes="railIndicator" Classes.active="{Binding IsChatPage}" Margin="4,0,0,0" />
+            <Button Grid.Column="1" Classes="rail" Classes.active="{Binding IsChatPage}"
+                    Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppPage.Chat}">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <Path Data="{StaticResource IconChat}" Width="17" Height="17" Stretch="Uniform"
+                      VerticalAlignment="Center" />
+                <TextBlock Text="Chat" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+          </Grid>
+
+          <Grid ColumnDefinitions="Auto,*">
+            <Border Grid.Column="0" Classes="railIndicator" Classes.active="{Binding IsTournamentPage}" Margin="4,0,0,0" />
+            <Button Grid.Column="1" Classes="rail" Classes.active="{Binding IsTournamentPage}"
+                    Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppPage.Tournament}">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <Path Data="{StaticResource IconTrophy}" Width="17" Height="17" Stretch="Uniform"
+                      VerticalAlignment="Center" />
+                <TextBlock Text="Tournament" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+          </Grid>
+
+          <Grid ColumnDefinitions="Auto,*">
+            <Border Grid.Column="0" Classes="railIndicator" Classes.active="{Binding IsProfilePage}" Margin="4,0,0,0" />
+            <Button Grid.Column="1" Classes="rail" Classes.active="{Binding IsProfilePage}"
+                    Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppPage.Profile}">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <Path Data="{StaticResource IconPerson}" Width="17" Height="17" Stretch="Uniform"
+                      VerticalAlignment="Center" />
+                <TextBlock Text="Profile" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+          </Grid>
+
+          <Grid ColumnDefinitions="Auto,*">
+            <Border Grid.Column="0" Classes="railIndicator" Classes.active="{Binding IsSettingsPage}" Margin="4,0,0,0" />
+            <Button Grid.Column="1" Classes="rail" Classes.active="{Binding IsSettingsPage}"
+                    Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppPage.Settings}">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <Path Data="{StaticResource IconGear}" Width="17" Height="17" Stretch="Uniform"
+                      VerticalAlignment="Center" />
+                <TextBlock Text="Settings" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+          </Grid>
         </StackPanel>
+
+        <!-- Connection -->
+        <Border Grid.Row="2" Margin="12" Padding="13"
+                Background="{DynamicResource CastoriceSurfaceBrush}"
+                BorderBrush="{DynamicResource CastoriceBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusLarge}">
+          <StackPanel Spacing="10">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Ellipse Width="8" Height="8" VerticalAlignment="Center"
+                       Fill="{DynamicResource CastoriceDangerBrush}"
+                       IsVisible="{Binding !IsConnected}" />
+              <Ellipse Width="8" Height="8" VerticalAlignment="Center"
+                       Fill="{DynamicResource CastoriceSuccessBrush}"
+                       IsVisible="{Binding IsConnected}" />
+              <TextBlock Classes="label" Text="BANCHO" VerticalAlignment="Center" />
+            </StackPanel>
+
+            <TextBlock Text="{Binding ConnectionStatus}" Classes="muted" TextWrapping="Wrap" />
+
+            <Button Classes="accent" Content="Connect"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                    Command="{Binding ConnectCommand}"
+                    IsVisible="{Binding !IsConnected}" />
+            <Button Content="Disconnect"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                    Command="{Binding DisconnectCommand}"
+                    IsVisible="{Binding IsConnected}" />
+
+            <TextBlock Text="{Binding ConnectionError}"
+                       Classes="muted"
+                       Foreground="{DynamicResource CastoriceDangerBrush}"
+                       TextWrapping="Wrap"
+                       IsVisible="{Binding ConnectionError, Converter={x:Static views:ViewConverters.IsNotEmpty}}" />
+          </StackPanel>
+        </Border>
       </Grid>
     </Border>
 
-    <!-- All four pages stay loaded so chat backlog and scroll position survive a page switch. -->
-    <Panel Grid.Row="1">
-      <ContentControl Content="{Binding Chat}"
+    <!-- ==================== Pages ==================== -->
+    <!-- All four stay loaded so chat backlog and scroll position survive a page switch. -->
+    <Panel Grid.Column="1">
+      <ContentControl Classes="page" Classes.shown="{Binding IsChatPage}"
+                      Content="{Binding Chat}"
                       ContentTemplate="{StaticResource ChatTemplate}"
                       IsVisible="{Binding IsChatPage}" />
-      <ContentControl Content="{Binding Tournament}"
+      <ContentControl Classes="page" Classes.shown="{Binding IsTournamentPage}"
+                      Content="{Binding Tournament}"
                       ContentTemplate="{StaticResource TournamentTemplate}"
                       IsVisible="{Binding IsTournamentPage}" />
-      <ContentControl Content="{Binding Profile}"
+      <ContentControl Classes="page" Classes.shown="{Binding IsProfilePage}"
+                      Content="{Binding Profile}"
                       ContentTemplate="{StaticResource ProfileTemplate}"
                       IsVisible="{Binding IsProfilePage}" />
-      <ContentControl Content="{Binding Settings}"
+      <ContentControl Classes="page" Classes.shown="{Binding IsSettingsPage}"
+                      Content="{Binding Settings}"
                       ContentTemplate="{StaticResource SettingsTemplate}"
                       IsVisible="{Binding IsSettingsPage}" />
     </Panel>
-
-    <Border Grid.Row="2"
-            Background="{DynamicResource CastoriceSurfaceBrush}"
-            BorderBrush="{DynamicResource CastoriceBorderBrush}"
-            BorderThickness="0,1,0,0"
-            Padding="12,6"
-            IsVisible="{Binding ConnectionError, Converter={x:Static views:ViewConverters.IsNotEmpty}}">
-      <TextBlock Text="{Binding ConnectionError}"
-                 Foreground="{DynamicResource CastoriceDangerBrush}"
-                 TextWrapping="Wrap" />
-    </Border>
 
   </Grid>
 

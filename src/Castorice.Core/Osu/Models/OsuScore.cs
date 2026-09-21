@@ -57,6 +57,10 @@ public sealed record OsuScore
     [JsonIgnore]
     public string AccuracyDisplay => $"{Accuracy * 100:0.00}%";
 
+    /// <summary>Small beatmapset cover for the score list; null when the API omitted the set.</summary>
+    [JsonIgnore]
+    public string? ThumbnailUrl => Beatmapset?.Covers?.List ?? Beatmapset?.Covers?.Card;
+
     [JsonIgnore]
     public string PpDisplay => Pp is null or 0 ? "-" : $"{Pp:0}pp";
 }

@@ -65,6 +65,14 @@ public sealed partial class MappoolSlotViewModel(MappoolSlot model) : ViewModelB
         set => SetModel(value, Model.LengthSeconds, v => Model.LengthSeconds = v, nameof(LengthSeconds), nameof(Metadata));
     }
 
+    public string CoverUrl
+    {
+        get => Model.CoverUrl;
+        set => SetModel(value, Model.CoverUrl, v => Model.CoverUrl = v, nameof(CoverUrl), nameof(HasCover));
+    }
+
+    public bool HasCover => Model.CoverUrl.Length > 0;
+
     public string Notes
     {
         get => Model.Notes;
@@ -99,6 +107,9 @@ public sealed partial class MappoolSlotViewModel(MappoolSlot model) : ViewModelB
         " · ",
         new[] { Model.Artist, Model.Mapper.Length > 0 ? $"mapped by {Model.Mapper}" : string.Empty }
             .Where(part => part.Length > 0));
+
+    /// <summary>Star rating alone, for the tile's corner chip.</summary>
+    public string StarDisplay => Model.StarRating > 0 ? $"{Model.StarRating:0.00}\u2605" : string.Empty;
 
     public string Metadata
     {

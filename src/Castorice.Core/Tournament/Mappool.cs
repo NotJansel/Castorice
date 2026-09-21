@@ -35,6 +35,9 @@ public sealed class MappoolSlot
 
     public double Bpm { get; set; }
 
+    /// <summary>Beatmapset cover, filled in from the osu! API. Empty means the tile draws flat.</summary>
+    public string CoverUrl { get; set; } = string.Empty;
+
     [JsonConverter(typeof(JsonStringEnumConverter<Mods>))]
     public Mods Mods { get; set; } = Mods.None;
 
@@ -44,10 +47,13 @@ public sealed class MappoolSlot
     public string Notes { get; set; } = string.Empty;
 
     [JsonIgnore]
-    public string DisplayName =>
-        Title.Length == 0
-            ? $"Beatmap {BeatmapId}"
-            : Difficulty.Length == 0 ? Title : $"{Title} [{Difficulty}]";
+    public string DisplayName => (Title.Length, BeatmapId, Difficulty.Length) switch
+    {
+        (0, <= 0, _) => "No beatmap set",
+        (0, _, _) => $"Beatmap {BeatmapId}",
+        (_, _, 0) => Title,
+        _ => $"{Title} [{Difficulty}]",
+    };
 
     [JsonIgnore]
     public string DisplayLength =>

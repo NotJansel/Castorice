@@ -2,108 +2,288 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
   <Design.PreviewWith>
-    <Border Padding="20" Background="{DynamicResource CastoriceBackgroundBrush}">
-      <StackPanel Spacing="8">
-        <TextBlock Classes="h1" Text="Heading" />
+    <Border Padding="24" Background="{DynamicResource CastoriceBackgroundBrush}">
+      <StackPanel Spacing="10" Width="320">
+        <TextBlock Classes="display" Text="Display" />
+        <TextBlock Classes="h1" Text="Heading one" />
+        <TextBlock Classes="h2" Text="Heading two" />
         <TextBlock Classes="muted" Text="Muted caption" />
+        <TextBlock Classes="label" Text="SECTION LABEL" />
         <Button Classes="accent" Content="Accent button" />
         <Button Content="Normal button" />
+        <Button Classes="danger" Content="Danger button" />
+        <Border Classes="card">
+          <TextBlock Text="A resting card" />
+        </Border>
       </StackPanel>
     </Border>
   </Design.PreviewWith>
 
-  <Style Selector="TextBlock.h1">
-    <Setter Property="FontSize" Value="22" />
-    <Setter Property="FontWeight" Value="SemiBold" />
+  <!-- ==================== Typography ==================== -->
+
+  <Style Selector="TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource CastoriceTextBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.display">
+    <Setter Property="FontSize" Value="30" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="LineHeight" Value="36" />
+  </Style>
+
+  <Style Selector="TextBlock.h1">
+    <Setter Property="FontSize" Value="21" />
+    <Setter Property="FontWeight" Value="Bold" />
   </Style>
 
   <Style Selector="TextBlock.h2">
-    <Setter Property="FontSize" Value="16" />
+    <Setter Property="FontSize" Value="15" />
     <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="Foreground" Value="{DynamicResource CastoriceTextBrush}" />
   </Style>
 
-  <Style Selector="TextBlock.muted">
+  <Style Selector="TextBlock.muted, SelectableTextBlock.muted">
     <Setter Property="Foreground" Value="{DynamicResource CastoriceMutedTextBrush}" />
     <Setter Property="FontSize" Value="12" />
   </Style>
 
-  <Style Selector="TextBlock.label">
-    <Setter Property="Foreground" Value="{DynamicResource CastoriceMutedTextBrush}" />
+  <Style Selector="TextBlock.faint">
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceFaintTextBrush}" />
     <Setter Property="FontSize" Value="11" />
-    <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="Margin" Value="0,6,0,2" />
   </Style>
+
+  <!-- Section headings: small, spaced-out caps. -->
+  <Style Selector="TextBlock.label">
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceFaintTextBrush}" />
+    <Setter Property="FontSize" Value="10.5" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="LetterSpacing" Value="1.1" />
+  </Style>
+
+  <Style Selector="TextBlock.metric">
+    <Setter Property="FontSize" Value="19" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+
+  <Style Selector="TextBlock.mono, SelectableTextBlock.mono">
+    <Setter Property="FontFamily" Value="Cascadia Code,JetBrains Mono,Consolas,Menlo,DejaVu Sans Mono,monospace" />
+    <Setter Property="FontSize" Value="11.5" />
+  </Style>
+
+  <!-- ==================== Surfaces ==================== -->
 
   <Style Selector="Border.card">
     <Setter Property="Background" Value="{DynamicResource CastoriceSurfaceBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource CastoriceBorderBrush}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="8" />
-    <Setter Property="Padding" Value="12" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusLarge}" />
+    <Setter Property="Padding" Value="16" />
+    <Setter Property="BoxShadow" Value="{DynamicResource ShadowResting}" />
+  </Style>
+
+  <!-- An inset container: logs, lists, anything that reads as carved into the card. -->
+  <Style Selector="Border.well">
+    <Setter Property="Background" Value="{DynamicResource CastoriceWellBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CastoriceBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
+    <Setter Property="Padding" Value="10" />
   </Style>
 
   <Style Selector="Border.statTile">
     <Setter Property="Background" Value="{DynamicResource CastoriceSurfaceAltBrush}" />
-    <Setter Property="CornerRadius" Value="8" />
-    <Setter Property="Padding" Value="12,10" />
-    <Setter Property="MinWidth" Value="120" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
+    <Setter Property="Padding" Value="14,11" />
+    <Setter Property="MinWidth" Value="134" />
   </Style>
 
+  <Style Selector="Border.badge">
+    <Setter Property="Background" Value="{DynamicResource CastoriceAccentMutedBrush}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}" />
+    <Setter Property="Padding" Value="7,2" />
+  </Style>
+
+  <Style Selector="Border.badge > TextBlock">
+    <Setter Property="FontSize" Value="10.5" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="LetterSpacing" Value="0.4" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
+  </Style>
+
+  <Style Selector="Border.badge.ghost">
+    <Setter Property="Background" Value="#33FFFFFF" />
+  </Style>
+
+  <Style Selector="Separator">
+    <Setter Property="Background" Value="{DynamicResource CastoriceBorderBrush}" />
+    <Setter Property="Height" Value="1" />
+    <Setter Property="Margin" Value="0,4" />
+  </Style>
+
+  <!-- ==================== Buttons ==================== -->
+
   <!--
-    Fluent styles the button's template part directly, so setting Background on the Button itself
-    is ignored. Every button variant below therefore targets PART_ContentPresenter.
+    Fluent styles the button's template part rather than the control, so setting Background on the
+    Button itself is ignored. Every variant below therefore targets PART_ContentPresenter.
   -->
+  <Style Selector="Button">
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
+    <Setter Property="Padding" Value="13,7" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" />
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="Button /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource CastoriceSurfaceAltBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CastoriceBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="0:0:0.12" />
+        <BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource CastoriceBorderBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CastoriceBorderStrongBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceTextBrush}" />
+  </Style>
+
+  <Style Selector="Button:pressed">
+    <Setter Property="RenderTransform" Value="scale(0.97)" />
+  </Style>
+
   <Style Selector="Button.accent /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource CastoriceAccentBrush}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource CastoriceAccentBrush}" />
-    <Setter Property="Foreground" Value="#1A1420" />
+    <Setter Property="Background" Value="{DynamicResource CastoriceAccentGradient}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceOnAccentBrush}" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
   <Style Selector="Button.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource CastoriceAccentMutedBrush}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource CastoriceAccentMutedBrush}" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <Style Selector="Button.accent:pressed /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource CastoriceAccentMutedBrush}" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
+    <Setter Property="Background" Value="{DynamicResource CastoriceAccentBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceOnAccentBrush}" />
   </Style>
 
   <Style Selector="Button.danger /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource CastoriceDangerBrush}" />
+    <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderBrush" Value="{DynamicResource CastoriceDangerBrush}" />
-    <Setter Property="Foreground" Value="#1A1420" />
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceDangerBrush}" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
   <Style Selector="Button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#C25454" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
+    <Setter Property="Background" Value="{DynamicResource CastoriceDangerBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceOnAccentBrush}" />
   </Style>
 
-  <!-- One mappool pick. Kept tall enough for the label, title and metadata rows. -->
+  <!-- Borderless button for icon-only and in-row actions. -->
+  <Style Selector="Button.ghost /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CastoriceBorderBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceMutedTextBrush}" />
+  </Style>
+
+  <Style Selector="Button.ghost:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource CastoriceSurfaceAltBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceTextBrush}" />
+  </Style>
+
+  <Style Selector="Button.pill">
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusPill}" />
+    <Setter Property="Padding" Value="15,7" />
+  </Style>
+
+  <Style Selector="Button.compact">
+    <Setter Property="Padding" Value="9,4" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+
+  <!-- ==================== Navigation rail ==================== -->
+
+  <Style Selector="Button.rail">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Padding" Value="12,10" />
+    <Setter Property="Margin" Value="8,2" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceMutedTextBrush}" />
+  </Style>
+
+  <Style Selector="Button.rail /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+  </Style>
+
+  <Style Selector="Button.rail:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource CastoriceSurfaceColor}" />
+  </Style>
+
+  <Style Selector="Button.rail.active">
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceTextBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="Button.rail.active /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource CastoriceSurfaceAltBrush}" />
+  </Style>
+
+  <!-- The icon inherits the button's foreground, so the active state colours both at once. -->
+  <Style Selector="Button.rail Path">
+    <Setter Property="Fill" Value="{DynamicResource CastoriceMutedTextBrush}" />
+  </Style>
+
+  <Style Selector="Button.rail.active Path">
+    <Setter Property="Fill" Value="{DynamicResource CastoriceAccentBrush}" />
+  </Style>
+
+  <!-- The pill that marks the current page; width animates in via the active class. -->
+  <Style Selector="Border.railIndicator">
+    <Setter Property="Width" Value="3" />
+    <Setter Property="Height" Value="0" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusPill}" />
+    <Setter Property="Background" Value="{DynamicResource CastoriceAccentBrush}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition Property="Height" Duration="0:0:0.18" Easing="CubicEaseOut" />
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="Border.railIndicator.active">
+    <Setter Property="Height" Value="22" />
+  </Style>
+
+  <!-- ==================== Mappool picks ==================== -->
+
   <Style Selector="Button.pick">
-    <Setter Property="MinWidth" Value="220" />
-    <Setter Property="MinHeight" Value="92" />
-    <Setter Property="Padding" Value="10" />
+    <Setter Property="Width" Value="236" />
+    <Setter Property="Height" Value="104" />
+    <Setter Property="Padding" Value="0" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-    <Setter Property="VerticalContentAlignment" Value="Top" />
+    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
   </Style>
 
   <Style Selector="Button.pick /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource CastoriceSurfaceAltBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource CastoriceBorderBrush}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <Style Selector="Button.pick:pointerover">
+    <Setter Property="RenderTransform" Value="translateY(-2px)" />
   </Style>
 
   <Style Selector="Button.pick:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource CastoriceSurfaceBrush}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource CastoriceAccentBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CastoriceAccentMutedBrush}" />
   </Style>
 
   <Style Selector="Button.pick.current /template/ ContentPresenter#PART_ContentPresenter">
@@ -111,47 +291,48 @@
     <Setter Property="BorderThickness" Value="2" />
   </Style>
 
-  <Style Selector="Button.nav">
-    <Setter Property="Padding" Value="14,6" />
-    <Setter Property="Margin" Value="2,0" />
-    <Setter Property="CornerRadius" Value="6" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Foreground" Value="{DynamicResource CastoriceMutedTextBrush}" />
+  <!-- ==================== Inputs ==================== -->
+
+  <Style Selector="TextBox">
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
+    <Setter Property="Padding" Value="11,7" />
+    <Setter Property="MinHeight" Value="34" />
   </Style>
 
-  <Style Selector="Button.nav.active">
-    <Setter Property="Foreground" Value="{DynamicResource CastoriceTextBrush}" />
+  <Style Selector="ComboBox">
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
+    <Setter Property="MinHeight" Value="34" />
   </Style>
 
-  <Style Selector="Button.nav /template/ ContentPresenter#PART_ContentPresenter">
+  <Style Selector="NumericUpDown">
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
+  </Style>
+
+  <Style Selector="ToggleButton">
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
+    <Setter Property="Padding" Value="13,7" />
+  </Style>
+
+  <!-- ==================== Lists ==================== -->
+
+  <Style Selector="ListBox.targets">
     <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="6,0" />
   </Style>
 
-  <Style Selector="Button.nav.active /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource CastoriceSurfaceAltBrush}" />
-    <Setter Property="Foreground" Value="{DynamicResource CastoriceTextBrush}" />
-    <Setter Property="FontWeight" Value="SemiBold" />
+  <Style Selector="ListBox.targets ListBoxItem">
+    <Setter Property="Padding" Value="10,8" />
+    <Setter Property="Margin" Value="0,1" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
+    <Setter Property="MinHeight" Value="0" />
   </Style>
 
   <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource CastoriceAccentMutedBrush}" />
+    <Setter Property="Background" Value="{DynamicResource CastoriceSurfaceAltBrush}" />
   </Style>
 
   <Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource CastoriceAccentBrush}" />
-  </Style>
-
-  <Style Selector="Border.badge">
-    <Setter Property="Background" Value="{DynamicResource CastoriceAccentMutedBrush}" />
-    <Setter Property="CornerRadius" Value="4" />
-    <Setter Property="Padding" Value="6,2" />
-  </Style>
-
-  <Style Selector="Border.badge > TextBlock">
-    <Setter Property="FontSize" Value="11" />
-    <Setter Property="FontWeight" Value="Bold" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
+    <Setter Property="Background" Value="{DynamicResource CastoriceBorderBrush}" />
   </Style>
 
   <!-- WrapPanel has no spacing properties, so children get their gap from a style. -->
@@ -159,9 +340,24 @@
     <Setter Property="Margin" Value="0,0,8,8" />
   </Style>
 
-  <Style Selector="ListBox.targets ListBoxItem">
-    <Setter Property="Padding" Value="8,6" />
-    <Setter Property="CornerRadius" Value="6" />
+  <Style Selector="WrapPanel.tight > :is(Control)">
+    <Setter Property="Margin" Value="0,0,6,6" />
+  </Style>
+
+  <!-- ==================== Motion ==================== -->
+
+  <!-- Pages fade in rather than snapping, which makes the rail feel like it is switching views. -->
+  <Style Selector="ContentControl.page">
+    <Setter Property="Opacity" Value="0" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition Property="Opacity" Duration="0:0:0.18" Easing="CubicEaseOut" />
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="ContentControl.page.shown">
+    <Setter Property="Opacity" Value="1" />
   </Style>
 
 </Styles>

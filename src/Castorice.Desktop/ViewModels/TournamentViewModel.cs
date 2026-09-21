@@ -511,6 +511,9 @@ public sealed partial class TournamentViewModel : ViewModelBase
                     slot.Title = set.Title;
                     slot.Artist = set.Artist;
                     slot.Mapper = set.Creator;
+
+                    // "card" is the widest cover the tiles can use without wasting bandwidth.
+                    slot.CoverUrl = set.Covers?.Card ?? set.Covers?.Cover ?? string.Empty;
                 }
 
                 slotVm.RefreshAll();

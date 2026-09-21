@@ -6,48 +6,53 @@
              xmlns:vm="clr-namespace:Castorice.Desktop.ViewModels"
              xmlns:views="clr-namespace:Castorice.Desktop.Views"
              xmlns:chat="clr-namespace:Castorice.Core.Chat;assembly=Castorice.Core"
-             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="740"
+             mc:Ignorable="d" d:DesignWidth="1120" d:DesignHeight="860"
              x:Class="Castorice.Desktop.Views.ChatView"
              x:DataType="vm:ChatViewModel">
 
-  <Grid ColumnDefinitions="240,*,Auto">
+  <Grid ColumnDefinitions="256,*,Auto">
 
-    <!-- Channel / conversation list -->
+    <!-- ==================== Conversations ==================== -->
     <Border Grid.Column="0"
-            Background="{DynamicResource CastoriceSurfaceBrush}"
+            Background="{DynamicResource CastoriceRailBrush}"
             BorderBrush="{DynamicResource CastoriceBorderBrush}"
             BorderThickness="0,0,1,0">
-      <Grid RowDefinitions="Auto,*,Auto">
+      <Grid RowDefinitions="Auto,Auto,*,Auto">
 
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="8">
+        <TextBlock Grid.Row="0" Classes="label" Text="CONVERSATIONS" Margin="18,18,18,10" />
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="12,0,12,12">
           <TextBox Grid.Column="0"
                    Watermark="Join #channel"
                    Text="{Binding JoinChannel}"
                    KeyDown="OnJoinKeyDown" />
-          <Button Grid.Column="1" Content="+" Margin="4,0,0,0"
+          <Button Grid.Column="1" Classes="accent" Content="+" Margin="6,0,0,0"
+                  Width="34" HorizontalContentAlignment="Center"
                   ToolTip.Tip="Join channel"
                   Command="{Binding JoinCommand}" />
         </Grid>
 
-        <ListBox Grid.Row="1"
+        <ListBox Grid.Row="2"
                  Classes="targets"
-                 Background="Transparent"
                  ItemsSource="{Binding Targets}"
                  SelectedItem="{Binding SelectedTarget}">
           <ListBox.ItemTemplate>
             <DataTemplate DataType="chat:ChatTarget">
               <Grid ColumnDefinitions="Auto,*,Auto" ToolTip.Tip="{Binding Name}">
-                <TextBlock Grid.Column="0"
-                           Text="{Binding Kind, Converter={x:Static views:ViewConverters.TargetGlyph}}"
-                           Foreground="{DynamicResource CastoriceAccentMutedBrush}"
-                           FontSize="11"
-                           Width="22"
-                           VerticalAlignment="Center" />
+                <Border Grid.Column="0" Width="24" Height="24" Margin="0,0,10,0"
+                        CornerRadius="{StaticResource RadiusSmall}"
+                        Background="{DynamicResource CastoriceSurfaceAltBrush}">
+                  <TextBlock Text="{Binding Kind, Converter={x:Static views:ViewConverters.TargetGlyph}}"
+                             Foreground="{DynamicResource CastoriceAccentBrush}"
+                             FontSize="10.5" FontWeight="Bold"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
                 <TextBlock Grid.Column="1"
                            Text="{Binding Name}"
+                           FontSize="12.5"
                            TextTrimming="CharacterEllipsis"
                            VerticalAlignment="Center" />
-                <Border Grid.Column="2" Classes="badge"
+                <Border Grid.Column="2" Classes="badge" VerticalAlignment="Center"
                         IsVisible="{Binding UnreadCount, Converter={x:Static views:ViewConverters.CountToVisible}}">
                   <TextBlock Text="{Binding UnreadCount}" />
                 </Border>
@@ -56,44 +61,53 @@
           </ListBox.ItemTemplate>
         </ListBox>
 
-        <StackPanel Grid.Row="2" Margin="8" Spacing="4">
-          <Button Content="Close conversation"
-                  HorizontalAlignment="Stretch"
+        <StackPanel Grid.Row="3" Margin="12" Spacing="6">
+          <Button Classes="ghost" Content="Close conversation"
+                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                   Command="{Binding CloseTargetCommand}" />
           <ToggleButton Content="Raw IRC console"
-                        HorizontalAlignment="Stretch"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                         IsChecked="{Binding ShowRawConsole}" />
         </StackPanel>
       </Grid>
     </Border>
 
-    <!-- Messages -->
+    <!-- ==================== Messages ==================== -->
     <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
 
-      <Border Grid.Row="0" Padding="12,8"
+      <Border Grid.Row="0" Padding="20,15"
               BorderBrush="{DynamicResource CastoriceBorderBrush}"
               BorderThickness="0,0,0,1">
-        <TextBlock Classes="h2" Text="{Binding SelectedTarget.Name, FallbackValue='Server'}" />
+        <StackPanel Spacing="1">
+          <TextBlock Classes="h1" Text="{Binding SelectedTarget.Name, FallbackValue='Server'}" />
+          <TextBlock Classes="faint" Text="{Binding SelectedTarget.Users.Count, StringFormat='{}{0} users'}"
+                     IsVisible="{Binding SelectedTarget.Users.Count, Converter={x:Static views:ViewConverters.CountToVisible}}" />
+        </StackPanel>
       </Border>
 
-      <ScrollViewer Grid.Row="1" Name="MessageScroller" Padding="12,8" HorizontalScrollBarVisibility="Disabled">
+      <ScrollViewer Grid.Row="1" Name="MessageScroller" Padding="20,12"
+                    HorizontalScrollBarVisibility="Disabled">
         <ItemsControl ItemsSource="{Binding SelectedTarget.Messages}">
           <ItemsControl.ItemTemplate>
             <DataTemplate DataType="chat:ChatMessage">
-              <Grid ColumnDefinitions="52,132,*" Margin="0,1">
+              <Grid ColumnDefinitions="48,140,*" Margin="0,2">
                 <TextBlock Grid.Column="0"
-                           Classes="muted"
+                           Classes="faint"
+                           VerticalAlignment="Top" Margin="0,1,0,0"
                            Text="{Binding Timestamp, Converter={x:Static views:ViewConverters.TimestampToShortTime}}" />
                 <TextBlock Grid.Column="1"
                            Text="{Binding Sender}"
                            TextTrimming="CharacterEllipsis"
                            HorizontalAlignment="Right"
-                           Margin="0,0,8,0"
+                           VerticalAlignment="Top"
+                           Margin="0,0,12,0"
+                           FontSize="12.5"
                            FontWeight="SemiBold"
                            Foreground="{Binding Kind, Converter={x:Static views:ViewConverters.MessageKindToBrush}}" />
                 <SelectableTextBlock Grid.Column="2"
                                      Text="{Binding Text}"
                                      TextWrapping="Wrap"
+                                     FontSize="12.5"
                                      Foreground="{Binding Kind, Converter={x:Static views:ViewConverters.MessageKindToBrush}}" />
               </Grid>
             </DataTemplate>
@@ -101,38 +115,47 @@
         </ItemsControl>
       </ScrollViewer>
 
-      <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="12,8">
-        <TextBox Grid.Column="0"
-                 Name="DraftBox"
-                 Watermark="Message, or /join #channel · /msg user text · /me action"
-                 Text="{Binding Draft}"
-                 AcceptsReturn="False"
-                 KeyDown="OnDraftKeyDown" />
-        <Button Grid.Column="1" Classes="accent" Content="Send" Margin="6,0,0,0"
-                Command="{Binding SendCommand}" />
-      </Grid>
+      <!-- Composer -->
+      <Border Grid.Row="2" Margin="20,10,20,16" Padding="6"
+              Background="{DynamicResource CastoriceSurfaceBrush}"
+              BorderBrush="{DynamicResource CastoriceBorderBrush}"
+              BorderThickness="1"
+              CornerRadius="{StaticResource RadiusLarge}"
+              BoxShadow="{StaticResource ShadowResting}">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBox Grid.Column="0"
+                   Name="DraftBox"
+                   Classes="bare"
+                   Watermark="Message, or /join #channel · /msg user text · /me action"
+                   Text="{Binding Draft}"
+                   AcceptsReturn="False"
+                   KeyDown="OnDraftKeyDown" />
+          <Button Grid.Column="1" Classes="accent" Content="Send" Margin="6,0,0,0"
+                  Command="{Binding SendCommand}" />
+        </Grid>
+      </Border>
     </Grid>
 
-    <!-- Raw console -->
+    <!-- ==================== Raw console ==================== -->
     <Border Grid.Column="2"
-            Width="380"
+            Width="400"
             IsVisible="{Binding ShowRawConsole}"
-            Background="{DynamicResource CastoriceSurfaceBrush}"
+            Background="{DynamicResource CastoriceRailBrush}"
             BorderBrush="{DynamicResource CastoriceBorderBrush}"
             BorderThickness="1,0,0,0">
       <Grid RowDefinitions="Auto,*">
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="8">
-          <TextBlock Grid.Column="0" Classes="h2" Text="Raw IRC" VerticalAlignment="Center" />
-          <Button Grid.Column="1" Content="Clear" Command="{Binding ClearRawLogCommand}" />
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="16,18,12,12">
+          <TextBlock Grid.Column="0" Classes="label" Text="RAW IRC" VerticalAlignment="Center" />
+          <Button Grid.Column="1" Classes="ghost compact" Content="Clear" Command="{Binding ClearRawLogCommand}" />
         </Grid>
-        <ScrollViewer Grid.Row="1" Padding="8,0,8,8" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Row="1" Padding="12,0,12,12" HorizontalScrollBarVisibility="Disabled">
           <ItemsControl ItemsSource="{Binding RawLog}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="sys:String">
                 <SelectableTextBlock Text="{Binding}"
-                                     FontFamily="Cascadia Code,Consolas,Menlo,monospace"
-                                     FontSize="11"
+                                     Classes="mono"
                                      TextWrapping="Wrap"
+                                     Margin="0,1"
                                      Foreground="{DynamicResource CastoriceMutedTextBrush}" />
               </DataTemplate>
             </ItemsControl.ItemTemplate>
@@ -142,4 +165,18 @@
     </Border>
 
   </Grid>
+
+  <UserControl.Styles>
+    <!-- The composer already draws the border, so the inner box is chromeless. -->
+    <Style Selector="TextBox.bare">
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Padding" Value="10,7" />
+    </Style>
+    <Style Selector="TextBox.bare /template/ Border#PART_BorderElement">
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+  </UserControl.Styles>
+
 </UserControl>

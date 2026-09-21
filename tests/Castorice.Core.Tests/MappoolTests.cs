@@ -82,6 +82,18 @@ public class MappoolTests : IDisposable
         Assert.Equal("MISC", new MappoolSlot { Label = "1" }.EffectiveCategory);
     }
 
+    [Theory]
+    [InlineData(0, "", "", "No beatmap set")]
+    [InlineData(123, "", "", "Beatmap 123")]
+    [InlineData(123, "Song", "", "Song")]
+    [InlineData(123, "Song", "Insane", "Song [Insane]")]
+    public void Describes_a_slot_for_the_pick_tile(long id, string title, string difficulty, string expected)
+    {
+        var slot = new MappoolSlot { BeatmapId = id, Title = title, Difficulty = difficulty };
+
+        Assert.Equal(expected, slot.DisplayName);
+    }
+
     [Fact]
     public void Builds_a_room_name_from_the_pool_and_teams()
     {

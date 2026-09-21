@@ -3,95 +3,103 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Castorice.Desktop.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="740"
+             xmlns:views="clr-namespace:Castorice.Desktop.Views"
+             mc:Ignorable="d" d:DesignWidth="1120" d:DesignHeight="860"
              x:Class="Castorice.Desktop.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
 
-  <ScrollViewer Padding="16" HorizontalScrollBarVisibility="Disabled">
-    <StackPanel Spacing="14" MaxWidth="760" HorizontalAlignment="Left">
+  <ScrollViewer Padding="24,22" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="16" MaxWidth="780" HorizontalAlignment="Left">
 
-      <TextBlock Classes="h1" Text="Settings" />
+      <StackPanel Spacing="2">
+        <TextBlock Classes="display" Text="Settings" />
+        <TextBlock Classes="muted" Text="Credentials, connection and appearance." />
+      </StackPanel>
 
       <Border Classes="card">
-        <StackPanel Spacing="4">
+        <StackPanel Spacing="6">
           <TextBlock Classes="h2" Text="osu! IRC" />
-          <TextBlock Classes="muted" TextWrapping="Wrap" Text="{Binding IrcPasswordHelp}" />
+          <TextBlock Classes="muted" TextWrapping="Wrap" Text="{Binding IrcPasswordHelp}" Margin="0,0,0,6" />
 
           <TextBlock Classes="label" Text="USERNAME" />
           <TextBox Text="{Binding Username}" Watermark="osu! username" />
 
-          <TextBlock Classes="label" Text="IRC PASSWORD" />
+          <TextBlock Classes="label" Text="IRC PASSWORD" Margin="0,8,0,0" />
           <TextBox Text="{Binding IrcPassword}" PasswordChar="•" Watermark="IRC server password" />
 
-          <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,8,0,0">
-            <StackPanel Grid.Column="0" Margin="0,0,12,0">
+          <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,12,0,0">
+            <StackPanel Grid.Column="0" Margin="0,0,14,0" Spacing="4">
               <TextBlock Classes="label" Text="SERVER" />
               <TextBox Text="{Binding IrcHost}" />
             </StackPanel>
-            <StackPanel Grid.Column="1" Margin="0,0,12,0">
+            <StackPanel Grid.Column="1" Margin="0,0,14,0" Spacing="4">
               <TextBlock Classes="label" Text="PORT" />
-              <NumericUpDown Value="{Binding IrcPort}" Minimum="1" Maximum="65535" Width="120"
+              <NumericUpDown Value="{Binding IrcPort}" Minimum="1" Maximum="65535" Width="130"
                              FormatString="0" />
             </StackPanel>
-            <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
-              <CheckBox Content="Use TLS" IsChecked="{Binding UseTls}" />
-            </StackPanel>
+            <CheckBox Grid.Column="2" Content="Use TLS" IsChecked="{Binding UseTls}" VerticalAlignment="Bottom" />
           </Grid>
 
-          <TextBlock Classes="label" Text="AUTO-JOIN CHANNELS" />
+          <TextBlock Classes="label" Text="AUTO-JOIN CHANNELS" Margin="0,12,0,0" />
           <TextBox Text="{Binding AutoJoinChannels}" Watermark="#osu, #german" />
 
-          <CheckBox Content="Connect automatically on start" IsChecked="{Binding AutoConnect}" Margin="0,6,0,0" />
+          <CheckBox Content="Connect automatically on start" IsChecked="{Binding AutoConnect}" Margin="0,10,0,0" />
           <CheckBox Content="This account is flagged as a bot (raises the send quota to 300/60s)"
                     IsChecked="{Binding HasBotAccount}" />
-          <TextBlock Classes="muted" TextWrapping="Wrap"
+          <TextBlock Classes="faint" TextWrapping="Wrap"
                      Text="Leave the bot option off unless osu! staff granted the account bot status — exceeding the quota gets the account silenced. The change takes effect on the next start." />
         </StackPanel>
       </Border>
 
       <Border Classes="card">
-        <StackPanel Spacing="4">
+        <StackPanel Spacing="6">
           <TextBlock Classes="h2" Text="osu! API" />
-          <TextBlock Classes="muted" TextWrapping="Wrap" Text="{Binding ApiHelp}" />
+          <TextBlock Classes="muted" TextWrapping="Wrap" Text="{Binding ApiHelp}" Margin="0,0,0,6" />
 
           <TextBlock Classes="label" Text="CLIENT ID" />
           <TextBox Text="{Binding OsuClientId}" />
 
-          <TextBlock Classes="label" Text="CLIENT SECRET" />
+          <TextBlock Classes="label" Text="CLIENT SECRET" Margin="0,8,0,0" />
           <TextBox Text="{Binding OsuClientSecret}" PasswordChar="•" />
 
-          <Button Content="Test credentials" Command="{Binding TestApiCommand}" Margin="0,8,0,0"
+          <Button Content="Test credentials" Command="{Binding TestApiCommand}" Margin="0,12,0,0"
                   HorizontalAlignment="Left" />
         </StackPanel>
       </Border>
 
       <Border Classes="card">
-        <StackPanel Spacing="8">
+        <StackPanel Spacing="12">
           <TextBlock Classes="h2" Text="Application" />
 
-          <StackPanel>
+          <StackPanel Spacing="4">
             <TextBlock Classes="label" Text="THEME" />
-            <ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding Theme}" MinWidth="160" />
+            <ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding Theme}" MinWidth="170" />
           </StackPanel>
 
           <CheckBox Content="Ask before sending destructive commands (!mp close, kick)"
                     IsChecked="{Binding ConfirmDestructiveCommands}" />
 
-          <TextBlock Classes="label" Text="CONFIG DIRECTORY" />
-          <SelectableTextBlock Text="{Binding ConfigDirectory}" Classes="muted" TextWrapping="Wrap" />
+          <StackPanel Spacing="4">
+            <TextBlock Classes="label" Text="CONFIG DIRECTORY" />
+            <SelectableTextBlock Text="{Binding ConfigDirectory}" Classes="muted mono" TextWrapping="Wrap" />
+          </StackPanel>
 
-          <TextBlock Classes="label" Text="MAPPOOL DIRECTORY" />
-          <SelectableTextBlock Text="{Binding MappoolDirectory}" Classes="muted" TextWrapping="Wrap" />
+          <StackPanel Spacing="4">
+            <TextBlock Classes="label" Text="MAPPOOL DIRECTORY" />
+            <SelectableTextBlock Text="{Binding MappoolDirectory}" Classes="muted mono" TextWrapping="Wrap" />
+          </StackPanel>
         </StackPanel>
       </Border>
 
-      <StackPanel Orientation="Horizontal" Spacing="8">
+      <StackPanel Orientation="Horizontal" Spacing="12">
         <Button Classes="accent" Content="Save settings" Command="{Binding SaveCommand}" />
         <TextBlock Text="{Binding Status}" Classes="muted" VerticalAlignment="Center" TextWrapping="Wrap" />
       </StackPanel>
 
-      <TextBlock Classes="muted" TextWrapping="Wrap"
-                 Text="Credentials are stored in plain text in the config file above, which is created with owner-only permissions on macOS and Linux. Treat the file the way you would treat the password itself." />
+      <Border Classes="well">
+        <TextBlock Classes="faint" TextWrapping="Wrap"
+                   Text="Credentials are stored in plain text in the config file above, which is created with owner-only permissions on macOS and Linux. Treat the file the way you would treat the password itself." />
+      </Border>
 
     </StackPanel>
   </ScrollViewer>

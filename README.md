@@ -12,20 +12,28 @@ Three things it sets out to do better than a generic IRC client:
 - **A readable profile view.** Ranks, accuracy, play time, grades, a 90-day rank sparkline, and the
   top and recent plays — without leaving the client.
 
-## Screenshots
+## The interface
 
-The tournament panel, with a pool loaded and no lobby attached yet:
+A navigation rail on the left carries the four pages and the Bancho connection; the rest of the
+window belongs to whichever page is open:
 
 ```
-┌ Castorice ─ Chat │ Tournament │ Profile │ Settings ──────────── ● Connected ─┐
-│ [Mappool ▾] [Red team] [Blue team] [Create lobby] [id] [Attach] [Close]      │
-├──────────────────────────────────────────────┬──────────────────────────────┤
-│ NoMod     [NM1 ][NM2 ][NM3 ]                 │  RED 2   vs   BLUE 1         │
-│ Hidden    [HD1 ][HD2 ]                       │  MATCH CONTROL               │
-│ HardRock  [HR1 ][HR2 ]                       │  [Start][Abort][Timer]…      │
-│ FreeMod   [FM1 ]                             │  PLAYERS / LOBBY LOG         │
-└──────────────────────────────────────────────┴──────────────────────────────┘
+┌──────────────┬──────────────────────────────────────────────────────────────┐
+│ C Castorice  │ [Mappool ▾][Red team][Blue team][Create lobby][id][Attach]   │
+│              ├───────────────────────────────────────┬──────────────────────┤
+│ ▍Chat        │ Castorice Cup — Finals                │ LOBBY                │
+│  Tournament  │ NoMod    ┌────────┐┌────────┐         │ RED 2  vs  BLUE 1    │
+│  Profile     │          │NM1  NM │││NM2  NM│         │ MATCH CONTROL        │
+│  Settings    │          │cover…  ││cover…  │         │ [Start][Abort][Timer]│
+│              │ Hidden   └────────┘└────────┘         │ PLAYERS / LOBBY LOG  │
+│ ● BANCHO     │          ┌────────┐                   │                      │
+│  [Connect]   │          │HD1  HD │                   │                      │
+└──────────────┴───────────────────────────────────────┴──────────────────────┘
 ```
+
+Pick tiles show the beatmap's cover art behind the title, mods and difficulty stats, and the
+profile page loads avatars and banners the same way. Images are fetched once and cached under
+`cache/images` in the config directory, so reopening a pool costs nothing.
 
 ## Getting started
 
@@ -88,7 +96,8 @@ with the rest of the staff means sending a single file. See
   are used, so `HD2` lands in an `HD` row on its own.
 
 With API credentials configured, **Fetch metadata** fills in title, artist, mapper, star rating,
-BPM and length for every pick in one request.
+BPM, length and cover art for every pick in one request. `coverUrl` is written back into the pool
+file, so a pool you share arrives with its artwork already set.
 
 ## Running a match
 
@@ -147,7 +156,7 @@ The core library never references Avalonia. UI thread marshalling goes through t
 
 ```bash
 dotnet build              # whole solution
-dotnet test               # 93 tests, no network needed
+dotnet test               # 97 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
 

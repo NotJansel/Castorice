@@ -4,47 +4,72 @@
   <ResourceDictionary.ThemeDictionaries>
 
     <ResourceDictionary x:Key="Dark">
-      <Color x:Key="CastoriceBackgroundColor">#14121A</Color>
-      <Color x:Key="CastoriceSurfaceColor">#1C1926</Color>
-      <Color x:Key="CastoriceSurfaceAltColor">#252131</Color>
-      <Color x:Key="CastoriceBorderColor">#37314C</Color>
-      <Color x:Key="CastoriceAccentColor">#E36FA8</Color>
-      <Color x:Key="CastoriceAccentMutedColor">#8C5FC4</Color>
-      <Color x:Key="CastoriceTextColor">#EDEAF5</Color>
-      <Color x:Key="CastoriceMutedTextColor">#9A94AD</Color>
+      <!-- Four background layers: the window, the rail, raised cards, and inset wells. -->
+      <Color x:Key="CastoriceBackgroundColor">#0E0B14</Color>
+      <Color x:Key="CastoriceRailColor">#141020</Color>
+      <Color x:Key="CastoriceSurfaceColor">#19142A</Color>
+      <Color x:Key="CastoriceSurfaceAltColor">#221B38</Color>
+      <Color x:Key="CastoriceWellColor">#100C1B</Color>
+
+      <Color x:Key="CastoriceBorderColor">#2C2348</Color>
+      <Color x:Key="CastoriceBorderStrongColor">#3D3163</Color>
+
+      <Color x:Key="CastoriceAccentColor">#F072B0</Color>
+      <Color x:Key="CastoriceAccentMutedColor">#9A6BE4</Color>
+      <Color x:Key="CastoriceAccentDeepColor">#6D4BC4</Color>
+
+      <Color x:Key="CastoriceTextColor">#F3F0FA</Color>
+      <Color x:Key="CastoriceMutedTextColor">#9B93B5</Color>
+      <Color x:Key="CastoriceFaintTextColor">#6B6488</Color>
+
       <Color x:Key="CastoriceSuccessColor">#5FD48A</Color>
-      <Color x:Key="CastoriceWarningColor">#E8B860</Color>
-      <Color x:Key="CastoriceDangerColor">#E56B6B</Color>
-      <Color x:Key="CastoriceRedTeamColor">#E05A72</Color>
-      <Color x:Key="CastoriceBlueTeamColor">#5A9BE0</Color>
+      <Color x:Key="CastoriceWarningColor">#EDBE68</Color>
+      <Color x:Key="CastoriceDangerColor">#F0707A</Color>
+      <Color x:Key="CastoriceRedTeamColor">#F05A78</Color>
+      <Color x:Key="CastoriceBlueTeamColor">#5A9BF0</Color>
+
+      <Color x:Key="CastoriceScrimColor">#CC0E0B14</Color>
+      <Color x:Key="CastoriceOnAccentColor">#180F22</Color>
 
       <!--
         Fluent derives focus rings, checkmarks and selection highlights from the system accent,
         so overriding it here keeps the stock controls on-palette instead of Windows blue.
       -->
-      <Color x:Key="SystemAccentColor">#E36FA8</Color>
-      <Color x:Key="SystemAccentColorLight1">#E98CBA</Color>
-      <Color x:Key="SystemAccentColorLight2">#EFA9CB</Color>
-      <Color x:Key="SystemAccentColorLight3">#F5C6DC</Color>
-      <Color x:Key="SystemAccentColorDark1">#C55A90</Color>
-      <Color x:Key="SystemAccentColorDark2">#A74878</Color>
-      <Color x:Key="SystemAccentColorDark3">#893760</Color>
+      <Color x:Key="SystemAccentColor">#F072B0</Color>
+      <Color x:Key="SystemAccentColorLight1">#F48FC2</Color>
+      <Color x:Key="SystemAccentColorLight2">#F7ACD3</Color>
+      <Color x:Key="SystemAccentColorLight3">#FBC9E5</Color>
+      <Color x:Key="SystemAccentColorDark1">#D25C97</Color>
+      <Color x:Key="SystemAccentColorDark2">#B0487D</Color>
+      <Color x:Key="SystemAccentColorDark3">#8E3563</Color>
     </ResourceDictionary>
 
     <ResourceDictionary x:Key="Light">
-      <Color x:Key="CastoriceBackgroundColor">#F5F3F9</Color>
+      <Color x:Key="CastoriceBackgroundColor">#F4F1F9</Color>
+      <Color x:Key="CastoriceRailColor">#FFFFFF</Color>
       <Color x:Key="CastoriceSurfaceColor">#FFFFFF</Color>
-      <Color x:Key="CastoriceSurfaceAltColor">#ECE8F3</Color>
-      <Color x:Key="CastoriceBorderColor">#D5CEE4</Color>
+      <Color x:Key="CastoriceSurfaceAltColor">#EFEAF7</Color>
+      <Color x:Key="CastoriceWellColor">#E7E1F2</Color>
+
+      <Color x:Key="CastoriceBorderColor">#DCD4EA</Color>
+      <Color x:Key="CastoriceBorderStrongColor">#C3B7DA</Color>
+
       <Color x:Key="CastoriceAccentColor">#C4407F</Color>
       <Color x:Key="CastoriceAccentMutedColor">#7B4BB5</Color>
-      <Color x:Key="CastoriceTextColor">#20192B</Color>
-      <Color x:Key="CastoriceMutedTextColor">#6B6480</Color>
+      <Color x:Key="CastoriceAccentDeepColor">#5B3691</Color>
+
+      <Color x:Key="CastoriceTextColor">#1D1729</Color>
+      <Color x:Key="CastoriceMutedTextColor">#655D7B</Color>
+      <Color x:Key="CastoriceFaintTextColor">#8D86A1</Color>
+
       <Color x:Key="CastoriceSuccessColor">#2E9A5B</Color>
       <Color x:Key="CastoriceWarningColor">#B07A18</Color>
       <Color x:Key="CastoriceDangerColor">#C2453F</Color>
       <Color x:Key="CastoriceRedTeamColor">#C23B52</Color>
       <Color x:Key="CastoriceBlueTeamColor">#3A6FB5</Color>
+
+      <Color x:Key="CastoriceScrimColor">#CC1D1729</Color>
+      <Color x:Key="CastoriceOnAccentColor">#FFFFFF</Color>
 
       <Color x:Key="SystemAccentColor">#C4407F</Color>
       <Color x:Key="SystemAccentColorLight1">#D1639A</Color>
@@ -58,17 +83,57 @@
   </ResourceDictionary.ThemeDictionaries>
 
   <SolidColorBrush x:Key="CastoriceBackgroundBrush" Color="{DynamicResource CastoriceBackgroundColor}" />
+  <SolidColorBrush x:Key="CastoriceRailBrush" Color="{DynamicResource CastoriceRailColor}" />
   <SolidColorBrush x:Key="CastoriceSurfaceBrush" Color="{DynamicResource CastoriceSurfaceColor}" />
   <SolidColorBrush x:Key="CastoriceSurfaceAltBrush" Color="{DynamicResource CastoriceSurfaceAltColor}" />
+  <SolidColorBrush x:Key="CastoriceWellBrush" Color="{DynamicResource CastoriceWellColor}" />
   <SolidColorBrush x:Key="CastoriceBorderBrush" Color="{DynamicResource CastoriceBorderColor}" />
+  <SolidColorBrush x:Key="CastoriceBorderStrongBrush" Color="{DynamicResource CastoriceBorderStrongColor}" />
   <SolidColorBrush x:Key="CastoriceAccentBrush" Color="{DynamicResource CastoriceAccentColor}" />
   <SolidColorBrush x:Key="CastoriceAccentMutedBrush" Color="{DynamicResource CastoriceAccentMutedColor}" />
+  <SolidColorBrush x:Key="CastoriceAccentDeepBrush" Color="{DynamicResource CastoriceAccentDeepColor}" />
   <SolidColorBrush x:Key="CastoriceTextBrush" Color="{DynamicResource CastoriceTextColor}" />
   <SolidColorBrush x:Key="CastoriceMutedTextBrush" Color="{DynamicResource CastoriceMutedTextColor}" />
+  <SolidColorBrush x:Key="CastoriceFaintTextBrush" Color="{DynamicResource CastoriceFaintTextColor}" />
   <SolidColorBrush x:Key="CastoriceSuccessBrush" Color="{DynamicResource CastoriceSuccessColor}" />
   <SolidColorBrush x:Key="CastoriceWarningBrush" Color="{DynamicResource CastoriceWarningColor}" />
   <SolidColorBrush x:Key="CastoriceDangerBrush" Color="{DynamicResource CastoriceDangerColor}" />
   <SolidColorBrush x:Key="CastoriceRedTeamBrush" Color="{DynamicResource CastoriceRedTeamColor}" />
   <SolidColorBrush x:Key="CastoriceBlueTeamBrush" Color="{DynamicResource CastoriceBlueTeamColor}" />
+  <SolidColorBrush x:Key="CastoriceOnAccentBrush" Color="{DynamicResource CastoriceOnAccentColor}" />
+
+  <LinearGradientBrush x:Key="CastoriceAccentGradient" StartPoint="0%,0%" EndPoint="100%,100%">
+    <GradientStop Color="{DynamicResource CastoriceAccentColor}" Offset="0" />
+    <GradientStop Color="{DynamicResource CastoriceAccentMutedColor}" Offset="1" />
+  </LinearGradientBrush>
+
+  <!-- Scrim laid over cover art so white text stays readable whatever the artwork is. -->
+  <LinearGradientBrush x:Key="CastoriceCoverScrim" StartPoint="0%,0%" EndPoint="0%,100%">
+    <GradientStop Color="#66000000" Offset="0" />
+    <GradientStop Color="#D9000000" Offset="1" />
+  </LinearGradientBrush>
+
+  <LinearGradientBrush x:Key="CastoriceHeaderGradient" StartPoint="0%,0%" EndPoint="100%,0%">
+    <GradientStop Color="{DynamicResource CastoriceAccentDeepColor}" Offset="0" />
+    <GradientStop Color="{DynamicResource CastoriceAccentMutedColor}" Offset="0.55" />
+    <GradientStop Color="{DynamicResource CastoriceAccentColor}" Offset="1" />
+  </LinearGradientBrush>
+
+  <!-- Corner radius scale. -->
+  <CornerRadius x:Key="RadiusSmall">6</CornerRadius>
+  <CornerRadius x:Key="RadiusMedium">10</CornerRadius>
+  <CornerRadius x:Key="RadiusLarge">14</CornerRadius>
+  <CornerRadius x:Key="RadiusPill">999</CornerRadius>
+
+  <!-- Elevation. Two levels is enough: resting cards and things that float over them. -->
+  <BoxShadows x:Key="ShadowResting">0 1 2 0 #1A000000, 0 4 12 -2 #33000000</BoxShadows>
+  <BoxShadows x:Key="ShadowRaised">0 2 4 0 #26000000, 0 12 28 -6 #59000000</BoxShadows>
+  <BoxShadows x:Key="ShadowNone">0 0 0 0 #00000000</BoxShadows>
+
+  <!-- Nav icons, 24x24. -->
+  <StreamGeometry x:Key="IconChat">M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z</StreamGeometry>
+  <StreamGeometry x:Key="IconTrophy">M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z</StreamGeometry>
+  <StreamGeometry x:Key="IconPerson">M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z</StreamGeometry>
+  <StreamGeometry x:Key="IconGear">M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z</StreamGeometry>
 
 </ResourceDictionary>
