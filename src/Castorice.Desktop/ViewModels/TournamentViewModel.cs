@@ -13,6 +13,10 @@ public sealed partial class TournamentViewModel : ViewModelBase
 {
     private readonly AppServices _services;
 
+    // Set while re-selecting the file the pool was just written to, so the save does not bounce
+    // back through a reload and throw away the in-memory state.
+    private bool _suppressPoolReload;
+
     [ObservableProperty]
     private MappoolFile? _selectedPoolFile;
 
@@ -78,6 +82,59 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
     public ObservableCollection<string> RoomLog { get; } = [];
 
+    /// <summary>
+    /// The pool's own fields are wrapped rather than bound through <c>Pool.Name</c> directly:
+    /// <see cref="Mappool"/> raises no change notifications, so a rename would otherwise update the
+    /// box it was typed into and nothing else.
+    /// </summary>
+    public string PoolName
+    {
+        get => Pool.Name;
+        set
+        {
+            if (Pool.Name == value)
+            {
+                return;
+            }
+
+            Pool.Name = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string PoolAcronym
+    {
+        get => Pool.Acronym;
+        set
+        {
+            if (Pool.Acronym == value)
+            {
+                return;
+            }
+
+            Pool.Acronym = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasPoolAcronym));
+        }
+    }
+
+    public bool HasPoolAcronym => !string.IsNullOrWhiteSpace(Pool.Acronym);
+
+    public string PoolStage
+    {
+        get => Pool.Stage;
+        set
+        {
+            if (Pool.Stage == value)
+            {
+                return;
+            }
+
+            Pool.Stage = value;
+            OnPropertyChanged();
+        }
+    }
+
     public MultiplayerRoom? Room => _services.Tournament.Room;
 
     public bool IsAttached => Room is not null;
@@ -130,7 +187,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
     partial void OnSelectedPoolFileChanged(MappoolFile? value)
     {
-        if (value is null)
+        if (value is null || _suppressPoolReload)
         {
             return;
         }
@@ -172,6 +229,10 @@ public sealed partial class TournamentViewModel : ViewModelBase
         RebuildGroups();
 
         OnPropertyChanged(nameof(Pool));
+        OnPropertyChanged(nameof(PoolName));
+        OnPropertyChanged(nameof(PoolAcronym));
+        OnPropertyChanged(nameof(HasPoolAcronym));
+        OnPropertyChanged(nameof(PoolStage));
     }
 
     private void RebuildGroups()
@@ -458,10 +519,26 @@ public sealed partial class TournamentViewModel : ViewModelBase
         try
         {
             var fileName = _services.Mappools.Save(Pool, SelectedPoolFile?.FileName);
-            RefreshPoolList();
-            SelectedPoolFile = PoolFiles.FirstOrDefault(f =>
-                f.FileName.Equals(fileName, StringComparison.OrdinalIgnoreCase));
-            Status = $"Saved to {fileName}.";
+
+            // Re-selecting the file would otherwise reload it and rebuild every slot view model,
+            // dropping the "currently picked" highlight in the middle of a match.
+            _suppressPoolReload = true;
+            try
+            {
+                RefreshPoolList();
+                SelectedPoolFile = PoolFiles.FirstOrDefault(f =>
+                    f.FileName.Equals(fileName, StringComparison.OrdinalIgnoreCase));
+            }
+            finally
+            {
+                _suppressPoolReload = false;
+            }
+
+            // Normally recorded by the selection handler, which the guard above just skipped.
+            _services.Settings.LastMappoolFile = fileName;
+            _services.SaveSettings();
+
+            Status = $"Saved \"{Pool.Name}\" to {fileName}.";
         }
         catch (Exception ex)
         {

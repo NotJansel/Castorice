@@ -52,12 +52,15 @@
                otherwise push the buttons past the edge of the column. -->
           <StackPanel Spacing="10">
             <StackPanel Spacing="2">
-              <TextBlock Classes="display" Text="{Binding Pool.Name}"
-                         TextTrimming="CharacterEllipsis" />
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock Classes="muted" Text="{Binding Pool.Stage}" VerticalAlignment="Center" />
-                <Border Classes="badge" IsVisible="{Binding Pool.Acronym, Converter={x:Static views:ViewConverters.IsNotEmpty}}">
-                  <TextBlock Text="{Binding Pool.Acronym}" />
+              <!-- The heading is the rename affordance; it writes straight through to the pool. -->
+              <TextBox Classes="titleEdit"
+                       Text="{Binding PoolName}"
+                       Watermark="Mappool name"
+                       ToolTip.Tip="Rename the pool. Save it to keep the change." />
+              <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2,0,0">
+                <TextBlock Classes="muted" Text="{Binding PoolStage}" VerticalAlignment="Center" />
+                <Border Classes="badge" IsVisible="{Binding HasPoolAcronym}">
+                  <TextBlock Text="{Binding PoolAcronym}" />
                 </Border>
               </StackPanel>
             </StackPanel>
@@ -152,9 +155,9 @@
               <TextBlock Classes="h2" Text="Room defaults" />
               <Grid ColumnDefinitions="110,*,110,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
                 <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="ACRONYM" VerticalAlignment="Center" />
-                <TextBox  Grid.Row="0" Grid.Column="1" Text="{Binding Pool.Acronym}" Margin="0,0,16,0" />
+                <TextBox  Grid.Row="0" Grid.Column="1" Text="{Binding PoolAcronym}" Margin="0,0,16,0" />
                 <TextBlock Grid.Row="0" Grid.Column="2" Classes="label" Text="STAGE" VerticalAlignment="Center" />
-                <TextBox  Grid.Row="0" Grid.Column="3" Text="{Binding Pool.Stage}" />
+                <TextBox  Grid.Row="0" Grid.Column="3" Text="{Binding PoolStage}" />
 
                 <TextBlock Grid.Row="1" Grid.Column="0" Classes="label" Text="TEAM MODE" VerticalAlignment="Center" />
                 <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding TeamModes}"

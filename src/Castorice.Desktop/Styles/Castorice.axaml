@@ -299,6 +299,39 @@
     <Setter Property="MinHeight" Value="34" />
   </Style>
 
+  <!-- An editable heading: reads as a title, reveals its box on hover and focus. -->
+  <Style Selector="TextBox.titleEdit">
+    <Setter Property="FontSize" Value="30" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Padding" Value="8,2" />
+    <Setter Property="Margin" Value="-8,0,0,0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+  </Style>
+
+  <Style Selector="TextBox.titleEdit /template/ Border#PART_BorderElement">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="TextBox.titleEdit:pointerover /template/ Border#PART_BorderElement">
+    <Setter Property="Background" Value="{DynamicResource CastoriceSurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CastoriceBorderBrush}" />
+  </Style>
+
+  <Style Selector="TextBox.titleEdit:focus /template/ Border#PART_BorderElement">
+    <Setter Property="Background" Value="{DynamicResource CastoriceSurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CastoriceAccentBrush}" />
+  </Style>
+
   <Style Selector="ComboBox">
     <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
     <Setter Property="MinHeight" Value="34" />

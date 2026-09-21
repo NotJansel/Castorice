@@ -95,6 +95,10 @@ with the rest of the staff means sending a single file. See
 - `category` groups the picks into rows in the UI. Leave it out and the leading letters of `label`
   are used, so `HD2` lands in an `HD` row on its own.
 
+The pool's name is the heading on the Tournament page — click it to rename the pool, then **Save
+pool**. Renaming keeps the pool in its existing file, so nothing you have already shared breaks;
+the status bar names the file it wrote to.
+
 With API credentials configured, **Fetch metadata** fills in title, artist, mapper, star rating,
 BPM, length and cover art for every pick in one request. `coverUrl` is written back into the pool
 file, so a pool you share arrives with its artwork already set.
