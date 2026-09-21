@@ -61,6 +61,35 @@ public class BanchoBotParserTests
         Assert.Equal(Mods.Hidden | Mods.HardRock, acronyms.Mods);
     }
 
+    [Theory]
+    // The reply to !mp mods, which is what actually confirms a pick's mods in a live lobby.
+    [InlineData("Enabled DoubleTime, disabled FreeMod", Mods.DoubleTime)]
+    [InlineData("Enabled Hidden, HardRock, disabled FreeMod", Mods.Hidden | Mods.HardRock)]
+    [InlineData("Enabled NoFail, DoubleTime, disabled FreeMod", Mods.NoFail | Mods.DoubleTime)]
+    [InlineData("Enabled HardRock, enabled FreeMod", Mods.HardRock | Mods.FreeMod)]
+    [InlineData("Disabled all mods, enabled FreeMod", Mods.FreeMod)]
+    [InlineData("Disabled all mods, disabled FreeMod", Mods.None)]
+    [InlineData("Enabled DoubleTime", Mods.DoubleTime)]
+    public void Recognises_the_reply_to_setting_mods(string line, Mods expected)
+    {
+        var evt = Assert.IsType<ModsChanged>(BanchoBotParser.Parse(line));
+
+        Assert.Equal(expected, evt.Mods);
+    }
+
+    [Fact]
+    public void Picking_a_double_time_map_leaves_the_room_showing_double_time()
+    {
+        // Regression: the room only tracked the "Active mods:" line from !mp settings, so after a
+        // pick the panel kept reading NoMod even though the lobby had already switched.
+        var room = new MultiplayerRoom(1);
+
+        room.Apply("Changed beatmap to https://osu.ppy.sh/b/77 Artist - Title [Extra]");
+        room.Apply("Enabled DoubleTime, disabled FreeMod");
+
+        Assert.Equal(Mods.DoubleTime, room.CurrentMods);
+    }
+
     [Fact]
     public void Recognises_changed_match_settings()
     {

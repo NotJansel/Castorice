@@ -40,6 +40,20 @@ public static partial class BanchoBotParser
             return Tag(new ModsChanged(ModsExtensions.ParseMods(mods.Groups["mods"].Value)), line);
         }
 
+        // BanchoBot acknowledges "!mp mods" with its own wording rather than an "Active mods:" line,
+        // so without this the room's mods would only ever update on "!mp settings".
+        if (ModsSetPattern().Match(line) is { Success: true } modsSet)
+        {
+            var applied = ModsExtensions.ParseMods(modsSet.Groups["mods"].Value);
+
+            if (modsSet.Groups["freemod"].Value.Equals("enabled", StringComparison.OrdinalIgnoreCase))
+            {
+                applied |= Mods.FreeMod;
+            }
+
+            return Tag(new ModsChanged(applied), line);
+        }
+
         if (SettingsChangedPattern().Match(line) is { Success: true } settings)
         {
             var size = settings.Groups["size"].Success
@@ -201,6 +215,16 @@ public static partial class BanchoBotParser
 
     [GeneratedRegex(@"^Active mods:\s*(?<mods>.+)$", RegexOptions.IgnoreCase)]
     private static partial Regex ActiveModsPattern();
+
+    /// <summary>
+    /// The reply to <c>!mp mods</c>, in all the shapes BanchoBot uses:
+    /// <c>Enabled DoubleTime, disabled FreeMod</c>, <c>Enabled HardRock, Hidden, enabled FreeMod</c>,
+    /// and <c>Disabled all mods, enabled FreeMod</c>.
+    /// </summary>
+    [GeneratedRegex(
+        @"^(?:Enabled\s+(?<mods>.+?)|Disabled all mods)(?:,\s*(?<freemod>enabled|disabled)\s+FreeMod)?\.?$",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex ModsSetPattern();
 
     [GeneratedRegex(
         @"^Changed match settings to\s*(?:(?<size>\d+)\s*slots,?\s*)?(?<team>[A-Za-z ]+?),\s*(?<score>[A-Za-z0-9 ]+)\s*$",
