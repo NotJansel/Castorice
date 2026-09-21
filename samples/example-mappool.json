@@ -1,0 +1,25 @@
+{
+  "name": "Castorice Cup — Quarterfinals",
+  "acronym": "CC",
+  "stage": "Quarterfinals",
+  "playMode": "Osu",
+  "teamMode": "TeamVs",
+  "scoreMode": "ScoreV2",
+  "roomSize": 16,
+  "startTimerSeconds": 10,
+  "readyTimerSeconds": 120,
+  "referees": [],
+  "slots": [
+    { "label": "NM1", "category": "NoMod",      "beatmapId": 1234567, "mods": "None" },
+    { "label": "NM2", "category": "NoMod",      "beatmapId": 1234568, "mods": "None" },
+    { "label": "NM3", "category": "NoMod",      "beatmapId": 1234569, "mods": "None" },
+    { "label": "HD1", "category": "Hidden",     "beatmapId": 1234570, "mods": "Hidden" },
+    { "label": "HD2", "category": "Hidden",     "beatmapId": 1234571, "mods": "Hidden" },
+    { "label": "HR1", "category": "HardRock",   "beatmapId": 1234572, "mods": "HardRock" },
+    { "label": "HR2", "category": "HardRock",   "beatmapId": 1234573, "mods": "HardRock" },
+    { "label": "DT1", "category": "DoubleTime", "beatmapId": 1234574, "mods": "DoubleTime" },
+    { "label": "DT2", "category": "DoubleTime", "beatmapId": 1234575, "mods": "DoubleTime" },
+    { "label": "FM1", "category": "FreeMod",    "beatmapId": 1234576, "mods": "FreeMod" },
+    { "label": "TB",  "category": "Tiebreaker", "beatmapId": 1234577, "mods": "FreeMod" }
+  ]
+}

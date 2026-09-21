@@ -41,6 +41,26 @@ public static class ModsExtensions
         (Mods.FreeMod, "Freemod"),
     ];
 
+    /// <summary>
+    /// BanchoBot prints full mod names in <c>!mp settings</c> ("Team Red / HardRock") while the
+    /// acronym form is what <c>!mp mods</c> takes, so both spellings are accepted on the way in.
+    /// </summary>
+    private static readonly (Mods Mod, string Name)[] FullNames =
+    [
+        (Mods.NoFail, "NoFail"),
+        (Mods.Easy, "Easy"),
+        (Mods.Hidden, "Hidden"),
+        (Mods.HardRock, "HardRock"),
+        (Mods.SuddenDeath, "SuddenDeath"),
+        (Mods.DoubleTime, "DoubleTime"),
+        (Mods.Relax, "Relax"),
+        (Mods.HalfTime, "HalfTime"),
+        (Mods.Nightcore, "Nightcore"),
+        (Mods.Flashlight, "Flashlight"),
+        (Mods.SpunOut, "SpunOut"),
+        (Mods.Perfect, "Perfect"),
+    ];
+
     /// <summary>Renders as space-separated acronyms in the order Bancho prints them, or <c>None</c>.</summary>
     public static string ToAcronyms(this Mods mods)
     {
@@ -100,6 +120,15 @@ public static class ModsExtensions
                 word.Equals("FM", StringComparison.OrdinalIgnoreCase))
             {
                 result |= Mods.FreeMod;
+                continue;
+            }
+
+            var fullName = FullNames.FirstOrDefault(entry =>
+                entry.Name.Equals(word, StringComparison.OrdinalIgnoreCase));
+
+            if (fullName.Name is not null)
+            {
+                result |= fullName.Mod;
                 continue;
             }
 

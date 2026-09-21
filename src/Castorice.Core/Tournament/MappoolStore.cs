@@ -81,12 +81,17 @@ public sealed class MappoolStore(string? directory = null)
         }
     }
 
-    /// <summary>Turns a pool name into a file name that is safe on all three target platforms.</summary>
+    /// <summary>
+    /// Turns a pool name into a file name that is safe on all three target platforms. The set is
+    /// hard-coded rather than taken from <see cref="Path.GetInvalidFileNameChars"/>, which on Unix
+    /// reports only '/' and would let a name through that Windows then rejects.
+    /// </summary>
     public static string SuggestFileName(string poolName)
     {
-        var invalid = Path.GetInvalidFileNameChars();
+        const string invalid = "<>:\"/\\|?*";
+
         var cleaned = new string(poolName
-            .Select(c => invalid.Contains(c) || c is ' ' ? '-' : c)
+            .Select(c => invalid.Contains(c) || char.IsControl(c) || c is ' ' ? '-' : c)
             .ToArray())
             .Trim('-');
 

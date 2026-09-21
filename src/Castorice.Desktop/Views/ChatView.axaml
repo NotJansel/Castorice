@@ -1,0 +1,145 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sys="using:System"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Castorice.Desktop.ViewModels"
+             xmlns:views="clr-namespace:Castorice.Desktop.Views"
+             xmlns:chat="clr-namespace:Castorice.Core.Chat;assembly=Castorice.Core"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="740"
+             x:Class="Castorice.Desktop.Views.ChatView"
+             x:DataType="vm:ChatViewModel">
+
+  <Grid ColumnDefinitions="240,*,Auto">
+
+    <!-- Channel / conversation list -->
+    <Border Grid.Column="0"
+            Background="{DynamicResource CastoriceSurfaceBrush}"
+            BorderBrush="{DynamicResource CastoriceBorderBrush}"
+            BorderThickness="0,0,1,0">
+      <Grid RowDefinitions="Auto,*,Auto">
+
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="8">
+          <TextBox Grid.Column="0"
+                   Watermark="Join #channel"
+                   Text="{Binding JoinChannel}"
+                   KeyDown="OnJoinKeyDown" />
+          <Button Grid.Column="1" Content="+" Margin="4,0,0,0"
+                  ToolTip.Tip="Join channel"
+                  Command="{Binding JoinCommand}" />
+        </Grid>
+
+        <ListBox Grid.Row="1"
+                 Classes="targets"
+                 Background="Transparent"
+                 ItemsSource="{Binding Targets}"
+                 SelectedItem="{Binding SelectedTarget}">
+          <ListBox.ItemTemplate>
+            <DataTemplate DataType="chat:ChatTarget">
+              <Grid ColumnDefinitions="Auto,*,Auto" ToolTip.Tip="{Binding Name}">
+                <TextBlock Grid.Column="0"
+                           Text="{Binding Kind, Converter={x:Static views:ViewConverters.TargetGlyph}}"
+                           Foreground="{DynamicResource CastoriceAccentMutedBrush}"
+                           FontSize="11"
+                           Width="22"
+                           VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1"
+                           Text="{Binding Name}"
+                           TextTrimming="CharacterEllipsis"
+                           VerticalAlignment="Center" />
+                <Border Grid.Column="2" Classes="badge"
+                        IsVisible="{Binding UnreadCount, Converter={x:Static views:ViewConverters.CountToVisible}}">
+                  <TextBlock Text="{Binding UnreadCount}" />
+                </Border>
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Grid.Row="2" Margin="8" Spacing="4">
+          <Button Content="Close conversation"
+                  HorizontalAlignment="Stretch"
+                  Command="{Binding CloseTargetCommand}" />
+          <ToggleButton Content="Raw IRC console"
+                        HorizontalAlignment="Stretch"
+                        IsChecked="{Binding ShowRawConsole}" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Messages -->
+    <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+
+      <Border Grid.Row="0" Padding="12,8"
+              BorderBrush="{DynamicResource CastoriceBorderBrush}"
+              BorderThickness="0,0,0,1">
+        <TextBlock Classes="h2" Text="{Binding SelectedTarget.Name, FallbackValue='Server'}" />
+      </Border>
+
+      <ScrollViewer Grid.Row="1" Name="MessageScroller" Padding="12,8" HorizontalScrollBarVisibility="Disabled">
+        <ItemsControl ItemsSource="{Binding SelectedTarget.Messages}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="chat:ChatMessage">
+              <Grid ColumnDefinitions="52,132,*" Margin="0,1">
+                <TextBlock Grid.Column="0"
+                           Classes="muted"
+                           Text="{Binding Timestamp, Converter={x:Static views:ViewConverters.TimestampToShortTime}}" />
+                <TextBlock Grid.Column="1"
+                           Text="{Binding Sender}"
+                           TextTrimming="CharacterEllipsis"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,8,0"
+                           FontWeight="SemiBold"
+                           Foreground="{Binding Kind, Converter={x:Static views:ViewConverters.MessageKindToBrush}}" />
+                <SelectableTextBlock Grid.Column="2"
+                                     Text="{Binding Text}"
+                                     TextWrapping="Wrap"
+                                     Foreground="{Binding Kind, Converter={x:Static views:ViewConverters.MessageKindToBrush}}" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+
+      <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="12,8">
+        <TextBox Grid.Column="0"
+                 Name="DraftBox"
+                 Watermark="Message, or /join #channel · /msg user text · /me action"
+                 Text="{Binding Draft}"
+                 AcceptsReturn="False"
+                 KeyDown="OnDraftKeyDown" />
+        <Button Grid.Column="1" Classes="accent" Content="Send" Margin="6,0,0,0"
+                Command="{Binding SendCommand}" />
+      </Grid>
+    </Grid>
+
+    <!-- Raw console -->
+    <Border Grid.Column="2"
+            Width="380"
+            IsVisible="{Binding ShowRawConsole}"
+            Background="{DynamicResource CastoriceSurfaceBrush}"
+            BorderBrush="{DynamicResource CastoriceBorderBrush}"
+            BorderThickness="1,0,0,0">
+      <Grid RowDefinitions="Auto,*">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="8">
+          <TextBlock Grid.Column="0" Classes="h2" Text="Raw IRC" VerticalAlignment="Center" />
+          <Button Grid.Column="1" Content="Clear" Command="{Binding ClearRawLogCommand}" />
+        </Grid>
+        <ScrollViewer Grid.Row="1" Padding="8,0,8,8" HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl ItemsSource="{Binding RawLog}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="sys:String">
+                <SelectableTextBlock Text="{Binding}"
+                                     FontFamily="Cascadia Code,Consolas,Menlo,monospace"
+                                     FontSize="11"
+                                     TextWrapping="Wrap"
+                                     Foreground="{DynamicResource CastoriceMutedTextBrush}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Grid>
+    </Border>
+
+  </Grid>
+</UserControl>

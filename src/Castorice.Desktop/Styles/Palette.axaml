@@ -1,0 +1,54 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <ResourceDictionary.ThemeDictionaries>
+
+    <ResourceDictionary x:Key="Dark">
+      <Color x:Key="CastoriceBackgroundColor">#14121A</Color>
+      <Color x:Key="CastoriceSurfaceColor">#1C1926</Color>
+      <Color x:Key="CastoriceSurfaceAltColor">#252131</Color>
+      <Color x:Key="CastoriceBorderColor">#37314C</Color>
+      <Color x:Key="CastoriceAccentColor">#E36FA8</Color>
+      <Color x:Key="CastoriceAccentMutedColor">#8C5FC4</Color>
+      <Color x:Key="CastoriceTextColor">#EDEAF5</Color>
+      <Color x:Key="CastoriceMutedTextColor">#9A94AD</Color>
+      <Color x:Key="CastoriceSuccessColor">#5FD48A</Color>
+      <Color x:Key="CastoriceWarningColor">#E8B860</Color>
+      <Color x:Key="CastoriceDangerColor">#E56B6B</Color>
+      <Color x:Key="CastoriceRedTeamColor">#E05A72</Color>
+      <Color x:Key="CastoriceBlueTeamColor">#5A9BE0</Color>
+    </ResourceDictionary>
+
+    <ResourceDictionary x:Key="Light">
+      <Color x:Key="CastoriceBackgroundColor">#F5F3F9</Color>
+      <Color x:Key="CastoriceSurfaceColor">#FFFFFF</Color>
+      <Color x:Key="CastoriceSurfaceAltColor">#ECE8F3</Color>
+      <Color x:Key="CastoriceBorderColor">#D5CEE4</Color>
+      <Color x:Key="CastoriceAccentColor">#C4407F</Color>
+      <Color x:Key="CastoriceAccentMutedColor">#7B4BB5</Color>
+      <Color x:Key="CastoriceTextColor">#20192B</Color>
+      <Color x:Key="CastoriceMutedTextColor">#6B6480</Color>
+      <Color x:Key="CastoriceSuccessColor">#2E9A5B</Color>
+      <Color x:Key="CastoriceWarningColor">#B07A18</Color>
+      <Color x:Key="CastoriceDangerColor">#C2453F</Color>
+      <Color x:Key="CastoriceRedTeamColor">#C23B52</Color>
+      <Color x:Key="CastoriceBlueTeamColor">#3A6FB5</Color>
+    </ResourceDictionary>
+
+  </ResourceDictionary.ThemeDictionaries>
+
+  <SolidColorBrush x:Key="CastoriceBackgroundBrush" Color="{DynamicResource CastoriceBackgroundColor}" />
+  <SolidColorBrush x:Key="CastoriceSurfaceBrush" Color="{DynamicResource CastoriceSurfaceColor}" />
+  <SolidColorBrush x:Key="CastoriceSurfaceAltBrush" Color="{DynamicResource CastoriceSurfaceAltColor}" />
+  <SolidColorBrush x:Key="CastoriceBorderBrush" Color="{DynamicResource CastoriceBorderColor}" />
+  <SolidColorBrush x:Key="CastoriceAccentBrush" Color="{DynamicResource CastoriceAccentColor}" />
+  <SolidColorBrush x:Key="CastoriceAccentMutedBrush" Color="{DynamicResource CastoriceAccentMutedColor}" />
+  <SolidColorBrush x:Key="CastoriceTextBrush" Color="{DynamicResource CastoriceTextColor}" />
+  <SolidColorBrush x:Key="CastoriceMutedTextBrush" Color="{DynamicResource CastoriceMutedTextColor}" />
+  <SolidColorBrush x:Key="CastoriceSuccessBrush" Color="{DynamicResource CastoriceSuccessColor}" />
+  <SolidColorBrush x:Key="CastoriceWarningBrush" Color="{DynamicResource CastoriceWarningColor}" />
+  <SolidColorBrush x:Key="CastoriceDangerBrush" Color="{DynamicResource CastoriceDangerColor}" />
+  <SolidColorBrush x:Key="CastoriceRedTeamBrush" Color="{DynamicResource CastoriceRedTeamColor}" />
+  <SolidColorBrush x:Key="CastoriceBlueTeamBrush" Color="{DynamicResource CastoriceBlueTeamColor}" />
+
+</ResourceDictionary>

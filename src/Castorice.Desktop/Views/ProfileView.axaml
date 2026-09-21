@@ -1,0 +1,256 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Castorice.Desktop.ViewModels"
+             xmlns:views="clr-namespace:Castorice.Desktop.Views"
+             xmlns:osu="clr-namespace:Castorice.Core.Osu.Models;assembly=Castorice.Core"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="740"
+             x:Class="Castorice.Desktop.Views.ProfileView"
+             x:DataType="vm:ProfileViewModel">
+
+  <Grid RowDefinitions="Auto,*">
+
+    <!-- Search bar -->
+    <Border Grid.Row="0" Padding="12,10"
+            Background="{DynamicResource CastoriceSurfaceBrush}"
+            BorderBrush="{DynamicResource CastoriceBorderBrush}"
+            BorderThickness="0,0,0,1">
+      <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+        <TextBox Grid.Column="0" Text="{Binding Query}" Watermark="osu! username or user id"
+                 KeyDown="OnQueryKeyDown" />
+        <ComboBox Grid.Column="1" Margin="8,0,0,0" MinWidth="130"
+                  ItemsSource="{Binding AvailableModes}"
+                  SelectedItem="{Binding SelectedMode}" />
+        <Button Grid.Column="2" Classes="accent" Content="Search" Margin="8,0,0,0"
+                Command="{Binding SearchCommand}" />
+        <Button Grid.Column="3" Content="Me" Margin="6,0,0,0"
+                ToolTip.Tip="Look up the account configured in Settings"
+                Command="{Binding ShowMeCommand}" />
+      </Grid>
+    </Border>
+
+    <Panel Grid.Row="1">
+
+      <!-- Empty / error states -->
+      <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8"
+                  MaxWidth="460"
+                  IsVisible="{Binding !HasUser}">
+        <TextBlock Classes="h2" Text="No profile loaded" HorizontalAlignment="Center" />
+        <TextBlock Classes="muted" TextWrapping="Wrap" TextAlignment="Center"
+                   Text="Search for an osu! username above. The profile view needs osu! API credentials, which are configured on the Settings page."
+                   IsVisible="{Binding !IsApiConfigured}" />
+        <TextBlock Classes="muted" TextWrapping="Wrap" TextAlignment="Center"
+                   Text="Search for an osu! username above."
+                   IsVisible="{Binding IsApiConfigured}" />
+      </StackPanel>
+
+      <ScrollViewer IsVisible="{Binding HasUser}" Padding="16" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="14" MaxWidth="1100" HorizontalAlignment="Stretch">
+
+          <!-- Header card -->
+          <Border Classes="card" Padding="0" ClipToBounds="True">
+            <StackPanel>
+              <Border Height="120">
+                <Border.Background>
+                  <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                    <GradientStop Color="{DynamicResource CastoriceAccentMutedColor}" Offset="0" />
+                    <GradientStop Color="{DynamicResource CastoriceAccentColor}" Offset="1" />
+                  </LinearGradientBrush>
+                </Border.Background>
+              </Border>
+              <Grid ColumnDefinitions="Auto,*,Auto" Margin="16,-40,16,16">
+                <Border Grid.Column="0" Width="96" Height="96" CornerRadius="12"
+                        Background="{DynamicResource CastoriceSurfaceAltBrush}"
+                        BorderBrush="{DynamicResource CastoriceBorderBrush}"
+                        BorderThickness="2"
+                        ClipToBounds="True">
+                  <TextBlock Text="{Binding User.Username}"
+                             FontSize="28" FontWeight="Bold"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"
+                             TextTrimming="CharacterEllipsis" Margin="4" />
+                </Border>
+
+                <StackPanel Grid.Column="1" Margin="14,44,0,0" Spacing="2">
+                  <TextBlock Classes="h1" Text="{Binding User.Username}" />
+                  <TextBlock Classes="muted">
+                    <Run Text="{Binding CountryDisplay}" />
+                    <Run Text=" · joined " /><Run Text="{Binding JoinedDisplay}" />
+                  </TextBlock>
+                  <TextBlock Classes="muted" Text="{Binding LastSeenDisplay}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Margin="0,44,0,0" HorizontalAlignment="Right">
+                  <TextBlock Text="{Binding PpDisplay}" FontSize="26" FontWeight="Bold"
+                             HorizontalAlignment="Right"
+                             Foreground="{DynamicResource CastoriceAccentBrush}" />
+                  <TextBlock Classes="muted" Text="{Binding SelectedModeDisplay}"
+                             HorizontalAlignment="Right" />
+                </StackPanel>
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <!-- Stat tiles -->
+          <WrapPanel Orientation="Horizontal" Classes="spaced">
+            <Border Classes="statTile">
+              <StackPanel>
+                <TextBlock Classes="label" Text="GLOBAL RANK" />
+                <TextBlock Text="{Binding GlobalRankDisplay}" FontSize="18" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+            <Border Classes="statTile">
+              <StackPanel>
+                <TextBlock Classes="label" Text="COUNTRY RANK" />
+                <TextBlock Text="{Binding CountryRankDisplay}" FontSize="18" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+            <Border Classes="statTile">
+              <StackPanel>
+                <TextBlock Classes="label" Text="ACCURACY" />
+                <TextBlock Text="{Binding AccuracyDisplay}" FontSize="18" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+            <Border Classes="statTile">
+              <StackPanel>
+                <TextBlock Classes="label" Text="PLAY COUNT" />
+                <TextBlock Text="{Binding PlayCountDisplay}" FontSize="18" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+            <Border Classes="statTile">
+              <StackPanel>
+                <TextBlock Classes="label" Text="PLAY TIME" />
+                <TextBlock Text="{Binding PlayTimeDisplay}" FontSize="18" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+            <Border Classes="statTile">
+              <StackPanel>
+                <TextBlock Classes="label" Text="LEVEL" />
+                <TextBlock Text="{Binding LevelDisplay}" FontSize="18" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+            <Border Classes="statTile">
+              <StackPanel>
+                <TextBlock Classes="label" Text="MAX COMBO" />
+                <TextBlock Text="{Binding MaxComboDisplay}" FontSize="18" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+            <Border Classes="statTile">
+              <StackPanel>
+                <TextBlock Classes="label" Text="RANKED SCORE" />
+                <TextBlock Text="{Binding RankedScoreDisplay}" FontSize="18" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+            <Border Classes="statTile">
+              <StackPanel>
+                <TextBlock Classes="label" Text="SS / S / A" />
+                <TextBlock FontSize="18" FontWeight="SemiBold">
+                  <Run Text="{Binding GradeSsDisplay}" />
+                  <Run Text="/" />
+                  <Run Text="{Binding GradeSDisplay}" />
+                  <Run Text="/" />
+                  <Run Text="{Binding GradeADisplay}" />
+                </TextBlock>
+              </StackPanel>
+            </Border>
+          </WrapPanel>
+
+          <!-- Rank history -->
+          <Border Classes="card">
+            <StackPanel Spacing="6">
+              <TextBlock Classes="h2" Text="Global rank, last 90 days" />
+              <Canvas Height="48" Width="240" HorizontalAlignment="Left">
+                <Polyline Points="{Binding RankSparkline, Converter={x:Static views:ViewConverters.SparklinePoints}}"
+                          Stroke="{DynamicResource CastoriceAccentBrush}"
+                          StrokeThickness="2"
+                          StrokeLineCap="Round"
+                          StrokeJoin="Round" />
+              </Canvas>
+              <TextBlock Classes="muted" Text="Higher is better. Flat means no rank movement was recorded." />
+            </StackPanel>
+          </Border>
+
+          <!-- Scores -->
+          <Grid ColumnDefinitions="*,*">
+            <Border Grid.Column="0" Classes="card" Margin="0,0,6,0">
+              <StackPanel Spacing="6">
+                <TextBlock Classes="h2" Text="Top plays" />
+                <ItemsControl ItemsSource="{Binding TopPlays}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="osu:OsuScore">
+                      <Grid ColumnDefinitions="36,*,Auto" Margin="0,3">
+                        <Border Grid.Column="0" Classes="badge" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding Rank}" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="8,0">
+                          <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                          <TextBlock Classes="muted">
+                            <Run Text="{Binding Difficulty}" />
+                            <Run Text=" · " />
+                            <Run Text="{Binding ModsDisplay}" />
+                            <Run Text=" · " />
+                            <Run Text="{Binding AccuracyDisplay}" />
+                          </TextBlock>
+                        </StackPanel>
+                        <TextBlock Grid.Column="2" Text="{Binding PpDisplay}"
+                                   VerticalAlignment="Center" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource CastoriceAccentBrush}" />
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1" Classes="card" Margin="6,0,0,0">
+              <StackPanel Spacing="6">
+                <TextBlock Classes="h2" Text="Recent plays" />
+                <ItemsControl ItemsSource="{Binding RecentPlays}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="osu:OsuScore">
+                      <Grid ColumnDefinitions="36,*,Auto" Margin="0,3">
+                        <Border Grid.Column="0" Classes="badge" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding Rank}" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="8,0">
+                          <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                          <TextBlock Classes="muted">
+                            <Run Text="{Binding Difficulty}" />
+                            <Run Text=" · " />
+                            <Run Text="{Binding ModsDisplay}" />
+                            <Run Text=" · " />
+                            <Run Text="{Binding AccuracyDisplay}" />
+                          </TextBlock>
+                        </StackPanel>
+                        <TextBlock Grid.Column="2" Text="{Binding PpDisplay}"
+                                   VerticalAlignment="Center" Classes="muted" />
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+          </Grid>
+
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- Overlays -->
+      <Border IsVisible="{Binding IsLoading}"
+              Background="#8014121A">
+        <TextBlock Text="Loading…" HorizontalAlignment="Center" VerticalAlignment="Center" Classes="h2" />
+      </Border>
+
+      <Border VerticalAlignment="Bottom" Padding="12,8" Margin="12"
+              CornerRadius="8"
+              Background="{DynamicResource CastoriceSurfaceBrush}"
+              BorderBrush="{DynamicResource CastoriceDangerBrush}"
+              BorderThickness="1"
+              IsVisible="{Binding Error, Converter={x:Static views:ViewConverters.IsNotEmpty}}">
+        <TextBlock Text="{Binding Error}" TextWrapping="Wrap"
+                   Foreground="{DynamicResource CastoriceDangerBrush}" />
+      </Border>
+
+    </Panel>
+  </Grid>
+</UserControl>

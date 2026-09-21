@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Castorice.Core/Castorice.Core.csproj" />
+    <Project Path="src/Castorice.Desktop/Castorice.Desktop.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Castorice.Core.Tests/Castorice.Core.Tests.csproj" />
+  </Folder>
+</Solution>

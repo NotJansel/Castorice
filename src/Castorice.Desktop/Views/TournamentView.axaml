@@ -1,0 +1,265 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sys="using:System"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Castorice.Desktop.ViewModels"
+             xmlns:views="clr-namespace:Castorice.Desktop.Views"
+             xmlns:tour="clr-namespace:Castorice.Core.Tournament;assembly=Castorice.Core"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="740"
+             x:Class="Castorice.Desktop.Views.TournamentView"
+             x:DataType="vm:TournamentViewModel">
+
+  <Grid RowDefinitions="Auto,*,Auto">
+
+    <!-- Lobby bar -->
+    <Border Grid.Row="0" Padding="12,10"
+            Background="{DynamicResource CastoriceSurfaceBrush}"
+            BorderBrush="{DynamicResource CastoriceBorderBrush}"
+            BorderThickness="0,0,0,1">
+      <WrapPanel Orientation="Horizontal" Classes="spaced">
+        <ComboBox ItemsSource="{Binding PoolFiles}"
+                  SelectedItem="{Binding SelectedPoolFile}"
+                  MinWidth="200"
+                  PlaceholderText="Mappool" />
+        <TextBox Text="{Binding RedTeam}" Watermark="Red team" Width="140" />
+        <TextBox Text="{Binding BlueTeam}" Watermark="Blue team" Width="140" />
+        <Button Classes="accent" Content="Create lobby"
+                Command="{Binding CreateRoomCommand}"
+                IsEnabled="{Binding !IsBusy}" />
+        <TextBox Text="{Binding AttachMatchId}" Watermark="Match id or mp link" Width="180" />
+        <Button Content="Attach" Command="{Binding AttachCommand}" />
+        <Button Content="Detach" Command="{Binding DetachCommand}" IsEnabled="{Binding IsAttached}" />
+        <Button Classes="danger" Content="Close lobby"
+                Command="{Binding CloseRoomCommand}" IsEnabled="{Binding IsAttached}" />
+      </WrapPanel>
+    </Border>
+
+    <Grid Grid.Row="1" ColumnDefinitions="*,400">
+
+      <!-- Mappool -->
+      <ScrollViewer Grid.Column="0" Padding="12" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="14">
+
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Grid.Column="0">
+              <TextBlock Classes="h1" Text="{Binding Pool.Name}" />
+              <TextBlock Classes="muted" Text="{Binding Pool.Stage}" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+              <Button Content="Fetch metadata" Command="{Binding FetchMetadataCommand}" />
+              <Button Content="Save pool" Command="{Binding SavePoolCommand}" />
+              <Button Content="New pool" Command="{Binding NewPoolCommand}" />
+            </StackPanel>
+          </Grid>
+
+          <ItemsControl ItemsSource="{Binding Groups}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:SlotGroupViewModel">
+                <StackPanel Margin="0,0,0,10" Spacing="6">
+                  <TextBlock Classes="label" Text="{Binding Name}" />
+                  <ItemsControl ItemsSource="{Binding Slots}">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" Classes="spaced" />
+                      </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate DataType="vm:MappoolSlotViewModel">
+                        <Button Classes="pick"
+                                Classes.current="{Binding IsCurrentPick}"
+                                Command="{Binding $parent[UserControl].((vm:TournamentViewModel)DataContext).PickCommand}"
+                                CommandParameter="{Binding}"
+                                ToolTip.Tip="{Binding BeatmapUrl}">
+                          <StackPanel Spacing="3">
+                            <Grid ColumnDefinitions="*,Auto">
+                              <TextBlock Grid.Column="0" Text="{Binding Label}"
+                                         FontWeight="Bold"
+                                         Foreground="{DynamicResource CastoriceAccentBrush}" />
+                              <Border Grid.Column="1" Classes="badge">
+                                <TextBlock Text="{Binding ModsBadge}" />
+                              </Border>
+                            </Grid>
+                            <TextBlock Text="{Binding DisplayName}"
+                                       TextTrimming="CharacterEllipsis"
+                                       MaxWidth="200"
+                                       HorizontalAlignment="Left" />
+                            <TextBlock Classes="muted" Text="{Binding Subtitle}"
+                                       TextTrimming="CharacterEllipsis" MaxWidth="200"
+                                       HorizontalAlignment="Left" />
+                            <TextBlock Classes="muted" Text="{Binding Metadata}" />
+                          </StackPanel>
+                        </Button>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <Border Classes="card">
+            <StackPanel Spacing="8">
+              <TextBlock Classes="h2" Text="Add a pick" />
+              <WrapPanel Orientation="Horizontal" Classes="spaced">
+                <TextBox Text="{Binding NewSlotLabel}" Watermark="Label (NM1)" Width="120" />
+                <TextBox Text="{Binding NewSlotBeatmapId}" Watermark="Beatmap id or /b/ link" Width="200" />
+                <TextBox Text="{Binding NewSlotMods}" Watermark="Mods (HDHR)" Width="120" />
+                <Button Content="Add" Command="{Binding AddSlotCommand}" />
+              </WrapPanel>
+              <TextBlock Classes="muted"
+                         Text="The beatmap id is the last number of an osu.ppy.sh/b/… link — the difficulty, not the set." />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="card">
+            <StackPanel Spacing="8">
+              <TextBlock Classes="h2" Text="Room defaults" />
+              <Grid ColumnDefinitions="Auto,*,Auto,*" RowDefinitions="Auto,Auto,Auto" >
+                <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="Acronym" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBox  Grid.Row="0" Grid.Column="1" Text="{Binding Pool.Acronym}" Margin="0,0,12,6" />
+                <TextBlock Grid.Row="0" Grid.Column="2" Classes="label" Text="Stage" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBox  Grid.Row="0" Grid.Column="3" Text="{Binding Pool.Stage}" Margin="0,0,0,6" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Classes="label" Text="Team mode" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding TeamModes}"
+                          SelectedItem="{Binding Pool.TeamMode}" HorizontalAlignment="Stretch" Margin="0,0,12,6" />
+                <TextBlock Grid.Row="1" Grid.Column="2" Classes="label" Text="Win condition" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <ComboBox Grid.Row="1" Grid.Column="3" ItemsSource="{Binding ScoreModes}"
+                          SelectedItem="{Binding Pool.ScoreMode}" HorizontalAlignment="Stretch" Margin="0,0,0,6" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Classes="label" Text="Start timer (s)" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="300" Increment="5"
+                               Value="{Binding Pool.StartTimerSeconds}" Margin="0,0,12,0" />
+                <TextBlock Grid.Row="2" Grid.Column="2" Classes="label" Text="Ready timer (s)" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <NumericUpDown Grid.Row="2" Grid.Column="3" Minimum="0" Maximum="3600" Increment="15"
+                               Value="{Binding Pool.ReadyTimerSeconds}" />
+              </Grid>
+              <Button Content="Push settings to lobby"
+                      Command="{Binding ApplySettingsCommand}"
+                      IsEnabled="{Binding IsAttached}" />
+            </StackPanel>
+          </Border>
+
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- Lobby panel -->
+      <Border Grid.Column="1"
+              Background="{DynamicResource CastoriceSurfaceBrush}"
+              BorderBrush="{DynamicResource CastoriceBorderBrush}"
+              BorderThickness="1,0,0,0">
+        <ScrollViewer Padding="12" HorizontalScrollBarVisibility="Disabled">
+          <StackPanel Spacing="12">
+
+            <StackPanel Spacing="2">
+              <TextBlock Classes="h2" Text="{Binding RoomTitle}" TextWrapping="Wrap" />
+              <TextBlock Classes="muted" Text="{Binding CurrentMapDisplay}" TextWrapping="Wrap" />
+              <TextBlock Classes="muted" Text="{Binding CurrentModsDisplay}" />
+            </StackPanel>
+
+            <!-- Scoreboard -->
+            <Grid ColumnDefinitions="*,Auto,*">
+              <Border Grid.Column="0" Classes="statTile"
+                      Background="{DynamicResource CastoriceRedTeamBrush}">
+                <StackPanel>
+                  <TextBlock Text="{Binding Pool.Name}" FontSize="10" Opacity="0.75" IsVisible="False" />
+                  <TextBlock Text="RED" FontSize="11" FontWeight="Bold" Foreground="White" />
+                  <TextBlock Text="{Binding RedScore}" FontSize="26" FontWeight="Bold" Foreground="White" />
+                </StackPanel>
+              </Border>
+              <TextBlock Grid.Column="1" Text="vs" VerticalAlignment="Center" Margin="10,0" Classes="muted" />
+              <Border Grid.Column="2" Classes="statTile"
+                      Background="{DynamicResource CastoriceBlueTeamBrush}">
+                <StackPanel>
+                  <TextBlock Text="BLUE" FontSize="11" FontWeight="Bold" Foreground="White" />
+                  <TextBlock Text="{Binding BlueScore}" FontSize="26" FontWeight="Bold" Foreground="White" />
+                </StackPanel>
+              </Border>
+            </Grid>
+
+            <WrapPanel Orientation="Horizontal" Classes="spaced">
+              <Button Content="+1 Red" Command="{Binding AddRedPointCommand}" />
+              <Button Content="+1 Blue" Command="{Binding AddBluePointCommand}" />
+              <Button Content="Reset" Command="{Binding ResetScoreCommand}" />
+            </WrapPanel>
+
+            <Separator />
+
+            <TextBlock Classes="label" Text="MATCH CONTROL" />
+            <WrapPanel Orientation="Horizontal" Classes="spaced"
+                       IsEnabled="{Binding IsAttached}">
+              <Button Classes="accent" Content="Start" Command="{Binding StartCommand}" />
+              <Button Content="Start now" Command="{Binding StartNowCommand}" />
+              <Button Content="Abort timer" Command="{Binding AbortTimerCommand}" />
+              <Button Classes="danger" Content="Abort match" Command="{Binding AbortCommand}" />
+              <Button Content="Timer" Command="{Binding TimerCommand}" />
+              <Button Content="Refresh settings" Command="{Binding RefreshRoomCommand}" />
+              <Button Content="Lock" Command="{Binding LockCommand}" />
+              <Button Content="Unlock" Command="{Binding UnlockCommand}" />
+              <Button Content="Clear host" Command="{Binding ClearHostCommand}" />
+              <Button Content="Invite refs" Command="{Binding InviteRefereesCommand}" />
+            </WrapPanel>
+
+            <Grid ColumnDefinitions="*,Auto" IsEnabled="{Binding IsAttached}">
+              <TextBox Grid.Column="0" Text="{Binding InviteName}" Watermark="Invite a player" />
+              <Button Grid.Column="1" Content="Invite" Margin="6,0,0,0" Command="{Binding InviteCommand}" />
+            </Grid>
+
+            <Separator />
+
+            <TextBlock Classes="label" Text="PLAYERS" />
+            <ItemsControl ItemsSource="{Binding Players}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:RoomPlayerViewModel">
+                  <Border Classes="card" Padding="8" Margin="0,0,0,4">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                      <Border Grid.Column="0" Width="6" CornerRadius="3" Margin="0,0,8,0"
+                              Background="{Binding Team, Converter={x:Static views:ViewConverters.TeamToBrush}}" />
+                      <StackPanel Grid.Column="1">
+                        <TextBlock Text="{Binding Username}" FontWeight="SemiBold" />
+                        <TextBlock Classes="muted">
+                          <Run Text="Slot" /><Run Text=" " /><Run Text="{Binding Slot}" />
+                          <Run Text=" · " /><Run Text="{Binding Status}" />
+                          <Run Text=" · " /><Run Text="{Binding ScoreDisplay}" />
+                        </TextBlock>
+                      </StackPanel>
+                      <Button Grid.Column="2" Content="Team" Margin="4,0,0,0"
+                              ToolTip.Tip="Move to the other team"
+                              Command="{Binding $parent[UserControl].((vm:TournamentViewModel)DataContext).SetTeamCommand}"
+                              CommandParameter="{Binding}" />
+                      <Button Grid.Column="3" Classes="danger" Content="Kick" Margin="4,0,0,0"
+                              Command="{Binding $parent[UserControl].((vm:TournamentViewModel)DataContext).KickCommand}"
+                              CommandParameter="{Binding}" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Classes="label" Text="LOBBY LOG" />
+            <Border Classes="card" MinHeight="120">
+              <ItemsControl ItemsSource="{Binding RoomLog}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="sys:String">
+                    <TextBlock Text="{Binding}" Classes="muted" TextWrapping="Wrap"
+                               FontFamily="Cascadia Code,Consolas,Menlo,monospace" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Border>
+
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+
+    <Border Grid.Row="2" Padding="12,6"
+            Background="{DynamicResource CastoriceSurfaceBrush}"
+            BorderBrush="{DynamicResource CastoriceBorderBrush}"
+            BorderThickness="0,1,0,0">
+      <TextBlock Text="{Binding Status}" Classes="muted" TextWrapping="Wrap" />
+    </Border>
+
+  </Grid>
+</UserControl>
