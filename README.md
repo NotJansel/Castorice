@@ -111,10 +111,44 @@ file, so a pool you share arrives with its artwork already set.
    pool's `!mp set` configuration.
    Already have a lobby? Paste its id, `#mp_` channel or match-history link and press **Attach**.
 3. Invite players, then click a mappool button to set the map and its mods.
-4. **Start** runs the pool's countdown; **Start now** skips it; **Abort timer** and
+4. Right-click a pick to **ban** or **protect** it for either team. Banned picks grey out and
+   refuse to be sent to the lobby until the ban is cleared, so a misclick cannot burn a map.
+5. **Start** runs the pool's countdown; **Start now** skips it; **Abort timer** and
    **Abort match** are one click away.
-5. The panel tracks slots, teams and per-player scores as BanchoBot reports them, and **+1 Red** /
-   **+1 Blue** keep the running score.
+6. The panel tracks slots, teams and per-player scores as BanchoBot reports them, and **+1 Red** /
+   **+1 Blue** keep the running score by hand whenever you want them to.
+
+### Scoring a map
+
+With **Auto-score** on, a finished map is totalled by team, the point is awarded, and the result is
+posted into the lobby:
+
+```
+[FM1] Kobaryo - Ironclad [Overkill] | Red 1,234,567 - 1,000,000 Blue | Red wins by 234,567
+Multipliers: SomePlayer EZ x1.75 (100,000 -> 175,000)
+Match score: Red 3 - 2 Blue (first to 7)
+```
+
+- **Warmup** is on when the page opens and blocks scoring entirely, so a warmup can never take a
+  point by accident. Turn it off when the match proper starts.
+- **Best of** sets the target; `13` means first to 7.
+- A failed score counts as zero, the way bracket rules treat it.
+- If the map ends and no scores arrive, nothing is awarded and the status bar says so rather than
+  guessing.
+
+### FreeMod multipliers
+
+On a **FreeMod** pick, players who take Easy have their score multiplied before the teams are
+totalled. Easy and Easy+Hidden carry separate factors, because Hidden already earns its own ScoreV2
+bonus. Both default to `1.75` and live in the pool file, so each bracket keeps its own rule:
+
+```json
+{ "easyMultiplier": 1.75, "easyHiddenMultiplier": 1.60, "bestOf": 13 }
+```
+
+Multipliers apply only to FreeMod picks — on a forced-mod pick everyone is on the same mods, so
+there is nothing to even out. Every adjustment is named in the message posted to the lobby, so the
+teams can check the maths. Set both to `1.00` to score FreeMod picks raw.
 
 Everything the referee panel sends is an ordinary `!mp` command, and it all shows up in the
 `#mp_…` channel on the Chat page — nothing happens behind your back.

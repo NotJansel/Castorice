@@ -1,15 +1,65 @@
 using Castorice.Core.Tournament;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Castorice.Desktop.ViewModels;
 
 /// <summary>One mappool button. Wraps the model so edits show up without rebuilding the grid.</summary>
-public sealed partial class MappoolSlotViewModel(MappoolSlot model) : ViewModelBase
+public sealed partial class MappoolSlotViewModel : ViewModelBase
 {
     [ObservableProperty]
     private bool _isCurrentPick;
 
-    public MappoolSlot Model { get; } = model;
+    [ObservableProperty]
+    private SlotAvailability _availability = SlotAvailability.Available;
+
+    public MappoolSlotViewModel(MappoolSlot model)
+    {
+        Model = model;
+    }
+
+    public MappoolSlot Model { get; }
+
+    /// <summary>
+    /// Ban and protect state belongs to the match, not the pool, so it is never written to the
+    /// pool file. Every change flows back through here to the page that owns the match.
+    /// </summary>
+    public event EventHandler? AvailabilityChanged;
+
+    public bool IsBanned => Availability.IsBanned();
+
+    public bool IsProtected => Availability.IsProtected();
+
+    public bool HasAvailabilityMark => Availability is not SlotAvailability.Available;
+
+    public string AvailabilityLabel => Availability.ShortLabel();
+
+    public TeamColour? AvailabilityTeam => Availability.Team();
+
+    [RelayCommand]
+    private void BanRed() => Availability = SlotAvailability.BannedByRed;
+
+    [RelayCommand]
+    private void BanBlue() => Availability = SlotAvailability.BannedByBlue;
+
+    [RelayCommand]
+    private void ProtectRed() => Availability = SlotAvailability.ProtectedByRed;
+
+    [RelayCommand]
+    private void ProtectBlue() => Availability = SlotAvailability.ProtectedByBlue;
+
+    [RelayCommand]
+    private void ClearAvailability() => Availability = SlotAvailability.Available;
+
+    partial void OnAvailabilityChanged(SlotAvailability value)
+    {
+        OnPropertyChanged(nameof(IsBanned));
+        OnPropertyChanged(nameof(IsProtected));
+        OnPropertyChanged(nameof(HasAvailabilityMark));
+        OnPropertyChanged(nameof(AvailabilityLabel));
+        OnPropertyChanged(nameof(AvailabilityTeam));
+        AvailabilityChanged?.Invoke(this, EventArgs.Empty);
+    }
 
     public string Label
     {

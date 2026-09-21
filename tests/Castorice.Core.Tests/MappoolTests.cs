@@ -94,6 +94,25 @@ public class MappoolTests : IDisposable
         Assert.Equal(expected, slot.DisplayName);
     }
 
+    [Theory]
+    [InlineData(13, 7)]
+    [InlineData(11, 6)]
+    [InlineData(9, 5)]
+    [InlineData(1, 1)]
+    [InlineData(0, 1)]
+    public void Derives_the_points_needed_from_the_best_of(int bestOf, int expected) =>
+        Assert.Equal(expected, new Mappool { BestOf = bestOf }.PointsToWin);
+
+    [Fact]
+    public void Carries_its_freemod_multipliers()
+    {
+        var pool = new Mappool { EasyMultiplier = 1.8, EasyHiddenMultiplier = 1.6 };
+
+        Assert.Equal(1.8, pool.Multipliers.For(Mods.Easy));
+        Assert.Equal(1.6, pool.Multipliers.For(Mods.Easy | Mods.Hidden));
+        Assert.Equal(1.0, pool.Multipliers.For(Mods.HardRock));
+    }
+
     [Fact]
     public void Builds_a_room_name_from_the_pool_and_teams()
     {

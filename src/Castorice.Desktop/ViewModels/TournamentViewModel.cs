@@ -17,6 +17,12 @@ public sealed partial class TournamentViewModel : ViewModelBase
     // back through a reload and throw away the in-memory state.
     private bool _suppressPoolReload;
 
+    // BanchoBot reports the per-player scores around the "match has finished" line rather than
+    // before it, so scoring waits for the lobby to go quiet instead of reading a half-filled room.
+    private static readonly TimeSpan ScoreSettleDelay = TimeSpan.FromSeconds(4);
+
+    private CancellationTokenSource? _scoringCts;
+
     [ObservableProperty]
     private MappoolFile? _selectedPoolFile;
 
@@ -52,6 +58,13 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _newSlotMods = string.Empty;
+
+    /// <summary>Warmups must not score, so a match starts in warmup until the referee says otherwise.</summary>
+    [ObservableProperty]
+    private bool _isWarmup = true;
+
+    [ObservableProperty]
+    private bool _autoScore = true;
 
     public TournamentViewModel(AppServices services)
     {
@@ -134,6 +147,57 @@ public sealed partial class TournamentViewModel : ViewModelBase
             OnPropertyChanged();
         }
     }
+
+    public int BestOf
+    {
+        get => Pool.BestOf;
+        set
+        {
+            if (Pool.BestOf == value)
+            {
+                return;
+            }
+
+            Pool.BestOf = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(PointsToWin));
+            OnPropertyChanged(nameof(MatchTargetDisplay));
+        }
+    }
+
+    public double EasyMultiplier
+    {
+        get => Pool.EasyMultiplier;
+        set
+        {
+            if (Math.Abs(Pool.EasyMultiplier - value) < 0.0001)
+            {
+                return;
+            }
+
+            Pool.EasyMultiplier = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public double EasyHiddenMultiplier
+    {
+        get => Pool.EasyHiddenMultiplier;
+        set
+        {
+            if (Math.Abs(Pool.EasyHiddenMultiplier - value) < 0.0001)
+            {
+                return;
+            }
+
+            Pool.EasyHiddenMultiplier = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public int PointsToWin => Pool.PointsToWin;
+
+    public string MatchTargetDisplay => $"First to {Pool.PointsToWin}";
 
     public MultiplayerRoom? Room => _services.Tournament.Room;
 
@@ -233,6 +297,11 @@ public sealed partial class TournamentViewModel : ViewModelBase
         OnPropertyChanged(nameof(PoolAcronym));
         OnPropertyChanged(nameof(HasPoolAcronym));
         OnPropertyChanged(nameof(PoolStage));
+        OnPropertyChanged(nameof(BestOf));
+        OnPropertyChanged(nameof(PointsToWin));
+        OnPropertyChanged(nameof(MatchTargetDisplay));
+        OnPropertyChanged(nameof(EasyMultiplier));
+        OnPropertyChanged(nameof(EasyHiddenMultiplier));
     }
 
     private void RebuildGroups()
@@ -241,10 +310,52 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
         foreach (var group in Pool.Slots.GroupBy(slot => slot.EffectiveCategory))
         {
-            Groups.Add(new SlotGroupViewModel(
-                group.Key,
-                group.Select(slot => new MappoolSlotViewModel(slot))));
+            var slots = group.Select(slot =>
+            {
+                var viewModel = new MappoolSlotViewModel(slot);
+                viewModel.AvailabilityChanged += OnSlotAvailabilityChanged;
+                return viewModel;
+            });
+
+            Groups.Add(new SlotGroupViewModel(group.Key, slots));
         }
+
+        OnPropertyChanged(nameof(BanSummary));
+    }
+
+    private void OnSlotAvailabilityChanged(object? sender, EventArgs e)
+    {
+        if (sender is MappoolSlotViewModel slot)
+        {
+            Status = slot.Availability is SlotAvailability.Available
+                ? $"Cleared {slot.Label}."
+                : $"{slot.Label}: {slot.AvailabilityLabel}.";
+        }
+
+        OnPropertyChanged(nameof(BanSummary));
+    }
+
+    /// <summary>One line naming every ban and protect, for the lobby panel.</summary>
+    public string BanSummary
+    {
+        get
+        {
+            var marked = AllSlots.Where(s => s.HasAvailabilityMark).ToList();
+            return marked.Count == 0
+                ? "No bans or protects yet."
+                : string.Join("   ", marked.Select(s => $"{s.Label} {s.AvailabilityLabel}"));
+        }
+    }
+
+    [RelayCommand]
+    private void ClearBansAndProtects()
+    {
+        foreach (var slot in AllSlots)
+        {
+            slot.Availability = SlotAvailability.Available;
+        }
+
+        Status = "Cleared every ban and protect.";
     }
 
     private IEnumerable<MappoolSlotViewModel> AllSlots => Groups.SelectMany(group => group.Slots);
@@ -333,6 +444,13 @@ public sealed partial class TournamentViewModel : ViewModelBase
     {
         if (slot is null)
         {
+            return Task.CompletedTask;
+        }
+
+        if (slot.IsBanned)
+        {
+            // Left as a refusal rather than a disabled tile, so the ban stays easy to take back.
+            Status = $"{slot.Label} is banned by {slot.AvailabilityTeam}. Clear the ban to pick it.";
             return Task.CompletedTask;
         }
 
@@ -666,8 +784,113 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
         if (evt is MatchFinished)
         {
-            Status = "The match finished. Award the point and pick the next map.";
+            _ = HandleMatchFinishedAsync();
         }
+    }
+
+    /// <summary>
+    /// Runs once per finished map. Warmups are skipped outright, and with auto-scoring off this
+    /// only nudges the referee — the point is never awarded behind their back.
+    /// </summary>
+    private async Task HandleMatchFinishedAsync()
+    {
+        if (IsWarmup)
+        {
+            Status = "Warmup finished — not scored. Turn Warmup off when the match starts.";
+            return;
+        }
+
+        if (!AutoScore)
+        {
+            Status = "Map finished. Award the point and pick the next map.";
+            return;
+        }
+
+        await _scoringCts.CancelAsync().ConfigureAwait(true);
+        _scoringCts?.Dispose();
+
+        var cts = new CancellationTokenSource();
+        _scoringCts = cts;
+
+        try
+        {
+            Status = "Map finished — collecting scores…";
+
+            // Refreshes each player's team and mods, which the FreeMod multipliers depend on.
+            await _services.Tournament.RefreshSettingsAsync(cts.Token);
+            await Task.Delay(ScoreSettleDelay, cts.Token);
+
+            await ScoreFinishedMapAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // A second map finished first; that run owns the scoring now.
+        }
+        catch (Exception ex)
+        {
+            Status = $"Could not score the map: {ex.Message}";
+        }
+    }
+
+    private async Task ScoreFinishedMapAsync(CancellationToken cancellationToken)
+    {
+        var room = Room;
+        if (room is null)
+        {
+            return;
+        }
+
+        var inputs = room.Players
+            .Select(p => new PlayerScoreInput(p.Username, p.Team, p.LastScore ?? 0, p.LastScorePassed, p.Mods))
+            .ToList();
+
+        var result = MatchScoring.Score(inputs, room.CurrentMods, Pool.Multipliers);
+
+        if (!result.HasScores)
+        {
+            Status = "The map finished but no scores came through — award the point manually.";
+            return;
+        }
+
+        if (!result.HasTeams)
+        {
+            Status = "The map finished but the lobby has no teams, so no point was awarded.";
+        }
+
+        switch (result.Winner)
+        {
+            case TeamColour.Red:
+                room.RedScore++;
+                break;
+            case TeamColour.Blue:
+                room.BlueScore++;
+                break;
+        }
+
+        OnPropertyChanged(nameof(RedScore));
+        OnPropertyChanged(nameof(BlueScore));
+
+        var standing = new MatchStanding(
+            room.RedScore,
+            room.BlueScore,
+            Pool.PointsToWin,
+            RedTeam.Trim() is { Length: > 0 } red ? red : "Red",
+            BlueTeam.Trim() is { Length: > 0 } blue ? blue : "Blue");
+
+        var messages = MatchAnnouncer.BuildResultMessages(
+            result,
+            _services.Tournament.CurrentPick?.Label ?? string.Empty,
+            room.CurrentBeatmapName,
+            standing);
+
+        foreach (var message in messages)
+        {
+            await _services.Tournament.SendAsync(message, cancellationToken);
+        }
+
+        Status = result.Winner is { } winner
+            ? $"{winner} takes the map. Match: {room.RedScore} - {room.BlueScore}."
+            : $"The map was tied at {result.RedTotal:N0}. No point awarded.";
     }
 
     private void SyncPlayers()

@@ -106,8 +106,29 @@ public sealed class Mappool
     /// <summary>Seconds passed to <c>!mp timer</c> for the pick/ready countdown.</summary>
     public int ReadyTimerSeconds { get; set; } = 120;
 
+    /// <summary>
+    /// Score multiplier for a player on Easy during a FreeMod pick. 1.75x is the usual bracket
+    /// rule; set it to 1 to score FreeMod picks raw.
+    /// </summary>
+    public double EasyMultiplier { get; set; } = 1.75;
+
+    /// <summary>
+    /// Multiplier for Easy combined with Hidden, which many brackets set lower than plain Easy
+    /// because Hidden already carries its own ScoreV2 bonus.
+    /// </summary>
+    public double EasyHiddenMultiplier { get; set; } = 1.75;
+
+    /// <summary>Maps played in a match; the target is <c>BestOf / 2 + 1</c> points.</summary>
+    public int BestOf { get; set; } = 13;
+
     /// <summary>osu! usernames auto-added as referees with <c>!mp addref</c>.</summary>
     public List<string> Referees { get; set; } = [];
+
+    [JsonIgnore]
+    public ScoreMultipliers Multipliers => new(EasyMultiplier, EasyHiddenMultiplier);
+
+    [JsonIgnore]
+    public int PointsToWin => Math.Max(1, (BestOf / 2) + 1);
 
     public List<MappoolSlot> Slots { get; set; } = [];
 

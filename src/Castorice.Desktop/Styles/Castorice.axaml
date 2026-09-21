@@ -286,6 +286,11 @@
     <Setter Property="BorderBrush" Value="{DynamicResource CastoriceAccentMutedBrush}" />
   </Style>
 
+  <!-- A banned pick stays clickable so the ban can be taken back, but reads as struck out. -->
+  <Style Selector="Button.pick.banned">
+    <Setter Property="Opacity" Value="0.42" />
+  </Style>
+
   <Style Selector="Button.pick.current /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="BorderBrush" Value="{DynamicResource CastoriceAccentBrush}" />
     <Setter Property="BorderThickness" Value="2" />

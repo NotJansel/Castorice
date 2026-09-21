@@ -86,9 +86,21 @@
                       <DataTemplate DataType="vm:MappoolSlotViewModel">
                         <Button Classes="pick"
                                 Classes.current="{Binding IsCurrentPick}"
+                                Classes.banned="{Binding IsBanned}"
                                 Command="{Binding $parent[UserControl].((vm:TournamentViewModel)DataContext).PickCommand}"
                                 CommandParameter="{Binding}"
                                 ToolTip.Tip="{Binding DisplayName}">
+                          <Button.ContextMenu>
+                            <ContextMenu x:DataType="vm:MappoolSlotViewModel">
+                              <MenuItem Header="Ban for Red" Command="{Binding BanRedCommand}" />
+                              <MenuItem Header="Ban for Blue" Command="{Binding BanBlueCommand}" />
+                              <Separator />
+                              <MenuItem Header="Protect for Red" Command="{Binding ProtectRedCommand}" />
+                              <MenuItem Header="Protect for Blue" Command="{Binding ProtectBlueCommand}" />
+                              <Separator />
+                              <MenuItem Header="Clear" Command="{Binding ClearAvailabilityCommand}" />
+                            </ContextMenu>
+                          </Button.ContextMenu>
                           <Border CornerRadius="{StaticResource RadiusMedium}" ClipToBounds="True"
                                   HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                             <Panel>
@@ -100,11 +112,17 @@
                                       IsVisible="{Binding HasCover}" />
 
                               <Grid RowDefinitions="Auto,*,Auto" Margin="11,9">
-                                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
                                   <TextBlock Grid.Column="0" Text="{Binding Label}"
                                              FontWeight="Bold" FontSize="14"
                                              Foreground="{DynamicResource CastoriceAccentBrush}" />
-                                  <Border Grid.Column="1" Classes="badge">
+                                  <Border Grid.Column="1" Classes="badge" Margin="8,0,0,0"
+                                          HorizontalAlignment="Left"
+                                          IsVisible="{Binding HasAvailabilityMark}"
+                                          Background="{Binding AvailabilityTeam, Converter={x:Static views:ViewConverters.TeamToBrush}}">
+                                    <TextBlock Text="{Binding AvailabilityLabel}" />
+                                  </Border>
+                                  <Border Grid.Column="2" Classes="badge">
                                     <TextBlock Text="{Binding ModsBadge}" />
                                   </Border>
                                 </Grid>
@@ -173,6 +191,20 @@
                 <NumericUpDown Grid.Row="2" Grid.Column="3" Minimum="0" Maximum="3600" Increment="15"
                                Value="{Binding Pool.ReadyTimerSeconds}" />
               </Grid>
+              <Separator />
+
+              <TextBlock Classes="label" Text="FREEMOD SCORE MULTIPLIERS" />
+              <Grid ColumnDefinitions="110,*,110,*">
+                <TextBlock Grid.Column="0" Classes="label" Text="EASY" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Column="1" Minimum="1" Maximum="4" Increment="0.05"
+                               FormatString="0.00" Value="{Binding EasyMultiplier}" Margin="0,0,16,0" />
+                <TextBlock Grid.Column="2" Classes="label" Text="EASY + HD" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Column="3" Minimum="1" Maximum="4" Increment="0.05"
+                               FormatString="0.00" Value="{Binding EasyHiddenMultiplier}" />
+              </Grid>
+              <TextBlock Classes="faint" TextWrapping="Wrap"
+                         Text="Applied only on FreeMod picks, to players who took Easy. Every adjustment is named in the result posted to the lobby. Set both to 1.00 to score FreeMod picks raw." />
+
               <Button Content="Push settings to lobby"
                       HorizontalAlignment="Left"
                       Command="{Binding ApplySettingsCommand}"
@@ -229,6 +261,43 @@
               <Button Classes="ghost compact" Content="+1 Blue" Command="{Binding AddBluePointCommand}" />
               <Button Classes="ghost compact" Content="Reset" Command="{Binding ResetScoreCommand}" />
             </WrapPanel>
+
+            <StackPanel Spacing="8">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0" Classes="label" Text="MATCH" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Classes="faint" Text="{Binding MatchTargetDisplay}" />
+              </Grid>
+
+              <WrapPanel Orientation="Horizontal" Classes="tight">
+                <ToggleButton Classes="compact" Content="Warmup" IsChecked="{Binding IsWarmup}"
+                              ToolTip.Tip="While this is on, a finished map is never scored." />
+                <ToggleButton Classes="compact" Content="Auto-score" IsChecked="{Binding AutoScore}"
+                              ToolTip.Tip="Total the map when it ends, award the point and post the result to the lobby." />
+              </WrapPanel>
+
+              <Grid ColumnDefinitions="Auto,*">
+                <TextBlock Grid.Column="0" Classes="label" Text="BEST OF" VerticalAlignment="Center"
+                           Margin="0,0,10,0" />
+                <NumericUpDown Grid.Column="1" Minimum="1" Maximum="31" Increment="2"
+                               Value="{Binding BestOf}" FormatString="0" />
+              </Grid>
+
+              <TextBlock Classes="faint" TextWrapping="Wrap"
+                         Text="Warmup is on until you turn it off, so a warmup map can never take a point by accident." />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0" Classes="label" Text="BANS &amp; PROTECTS" VerticalAlignment="Center" />
+                <Button Grid.Column="1" Classes="ghost compact" Content="Clear"
+                        Command="{Binding ClearBansAndProtectsCommand}" />
+              </Grid>
+              <Border Classes="well">
+                <TextBlock Text="{Binding BanSummary}" Classes="muted" TextWrapping="Wrap" />
+              </Border>
+              <TextBlock Classes="faint" TextWrapping="Wrap"
+                         Text="Right-click a pick to ban or protect it for either team." />
+            </StackPanel>
 
             <StackPanel Spacing="8">
               <TextBlock Classes="label" Text="MATCH CONTROL" />
