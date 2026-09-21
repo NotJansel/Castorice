@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Castorice.Core</RootNamespace>
+    <AssemblyName>Castorice.Core</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Castorice.Core.Tests" />
+  </ItemGroup>
+
+</Project>
