@@ -832,8 +832,12 @@ public sealed partial class TournamentViewModel : ViewModelBase
             return;
         }
 
-        await _scoringCts.CancelAsync().ConfigureAwait(true);
-        _scoringCts?.Dispose();
+        // Null on the first finished map of a session, so this cannot be an unconditional await.
+        if (_scoringCts is not null)
+        {
+            await _scoringCts.CancelAsync().ConfigureAwait(true);
+            _scoringCts.Dispose();
+        }
 
         var cts = new CancellationTokenSource();
         _scoringCts = cts;

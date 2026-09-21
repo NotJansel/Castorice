@@ -210,9 +210,12 @@ The core library never references Avalonia. UI thread marshalling goes through t
 
 ```bash
 dotnet build              # whole solution
-dotnet test               # 97 tests, no network needed
+dotnet test               # 138 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
+
+Tests run on Microsoft.Testing.Platform, which xunit v4 requires and which the .NET 10 SDK selects
+through the `test` section of [`global.json`](global.json) — the old VSTest bridge is gone.
 
 ### Restore fails with NU1100
 

@@ -18,7 +18,7 @@
             BorderBrush="{DynamicResource CastoriceBorderBrush}"
             BorderThickness="0,0,0,1">
       <Grid ColumnDefinitions="*,Auto,Auto,Auto">
-        <TextBox Grid.Column="0" Text="{Binding Query}" Watermark="osu! username or user id"
+        <TextBox Grid.Column="0" Text="{Binding Query}" PlaceholderText="osu! username or user id"
                  KeyDown="OnQueryKeyDown" />
         <ComboBox Grid.Column="1" Margin="8,0,0,0" MinWidth="140"
                   ItemsSource="{Binding AvailableModes}"

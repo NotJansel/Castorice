@@ -22,10 +22,10 @@
           <TextBlock Classes="muted" TextWrapping="Wrap" Text="{Binding IrcPasswordHelp}" Margin="0,0,0,6" />
 
           <TextBlock Classes="label" Text="USERNAME" />
-          <TextBox Text="{Binding Username}" Watermark="osu! username" />
+          <TextBox Text="{Binding Username}" PlaceholderText="osu! username" />
 
           <TextBlock Classes="label" Text="IRC PASSWORD" Margin="0,8,0,0" />
-          <TextBox Text="{Binding IrcPassword}" PasswordChar="•" Watermark="IRC server password" />
+          <TextBox Text="{Binding IrcPassword}" PasswordChar="•" PlaceholderText="IRC server password" />
 
           <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,12,0,0">
             <StackPanel Grid.Column="0" Margin="0,0,14,0" Spacing="4">
@@ -41,7 +41,7 @@
           </Grid>
 
           <TextBlock Classes="label" Text="AUTO-JOIN CHANNELS" Margin="0,12,0,0" />
-          <TextBox Text="{Binding AutoJoinChannels}" Watermark="#osu, #german" />
+          <TextBox Text="{Binding AutoJoinChannels}" PlaceholderText="#osu, #german" />
 
           <CheckBox Content="Connect automatically on start" IsChecked="{Binding AutoConnect}" Margin="0,10,0,0" />
           <CheckBox Content="This account is flagged as a bot (raises the send quota to 300/60s)"

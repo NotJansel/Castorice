@@ -22,13 +22,13 @@
                   SelectedItem="{Binding SelectedPoolFile}"
                   MinWidth="210"
                   PlaceholderText="Mappool" />
-        <TextBox Text="{Binding RedTeam}" Watermark="Red team" Width="150" />
-        <TextBox Text="{Binding BlueTeam}" Watermark="Blue team" Width="150" />
+        <TextBox Text="{Binding RedTeam}" PlaceholderText="Red team" Width="150" />
+        <TextBox Text="{Binding BlueTeam}" PlaceholderText="Blue team" Width="150" />
         <Button Classes="accent" Content="Create lobby"
                 Command="{Binding CreateRoomCommand}"
                 IsEnabled="{Binding !IsBusy}" />
         <Border Width="1" Background="{DynamicResource CastoriceBorderBrush}" Margin="4,2,12,2" />
-        <TextBox Text="{Binding AttachMatchId}" Watermark="Match id or mp link" Width="190" />
+        <TextBox Text="{Binding AttachMatchId}" PlaceholderText="Match id or mp link" Width="190" />
         <Button Content="Attach" Command="{Binding AttachCommand}" />
         <Button Content="Detach" Command="{Binding DetachCommand}"
                 IsEnabled="{Binding IsAttached}" />
@@ -55,7 +55,7 @@
               <!-- The heading is the rename affordance; it writes straight through to the pool. -->
               <TextBox Classes="titleEdit"
                        Text="{Binding PoolName}"
-                       Watermark="Mappool name"
+                       PlaceholderText="Mappool name"
                        ToolTip.Tip="Rename the pool. Save it to keep the change." />
               <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2,0,0">
                 <TextBlock Classes="muted" Text="{Binding PoolStage}" VerticalAlignment="Center" />
@@ -158,9 +158,9 @@
             <StackPanel Spacing="10">
               <TextBlock Classes="h2" Text="Add a pick" />
               <WrapPanel Orientation="Horizontal" Classes="spaced">
-                <TextBox Text="{Binding NewSlotLabel}" Watermark="Label (NM1)" Width="130" />
-                <TextBox Text="{Binding NewSlotBeatmapId}" Watermark="Beatmap id or /b/ link" Width="220" />
-                <TextBox Text="{Binding NewSlotMods}" Watermark="Mods (HDHR)" Width="130" />
+                <TextBox Text="{Binding NewSlotLabel}" PlaceholderText="Label (NM1)" Width="130" />
+                <TextBox Text="{Binding NewSlotBeatmapId}" PlaceholderText="Beatmap id or /b/ link" Width="220" />
+                <TextBox Text="{Binding NewSlotMods}" PlaceholderText="Mods (HDHR)" Width="130" />
                 <Button Classes="accent" Content="Add" Command="{Binding AddSlotCommand}" />
               </WrapPanel>
               <TextBlock Classes="muted" TextWrapping="Wrap"
@@ -356,7 +356,7 @@
             </StackPanel>
 
             <Grid ColumnDefinitions="*,Auto" IsEnabled="{Binding IsAttached}">
-              <TextBox Grid.Column="0" Text="{Binding InviteName}" Watermark="Invite a player" />
+              <TextBox Grid.Column="0" Text="{Binding InviteName}" PlaceholderText="Invite a player" />
               <Button Grid.Column="1" Content="Invite" Margin="6,0,0,0" Command="{Binding InviteCommand}" />
             </Grid>
 
