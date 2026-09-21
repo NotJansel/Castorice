@@ -160,6 +160,35 @@ dotnet test               # 97 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
 
+### Restore fails with NU1100
+
+```
+error NU1100: Unable to resolve 'Avalonia (>= 11.3.22)' for 'net10.0'
+```
+
+If *every* package fails this way — including ordinary ones like CommunityToolkit.Mvvm — the
+problem is the package sources, not the versions. NU1100 means NuGet had nowhere to look, which
+happens when the source list is empty or nuget.org has been switched off, often by the IDE or by a
+`NuGet.config` in a parent folder such as `RiderProjects\`.
+
+The [`NuGet.config`](NuGet.config) at the repository root pins nuget.org and clears anything
+inherited, so a fresh clone restores the same way everywhere. If you still see NU1100, check what
+NuGet actually resolves from the repository folder:
+
+```bash
+dotnet nuget list source
+```
+
+nuget.org must be listed and `[Enabled]`. Then retry with a clean cache:
+
+```bash
+dotnet nuget locals http-cache --clear
+dotnet restore --force
+```
+
+In Rider, the same list lives under **Settings → Build, Execution, Deployment → NuGet → Sources**;
+in Visual Studio under **Tools → NuGet Package Manager → Package Sources**.
+
 Publishing a self-contained binary:
 
 ```bash
