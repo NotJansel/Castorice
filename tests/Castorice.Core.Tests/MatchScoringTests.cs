@@ -102,6 +102,83 @@ public class MatchScoringTests
         Assert.Null(result.Winner);
     }
 
+    [Fact]
+    public void A_pick_without_overrides_follows_the_pool_default()
+    {
+        var pool = new Mappool { EasyMultiplier = 1.75, EasyHiddenMultiplier = 1.6 };
+        var slot = new MappoolSlot { Label = "FM1", Mods = Mods.FreeMod };
+
+        var resolved = pool.MultipliersFor(slot);
+
+        Assert.Equal(1.75, resolved.Easy);
+        Assert.Equal(1.6, resolved.EasyHidden);
+        Assert.False(slot.HasMultiplierOverride);
+    }
+
+    [Fact]
+    public void A_pick_can_carry_its_own_multipliers()
+    {
+        var pool = new Mappool { EasyMultiplier = 1.75, EasyHiddenMultiplier = 1.75 };
+        var slot = new MappoolSlot { Label = "FM2", Mods = Mods.FreeMod, EasyMultiplier = 1.9 };
+
+        var resolved = pool.MultipliersFor(slot);
+
+        Assert.True(slot.HasMultiplierOverride);
+        Assert.Equal(1.9, resolved.Easy);
+
+        // Only the value that was overridden changes; the other still comes from the pool.
+        Assert.Equal(1.75, resolved.EasyHidden);
+    }
+
+    [Fact]
+    public void Two_freemod_picks_can_be_scored_differently()
+    {
+        var pool = new Mappool { EasyMultiplier = 1.75, EasyHiddenMultiplier = 1.75 };
+        var lenient = new MappoolSlot { Label = "FM1", Mods = Mods.FreeMod };
+        var strict = new MappoolSlot { Label = "FM2", Mods = Mods.FreeMod, EasyMultiplier = 1.2 };
+
+        var players = new[] { Red("A", 100_000, Mods.Easy), Blue("B", 150_000) };
+
+        Assert.Equal(175_000, MatchScoring.Score(players, Mods.FreeMod, pool.MultipliersFor(lenient)).RedTotal);
+        Assert.Equal(120_000, MatchScoring.Score(players, Mods.FreeMod, pool.MultipliersFor(strict)).RedTotal);
+    }
+
+    [Fact]
+    public void Clearing_an_override_returns_the_pick_to_the_pool_default()
+    {
+        var pool = new Mappool { EasyMultiplier = 1.75, EasyHiddenMultiplier = 1.75 };
+        var slot = new MappoolSlot { Mods = Mods.FreeMod, EasyMultiplier = 1.2, EasyHiddenMultiplier = 1.1 };
+
+        slot.ClearMultiplierOverride();
+
+        Assert.False(slot.HasMultiplierOverride);
+        Assert.Equal(1.75, pool.MultipliersFor(slot).Easy);
+    }
+
+    [Fact]
+    public void Scoring_falls_back_to_the_pool_when_no_pick_is_known()
+    {
+        var pool = new Mappool { EasyMultiplier = 1.4, EasyHiddenMultiplier = 1.3 };
+
+        Assert.Equal(1.4, pool.MultipliersFor(null).Easy);
+    }
+
+    [Fact]
+    public void Only_freemod_picks_are_offered_for_a_multiplier()
+    {
+        var pool = new Mappool
+        {
+            Slots =
+            [
+                new MappoolSlot { Label = "NM1", Mods = Mods.None },
+                new MappoolSlot { Label = "FM1", Mods = Mods.FreeMod },
+                new MappoolSlot { Label = "TB", Mods = Mods.FreeMod },
+            ],
+        };
+
+        Assert.Equal(["FM1", "TB"], pool.FreeModSlots.Select(s => s.Label));
+    }
+
     [Theory]
     [InlineData(SlotAvailability.BannedByRed, true, false)]
     [InlineData(SlotAvailability.BannedByBlue, true, false)]

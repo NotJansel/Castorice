@@ -194,6 +194,48 @@
               <Separator />
 
               <TextBlock Classes="label" Text="FREEMOD SCORE MULTIPLIERS" />
+              <TextBlock Classes="faint" TextWrapping="Wrap"
+                         Text="Set per FreeMod pick. Applied to players who took Easy, and named in the result posted to the lobby. A pick left on the pool default follows the two boxes at the bottom." />
+
+              <TextBlock Classes="muted" Text="This pool has no FreeMod picks."
+                         IsVisible="{Binding !HasFreeModSlots}" />
+
+              <ItemsControl ItemsSource="{Binding FreeModSlots}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="vm:MappoolSlotViewModel">
+                    <Border Classes="well" Margin="0,0,0,6">
+                      <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                          <TextBlock Grid.Column="0" Text="{Binding Label}"
+                                     FontWeight="Bold"
+                                     Foreground="{DynamicResource CastoriceAccentBrush}" />
+                          <TextBlock Grid.Column="1" Text="{Binding DisplayName}"
+                                     Classes="muted" Margin="10,0,10,0"
+                                     TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="2" Text="{Binding MultiplierOriginLabel}"
+                                     Classes="faint" VerticalAlignment="Center" />
+                        </Grid>
+                        <WrapPanel Orientation="Horizontal" Classes="tight">
+                          <StackPanel Orientation="Horizontal" Spacing="7">
+                            <TextBlock Classes="label" Text="EZ" VerticalAlignment="Center" />
+                            <NumericUpDown Width="122" Minimum="1" Maximum="4" Increment="0.05"
+                                           FormatString="0.00" Value="{Binding EasyMultiplier}" />
+                          </StackPanel>
+                          <StackPanel Orientation="Horizontal" Spacing="7">
+                            <TextBlock Classes="label" Text="EZ+HD" VerticalAlignment="Center" />
+                            <NumericUpDown Width="122" Minimum="1" Maximum="4" Increment="0.05"
+                                           FormatString="0.00" Value="{Binding EasyHiddenMultiplier}" />
+                          </StackPanel>
+                          <Button Classes="ghost compact" Content="Use pool default"
+                                  Command="{Binding UsePoolMultipliersCommand}" />
+                        </WrapPanel>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <TextBlock Classes="label" Text="POOL DEFAULT" Margin="0,4,0,0" />
               <Grid ColumnDefinitions="110,*,110,*">
                 <TextBlock Grid.Column="0" Classes="label" Text="EASY" VerticalAlignment="Center" />
                 <NumericUpDown Grid.Column="1" Minimum="1" Maximum="4" Increment="0.05"
@@ -202,8 +244,6 @@
                 <NumericUpDown Grid.Column="3" Minimum="1" Maximum="4" Increment="0.05"
                                FormatString="0.00" Value="{Binding EasyHiddenMultiplier}" />
               </Grid>
-              <TextBlock Classes="faint" TextWrapping="Wrap"
-                         Text="Applied only on FreeMod picks, to players who took Easy. Every adjustment is named in the result posted to the lobby. Set both to 1.00 to score FreeMod picks raw." />
 
               <Button Content="Push settings to lobby"
                       HorizontalAlignment="Left"

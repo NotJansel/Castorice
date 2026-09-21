@@ -36,6 +36,68 @@ public sealed partial class MappoolSlotViewModel : ViewModelBase
 
     public TeamColour? AvailabilityTeam => Availability.Team();
 
+    /// <summary>
+    /// The pool default this pick falls back to. Set by the page whenever the pool changes, so the
+    /// editor can show the effective number rather than a blank box.
+    /// </summary>
+    public ScoreMultipliers PoolDefault
+    {
+        get;
+        set
+        {
+            field = value;
+            OnPropertyChanged(nameof(EasyMultiplier));
+            OnPropertyChanged(nameof(EasyHiddenMultiplier));
+            OnPropertyChanged(nameof(MultiplierOriginLabel));
+        }
+    } = ScoreMultipliers.None;
+
+    public bool IsFreeMod => Model.Mods.HasFlag(Mods.FreeMod);
+
+    /// <summary>Shows the effective value; writing one turns it into an override for this pick.</summary>
+    public double EasyMultiplier
+    {
+        get => Model.EasyMultiplier ?? PoolDefault.Easy;
+        set
+        {
+            if (Math.Abs(EasyMultiplier - value) < 0.0001)
+            {
+                return;
+            }
+
+            Model.EasyMultiplier = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(MultiplierOriginLabel));
+        }
+    }
+
+    public double EasyHiddenMultiplier
+    {
+        get => Model.EasyHiddenMultiplier ?? PoolDefault.EasyHidden;
+        set
+        {
+            if (Math.Abs(EasyHiddenMultiplier - value) < 0.0001)
+            {
+                return;
+            }
+
+            Model.EasyHiddenMultiplier = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(MultiplierOriginLabel));
+        }
+    }
+
+    public string MultiplierOriginLabel => Model.HasMultiplierOverride ? "custom" : "pool default";
+
+    [RelayCommand]
+    private void UsePoolMultipliers()
+    {
+        Model.ClearMultiplierOverride();
+        OnPropertyChanged(nameof(EasyMultiplier));
+        OnPropertyChanged(nameof(EasyHiddenMultiplier));
+        OnPropertyChanged(nameof(MultiplierOriginLabel));
+    }
+
     [RelayCommand]
     private void BanRed() => Availability = SlotAvailability.BannedByRed;
 

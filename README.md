@@ -140,15 +140,31 @@ Match score: Red 3 - 2 Blue (first to 7)
 
 On a **FreeMod** pick, players who take Easy have their score multiplied before the teams are
 totalled. Easy and Easy+Hidden carry separate factors, because Hidden already earns its own ScoreV2
-bonus. Both default to `1.75` and live in the pool file, so each bracket keeps its own rule:
+bonus.
+
+Multipliers are set **per FreeMod pick** — a map where Easy barely helps can be scored differently
+from one where it does a lot. The Tournament page lists every FreeMod pick with its own two boxes,
+and each pick is marked `pool default` or `custom`:
 
 ```json
-{ "easyMultiplier": 1.75, "easyHiddenMultiplier": 1.60, "bestOf": 13 }
+{
+  "easyMultiplier": 1.75,
+  "easyHiddenMultiplier": 1.75,
+  "slots": [
+    { "label": "FM1", "mods": "FreeMod" },
+    { "label": "FM2", "mods": "FreeMod", "easyMultiplier": 1.30, "easyHiddenMultiplier": 1.20 }
+  ]
+}
 ```
+
+The two values at the pool level are the **default** a pick falls back to, so a bracket with one
+rule sets it once. `FM1` above follows that default; `FM2` overrides it. Changing the default moves
+every pick that follows it and leaves the overrides alone, and **Use pool default** on a pick drops
+its override again.
 
 Multipliers apply only to FreeMod picks — on a forced-mod pick everyone is on the same mods, so
 there is nothing to even out. Every adjustment is named in the message posted to the lobby, so the
-teams can check the maths. Set both to `1.00` to score FreeMod picks raw.
+teams can check the maths. Set the values to `1.00` to score a pick raw.
 
 Everything the referee panel sends is an ordinary `!mp` command, and it all shows up in the
 `#mp_…` channel on the Chat page — nothing happens behind your back.

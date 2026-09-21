@@ -93,6 +93,11 @@ public sealed partial class TournamentViewModel : ViewModelBase
     /// <summary>Picks grouped by bracket, so the UI can lay out one row per category.</summary>
     public ObservableCollection<SlotGroupViewModel> Groups { get; } = [];
 
+    /// <summary>The FreeMod picks, which are the only ones that carry a score multiplier.</summary>
+    public ObservableCollection<MappoolSlotViewModel> FreeModSlots { get; } = [];
+
+    public bool HasFreeModSlots => FreeModSlots.Count > 0;
+
     public ObservableCollection<string> RoomLog { get; } = [];
 
     /// <summary>
@@ -177,6 +182,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
             Pool.EasyMultiplier = value;
             OnPropertyChanged();
+            PushPoolDefaultsToSlots();
         }
     }
 
@@ -192,6 +198,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
             Pool.EasyHiddenMultiplier = value;
             OnPropertyChanged();
+            PushPoolDefaultsToSlots();
         }
     }
 
@@ -320,7 +327,26 @@ public sealed partial class TournamentViewModel : ViewModelBase
             Groups.Add(new SlotGroupViewModel(group.Key, slots));
         }
 
+        FreeModSlots.Clear();
+        foreach (var slot in AllSlots.Where(s => s.IsFreeMod))
+        {
+            FreeModSlots.Add(slot);
+        }
+
+        PushPoolDefaultsToSlots();
+
         OnPropertyChanged(nameof(BanSummary));
+        OnPropertyChanged(nameof(HasFreeModSlots));
+    }
+
+    /// <summary>Keeps every pick's fallback in step with the pool-level default.</summary>
+    private void PushPoolDefaultsToSlots()
+    {
+        var defaults = Pool.Multipliers;
+        foreach (var slot in FreeModSlots)
+        {
+            slot.PoolDefault = defaults;
+        }
     }
 
     private void OnSlotAvailabilityChanged(object? sender, EventArgs e)
@@ -844,7 +870,9 @@ public sealed partial class TournamentViewModel : ViewModelBase
             .Select(p => new PlayerScoreInput(p.Username, p.Team, p.LastScore ?? 0, p.LastScorePassed, p.Mods))
             .ToList();
 
-        var result = MatchScoring.Score(inputs, room.CurrentMods, Pool.Multipliers);
+        // The multipliers belong to the pick that is on the board, not to the pool as a whole.
+        var pick = _services.Tournament.CurrentPick;
+        var result = MatchScoring.Score(inputs, room.CurrentMods, Pool.MultipliersFor(pick));
 
         if (!result.HasScores)
         {
@@ -879,7 +907,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
         var messages = MatchAnnouncer.BuildResultMessages(
             result,
-            _services.Tournament.CurrentPick?.Label ?? string.Empty,
+            pick?.Label ?? string.Empty,
             room.CurrentBeatmapName,
             standing);
 

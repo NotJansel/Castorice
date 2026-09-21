@@ -38,6 +38,16 @@ public sealed class MappoolSlot
     /// <summary>Beatmapset cover, filled in from the osu! API. Empty means the tile draws flat.</summary>
     public string CoverUrl { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Score multiplier for Easy on this pick, overriding the pool's default. <c>null</c> keeps the
+    /// default, so a bracket with one rule does not have to repeat it on every FreeMod map.
+    /// Only ever read for a FreeMod pick.
+    /// </summary>
+    public double? EasyMultiplier { get; set; }
+
+    /// <summary>Per-pick override for Easy combined with Hidden. <c>null</c> keeps the pool default.</summary>
+    public double? EasyHiddenMultiplier { get; set; }
+
     [JsonConverter(typeof(JsonStringEnumConverter<Mods>))]
     public Mods Mods { get; set; } = Mods.None;
 
@@ -74,6 +84,29 @@ public sealed class MappoolSlot
         }
     }
 
+    /// <summary>True when this pick carries a multiplier of its own rather than the pool's.</summary>
+    [JsonIgnore]
+    public bool HasMultiplierOverride => EasyMultiplier is not null || EasyHiddenMultiplier is not null;
+
+    /// <summary>
+    /// The multipliers to score this pick with: its own where set, the pool's default otherwise.
+    /// </summary>
+    public ScoreMultipliers MultipliersOrDefault(ScoreMultipliers poolDefault)
+    {
+        ArgumentNullException.ThrowIfNull(poolDefault);
+
+        return new ScoreMultipliers(
+            EasyMultiplier ?? poolDefault.Easy,
+            EasyHiddenMultiplier ?? poolDefault.EasyHidden);
+    }
+
+    /// <summary>Drops both overrides so the pick follows the pool default again.</summary>
+    public void ClearMultiplierOverride()
+    {
+        EasyMultiplier = null;
+        EasyHiddenMultiplier = null;
+    }
+
     public MappoolSlot Clone() => (MappoolSlot)MemberwiseClone();
 }
 
@@ -107,14 +140,14 @@ public sealed class Mappool
     public int ReadyTimerSeconds { get; set; } = 120;
 
     /// <summary>
-    /// Score multiplier for a player on Easy during a FreeMod pick. 1.75x is the usual bracket
-    /// rule; set it to 1 to score FreeMod picks raw.
+    /// Default Easy multiplier for this pool's FreeMod picks. 1.75x is the usual bracket rule.
+    /// A pick may override it; set both to 1 to score FreeMod picks raw.
     /// </summary>
     public double EasyMultiplier { get; set; } = 1.75;
 
     /// <summary>
-    /// Multiplier for Easy combined with Hidden, which many brackets set lower than plain Easy
-    /// because Hidden already carries its own ScoreV2 bonus.
+    /// Default multiplier for Easy combined with Hidden, which many brackets set lower than plain
+    /// Easy because Hidden already carries its own ScoreV2 bonus. A pick may override it.
     /// </summary>
     public double EasyHiddenMultiplier { get; set; } = 1.75;
 
@@ -124,8 +157,17 @@ public sealed class Mappool
     /// <summary>osu! usernames auto-added as referees with <c>!mp addref</c>.</summary>
     public List<string> Referees { get; set; } = [];
 
+    /// <summary>The pool-wide default, used by any pick that does not override it.</summary>
     [JsonIgnore]
     public ScoreMultipliers Multipliers => new(EasyMultiplier, EasyHiddenMultiplier);
+
+    /// <summary>The multipliers a given pick is scored with, falling back to this pool's default.</summary>
+    public ScoreMultipliers MultipliersFor(MappoolSlot? slot) =>
+        slot?.MultipliersOrDefault(Multipliers) ?? Multipliers;
+
+    /// <summary>The FreeMod picks, which are the only ones a multiplier ever applies to.</summary>
+    [JsonIgnore]
+    public IEnumerable<MappoolSlot> FreeModSlots => Slots.Where(s => s.Mods.HasFlag(Mods.FreeMod));
 
     [JsonIgnore]
     public int PointsToWin => Math.Max(1, (BestOf / 2) + 1);
