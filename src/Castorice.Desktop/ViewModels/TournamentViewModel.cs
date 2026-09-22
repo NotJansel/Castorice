@@ -360,9 +360,11 @@ public sealed partial class TournamentViewModel : ViewModelBase
         PushPoolDefaultsToSlots();
 
         FreeModGroups.Clear();
+        var claimed = Mods.None;
         foreach (var group in Pool.FreeModGroups)
         {
-            FreeModGroups.Add(new FreeModGroupViewModel(group));
+            FreeModGroups.Add(new FreeModGroupViewModel(group, claimed));
+            claimed |= group.AnyOf;
         }
 
         OnPropertyChanged(nameof(BanSummary));

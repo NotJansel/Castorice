@@ -209,7 +209,7 @@
                                  VerticalAlignment="Center"
                                  Foreground="{DynamicResource CastoriceAccentBrush}" />
                       <TextBlock Grid.Column="1" Text="{Binding ModsDisplay}" Classes="muted"
-                                 VerticalAlignment="Center" />
+                                 VerticalAlignment="Center" TextWrapping="Wrap" />
                       <NumericUpDown Grid.Column="2" Width="118" Minimum="0" Maximum="8" Increment="1"
                                      FormatString="0" Value="{Binding MinimumPerTeam}" />
                     </Grid>
