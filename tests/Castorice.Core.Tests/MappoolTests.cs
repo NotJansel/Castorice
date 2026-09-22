@@ -116,10 +116,32 @@ public class MappoolTests : IDisposable
     [Fact]
     public void Builds_a_room_name_from_the_pool_and_teams()
     {
-        var pool = new Mappool { Name = "Cup", Acronym = "OWC", Stage = "Quarterfinals" };
+        // Brackets normally leave the stage out of the lobby title.
+        var pool = new Mappool { Name = "Cup", Acronym = "TP", Stage = "Quarterfinals" };
 
-        Assert.Equal("OWC: Quarterfinals: (Red Team) vs (Blue Team)", pool.BuildRoomName("Red Team", "Blue Team"));
-        Assert.Equal("OWC: Quarterfinals: (Red) vs (Blue)", pool.BuildRoomName("", "  "));
+        Assert.Equal("TP: (nihurax) vs (was geht sie das an)", pool.BuildRoomName("nihurax", "was geht sie das an"));
+        Assert.Equal("TP: (Red) vs (Blue)", pool.BuildRoomName("", "  "));
+    }
+
+    [Fact]
+    public void Can_be_asked_to_put_the_stage_in_the_room_name()
+    {
+        var pool = new Mappool
+        {
+            Acronym = "TP",
+            Stage = "Quarterfinals",
+            IncludeStageInRoomName = true,
+        };
+
+        Assert.Equal("TP: Quarterfinals: (A) vs (B)", pool.BuildRoomName("A", "B"));
+    }
+
+    [Fact]
+    public void An_empty_stage_never_appears_even_when_asked_for()
+    {
+        var pool = new Mappool { Acronym = "TP", Stage = "", IncludeStageInRoomName = true };
+
+        Assert.Equal("TP: (A) vs (B)", pool.BuildRoomName("A", "B"));
     }
 
     [Fact]

@@ -191,6 +191,36 @@
                 <NumericUpDown Grid.Row="2" Grid.Column="3" Minimum="0" Maximum="3600" Increment="15"
                                Value="{Binding Pool.ReadyTimerSeconds}" />
               </Grid>
+
+              <CheckBox Content="Put the stage in the lobby name"
+                        IsChecked="{Binding IncludeStageInRoomName}"
+                        ToolTip.Tip="Off by default: brackets normally name a lobby &quot;TP: (Red) vs (Blue)&quot;." />
+
+              <Separator />
+
+              <TextBlock Classes="label" Text="FREEMOD RULE, PER TEAM" />
+              <TextBlock Classes="faint" TextWrapping="Wrap"
+                         Text="Each team owes this many players in each group. Whoever is left over may play NoMod — which is why a 3v3 team has one NoMod slot spare and a 4v4 team two. A player counts towards the first group they match, so HDHR fills the HR slot." />
+              <ItemsControl ItemsSource="{Binding FreeModGroups}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="vm:FreeModGroupViewModel">
+                    <Grid ColumnDefinitions="90,*,Auto" Margin="0,0,0,6">
+                      <TextBlock Grid.Column="0" Text="{Binding Name}" FontWeight="Bold"
+                                 VerticalAlignment="Center"
+                                 Foreground="{DynamicResource CastoriceAccentBrush}" />
+                      <TextBlock Grid.Column="1" Text="{Binding ModsDisplay}" Classes="muted"
+                                 VerticalAlignment="Center" />
+                      <NumericUpDown Grid.Column="2" Width="118" Minimum="0" Maximum="8" Increment="1"
+                                     FormatString="0" Value="{Binding MinimumPerTeam}" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Classes="faint" TextWrapping="Wrap">
+                <Run Text="Mods allowed at all:" />
+                <Run Text="{Binding FreeModAllowedDisplay}" />
+                <Run Text="— change the groups or that set in the pool file." />
+              </TextBlock>
               <Separator />
 
               <TextBlock Classes="label" Text="FREEMOD SCORE MULTIPLIERS" />

@@ -100,6 +100,26 @@ public sealed partial class TournamentViewModel : ViewModelBase
     /// <summary>The FreeMod picks, which are the only ones that carry a score multiplier.</summary>
     public ObservableCollection<MappoolSlotViewModel> FreeModSlots { get; } = [];
 
+    /// <summary>What each team has to field on a FreeMod pick.</summary>
+    public ObservableCollection<FreeModGroupViewModel> FreeModGroups { get; } = [];
+
+    public string FreeModAllowedDisplay => string.Join(", ", Pool.FreeModAllowedMods.ToAcronymList());
+
+    public bool IncludeStageInRoomName
+    {
+        get => Pool.IncludeStageInRoomName;
+        set
+        {
+            if (Pool.IncludeStageInRoomName == value)
+            {
+                return;
+            }
+
+            Pool.IncludeStageInRoomName = value;
+            OnPropertyChanged();
+        }
+    }
+
     public bool HasFreeModSlots => FreeModSlots.Count > 0;
 
     public ObservableCollection<string> RoomLog { get; } = [];
@@ -339,8 +359,16 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
         PushPoolDefaultsToSlots();
 
+        FreeModGroups.Clear();
+        foreach (var group in Pool.FreeModGroups)
+        {
+            FreeModGroups.Add(new FreeModGroupViewModel(group));
+        }
+
         OnPropertyChanged(nameof(BanSummary));
         OnPropertyChanged(nameof(HasFreeModSlots));
+        OnPropertyChanged(nameof(FreeModAllowedDisplay));
+        OnPropertyChanged(nameof(IncludeStageInRoomName));
     }
 
     /// <summary>Keeps every pick's fallback in step with the pool-level default.</summary>
@@ -647,7 +675,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
             .Select(p => new PlayerScoreInput(p.Username, p.Team, 0, true, p.Mods))
             .ToList();
 
-        var result = FreeModCheck.Check(inputs, Pool.FreeModAllowedMods, Pool.FreeModRequiresAMod);
+        var result = FreeModCheck.Check(inputs, Pool.FreeModGroups, Pool.FreeModAllowedMods);
 
         if (!result.HasData)
         {

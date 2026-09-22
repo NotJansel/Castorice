@@ -95,6 +95,14 @@ public static class ModsExtensions
     }
 
     /// <summary>
+    /// The acronyms as separate items. Use this where the value is a <em>set of alternatives</em>
+    /// rather than one combination: "HD, EZ" reads as two mods, where <see cref="ToCompactAcronyms"/>
+    /// would render "EZHD" and look like a single one.
+    /// </summary>
+    public static IReadOnlyList<string> ToAcronymList(this Mods mods) =>
+        Table.Where(entry => mods.HasFlag(entry.Mod)).Select(entry => entry.Acronym).ToList();
+
+    /// <summary>
     /// Parses "HDHR", "HD HR", "hd,hr" and similar. Unknown tokens are ignored so a hand-edited
     /// mappool file never fails to load over a typo.
     /// </summary>

@@ -1,0 +1,118 @@
+# Distinct BanchoBot lines from a real bracket match (osu.ppy.sh/mp/120020454).
+# Player chat is deliberately not included: only what BanchoBot itself says is parsed.
+
+Room name: FDC2: (pisyukastyye) vs (FA Team 6), History: https://osu.ppy.sh/mp/120020454
+Team mode: HeadToHead, Win condition: Score
+Players: 0
+Changed match settings to 7 slots, TeamVs, ScoreV2
+Invited igoryaka to the room
+Invited Polistin to the room
+Invited Joryan to the room
+Invited Kal3ber to the room
+joryan is in Canada
+Polistin joined in slot 1 for team blue.
+igoryaka joined in slot 2 for team red.
+igoryaka moved to slot 3
+Polistin moved to slot 2
+igoryaka left the game.
+Polistin changed to Red
+Countdown ends in 10 minutes
+Countdown ends in 9 minutes
+Joryan joined in slot 1 for team blue.
+Kal3ber joined in slot 3 for team blue.
+igoryaka joined in slot 4 for team red.
+Joryan moved to slot 5
+igoryaka moved to slot 1
+Joryan moved to slot 4
+Countdown ends in 8 minutes
+Joryan rolls 66 point(s)
+igoryaka rolls 12 point(s)
+Added Cessna to the match referees
+Countdown ends in 7 minutes
+Countdown aborted
+Countdown ends in 1 minute and 30 seconds
+Countdown ends in 1 minute
+Countdown ends in 30 seconds
+Enabled NoFail, DoubleTime, disabled FreeMod
+Changed beatmap to https://osu.ppy.sh/b/2498454 Adust Rain - TRAUMATIC SYNDROME -Lenboxx Remix-
+Changed match mode to Osu
+All players are ready
+Beatmap: https://osu.ppy.sh/b/2498454 Adust Rain - TRAUMATIC SYNDROME -Lenboxx Remix-
+Team mode: TeamVs, Win condition: ScoreV2
+Active mods: NoFail, DoubleTime
+Players: 4
+Slot 1  Ready     https://osu.ppy.sh/u/22185509 igoryaka        [Team Red ]
+Slot 2  Ready     https://osu.ppy.sh/u/33976861 Polistin        [Team Red ]
+Slot 3  Ready     https://osu.ppy.sh/u/35162776 Kal3ber         [Team Blue]
+Slot 4  Ready     https://osu.ppy.sh/u/8240995 Joryan          [Team Blue]
+Match starts in 10 seconds
+Queued the match to start in 10 seconds
+Match starts in 5 seconds
+Match starts in 4 seconds
+Match starts in 3 seconds
+Good luck, have fun!
+The match has started!
+Kal3ber finished playing (Score: 1112977, PASSED).
+Polistin finished playing (Score: 1144209, PASSED).
+igoryaka finished playing (Score: 1151186, PASSED).
+Joryan finished playing (Score: 470196, PASSED).
+The match has finished!
+Enabled NoFail, disabled FreeMod
+Changed beatmap to https://osu.ppy.sh/b/4753271 cassie - me & u (succducc bootleg) (Kara Edit)
+Beatmap: https://osu.ppy.sh/b/4753271 cassie - me & u (succducc bootleg) (Kara Edit)
+Active mods: NoFail
+Joryan finished playing (Score: 620138, PASSED).
+Polistin finished playing (Score: 458205, PASSED).
+igoryaka finished playing (Score: 469781, PASSED).
+Kal3ber finished playing (Score: 345489, PASSED).
+Changed beatmap to https://osu.ppy.sh/b/2880808 Polyphia - O.D.
+Beatmap: https://osu.ppy.sh/b/2880808 Polyphia - O.D.
+Joryan finished playing (Score: 423487, PASSED).
+igoryaka finished playing (Score: 446505, PASSED).
+Kal3ber finished playing (Score: 350460, PASSED).
+Polistin finished playing (Score: 357201, PASSED).
+Enabled NoFail, HardRock, disabled FreeMod
+Changed beatmap to https://osu.ppy.sh/b/2137243 Aimiya Zero - -ERROR
+Beatmap: https://osu.ppy.sh/b/2137243 Aimiya Zero - -ERROR
+Active mods: NoFail, HardRock
+Joryan finished playing (Score: 690373, PASSED).
+igoryaka finished playing (Score: 396057, PASSED).
+Kal3ber finished playing (Score: 640270, PASSED).
+Polistin finished playing (Score: 777456, PASSED).
+Changed beatmap to https://osu.ppy.sh/b/4821625 HiTECH NINJA - Modelista
+Beatmap: https://osu.ppy.sh/b/4821625 HiTECH NINJA - Modelista
+Kal3ber finished playing (Score: 386449, PASSED).
+Joryan finished playing (Score: 276270, PASSED).
+Polistin finished playing (Score: 913980, PASSED).
+igoryaka finished playing (Score: 934413, PASSED).
+Changed beatmap to https://osu.ppy.sh/b/557963 DJ S3RL - T-T-Techno (feat. Jesskah)
+Beatmap: https://osu.ppy.sh/b/557963 DJ S3RL - T-T-Techno (feat. Jesskah)
+Kal3ber finished playing (Score: 981934, PASSED).
+Joryan finished playing (Score: 619264, PASSED).
+Polistin finished playing (Score: 825835, PASSED).
+igoryaka finished playing (Score: 974815, PASSED).
+Enabled NoFail, Easy, disabled FreeMod
+Changed beatmap to https://osu.ppy.sh/b/1660623 Kurahashi Yoeko - Tomodachi no Uta
+Beatmap: https://osu.ppy.sh/b/1660623 Kurahashi Yoeko - Tomodachi no Uta
+Active mods: NoFail, Easy
+igoryaka finished playing (Score: 229771, PASSED).
+Joryan finished playing (Score: 139944, PASSED).
+Polistin finished playing (Score: 69481, PASSED).
+Kal3ber finished playing (Score: 156999, PASSED).
+Disabled all mods, enabled FreeMod
+Changed beatmap to https://osu.ppy.sh/b/2199664 FELT - Lost in the Abyss
+Countdown ends in 2 minutes
+Beatmap: https://osu.ppy.sh/b/2199664 FELT - Lost in the Abyss
+Active mods: Freemod
+Slot 1  Ready     https://osu.ppy.sh/u/22185509 igoryaka        [Team Red  / NoFail, Hidden]
+Slot 2  Ready     https://osu.ppy.sh/u/33976861 Polistin        [Team Red  / NoFail, Hidden, HardRock]
+Slot 3  Ready     https://osu.ppy.sh/u/35162776 Kal3ber         [Team Blue / NoFail, HardRock]
+Slot 4  Ready     https://osu.ppy.sh/u/8240995 Joryan          [Team Blue / NoFail, Hidden]
+Joryan finished playing (Score: 957009, PASSED).
+igoryaka finished playing (Score: 551089, PASSED).
+Kal3ber finished playing (Score: 254835, PASSED).
+Polistin finished playing (Score: 459008, PASSED).
+Joryan left the game.
+Polistin left the game.
+Kal3ber left the game.
+Closed the match

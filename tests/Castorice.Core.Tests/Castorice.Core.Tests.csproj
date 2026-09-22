@@ -30,6 +30,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- The shipped sample is parsed by a test, so a typo in it fails the build rather than a match. -->
     <None Include="../../samples/example-mappool.json" Link="samples/example-mappool.json"
           CopyToOutputDirectory="PreserveNewest" />

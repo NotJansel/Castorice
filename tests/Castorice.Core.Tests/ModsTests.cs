@@ -53,6 +53,15 @@ public class ModsTests
     }
 
     [Fact]
+    public void Lists_acronyms_separately_for_a_set_of_alternatives()
+    {
+        // A set of choices must not render as one combination: "HD, EZ", never "EZHD".
+        Assert.Equal(["EZ", "HD"], (Mods.Hidden | Mods.Easy).ToAcronymList());
+        Assert.Equal(["HR"], Mods.HardRock.ToAcronymList());
+        Assert.Empty(Mods.None.ToAcronymList());
+    }
+
+    [Fact]
     public void Round_trips_through_the_compact_form()
     {
         var mods = Mods.Hidden | Mods.DoubleTime;

@@ -155,14 +155,18 @@ public sealed class Mappool
     public int BestOf { get; set; } = 13;
 
     /// <summary>
-    /// The mods a player may take on a FreeMod pick. The FreeMod check flags anyone carrying
-    /// something outside this set, or carrying nothing at all.
+    /// The mods a player may take on a FreeMod pick. The check reports anyone carrying something
+    /// outside this set.
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter<Mods>))]
     public Mods FreeModAllowedMods { get; set; } = FreeModCheck.DefaultAllowed;
 
-    /// <summary>Whether a FreeMod pick requires every player to take at least one mod.</summary>
-    public bool FreeModRequiresAMod { get; set; } = true;
+    /// <summary>
+    /// What each team has to field on a FreeMod pick. The default is one HardRock and one
+    /// Hidden/Easy player; whoever is left over may play NoMod, which is why a 3v3 team has one
+    /// NoMod slot spare and a 4v4 team two.
+    /// </summary>
+    public List<FreeModGroup> FreeModGroups { get; set; } = FreeModCheck.DefaultGroups();
 
     /// <summary>osu! usernames auto-added as referees with <c>!mp addref</c>.</summary>
     public List<string> Referees { get; set; } = [];
@@ -188,11 +192,17 @@ public sealed class Mappool
     public IEnumerable<IGrouping<string, MappoolSlot>> ByCategory =>
         Slots.GroupBy(slot => slot.EffectiveCategory);
 
+    /// <summary>
+    /// Whether the stage appears in the lobby title. Brackets normally leave it out, so this is
+    /// off by default and the title reads <c>TP: (Red) vs (Blue)</c>.
+    /// </summary>
+    public bool IncludeStageInRoomName { get; set; }
+
     /// <summary>The room title suggested for <c>!mp make</c>, e.g. <c>OWC: (Red) vs (Blue)</c>.</summary>
     public string BuildRoomName(string redTeam, string blueTeam)
     {
         var prefix = string.IsNullOrWhiteSpace(Acronym) ? Name : Acronym;
-        if (!string.IsNullOrWhiteSpace(Stage))
+        if (IncludeStageInRoomName && !string.IsNullOrWhiteSpace(Stage))
         {
             prefix = $"{prefix}: {Stage}";
         }

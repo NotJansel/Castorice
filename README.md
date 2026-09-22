@@ -108,7 +108,8 @@ file, so a pool you share arrives with its artwork already set.
 1. Connect on the top bar.
 2. Pick a mappool, type the two team names, and press **Create lobby**. Castorice sends
    `!mp make` to BanchoBot, reads the match id out of the reply, joins `#mp_<id>` and pushes the
-   pool's `!mp set` configuration.
+   pool's `!mp set` configuration. The title is `TP: (Red) vs (Blue)` — the stage is left out
+   unless you tick **Put the stage in the lobby name**.
    Already have a lobby? Paste its id, `#mp_` channel or match-history link and press **Attach**.
 3. Invite players, then click a mappool button to set the map and its mods.
 4. Right-click a pick to **ban** or **protect** it for either team. Banned picks grey out and
@@ -121,20 +122,33 @@ file, so a pool you share arrives with its artwork already set.
 
 ### FreeMod rule check
 
-On a FreeMod pick most brackets require every player to take at least one mod from an allowed set.
-With **FreeMod check** on, the lobby is checked the moment everyone is ready and a warning naming
-whoever is off goes into the chat:
+A FreeMod pick is not "everybody needs a mod" but a per-team quota: a team owes one HardRock player
+and one on Hidden or Easy, and whoever is left over may play NoMod. The NoMod allowance falls out
+of that on its own — a 3v3 team has one spare slot and a 4v4 team two — so the team size is never
+configured anywhere.
+
+With **FreeMod check** on, the lobby is checked the moment everyone is ready, and a warning naming
+what is missing goes into the chat:
 
 ```
-FreeMod check: Blue Two: no mod
+FreeMod check: Red needs 1x HR
 ```
 
-It stays quiet when the lobby is fine, and **Check FreeMod** runs it on demand. The allowed set
-lives in the pool file and defaults to HD, HR, EZ and FL; NoFail is tolerated on top but does not
-satisfy the requirement on its own:
+It stays quiet when the lobby is fine, and **Check FreeMod** runs it on demand. A player counts
+towards the first group they match, which is why HDHR fills the HardRock slot rather than the
+Hidden one. NoFail is tolerated on top of anything but never fills a slot by itself.
+
+The quota and the set of mods allowed at all live in the pool file; the minimums are editable on
+the Tournament page:
 
 ```json
-{ "freeModAllowedMods": "Hidden, HardRock, Easy, Flashlight", "freeModRequiresAMod": true }
+{
+  "freeModAllowedMods": "Hidden, HardRock, Easy, Flashlight",
+  "freeModGroups": [
+    { "name": "HR",    "anyOf": "HardRock",       "minimumPerTeam": 1 },
+    { "name": "HD/EZ", "anyOf": "Hidden, Easy",   "minimumPerTeam": 1 }
+  ]
+}
 ```
 
 ### Scoring a map
@@ -221,6 +235,8 @@ src/Castorice.Core/        No UI dependencies; all of it is unit-testable
   Configuration/           Settings model, atomic writes, platform paths
 src/Castorice.Desktop/     Avalonia UI (MVVM, CommunityToolkit.Mvvm)
 tests/Castorice.Core.Tests/
+  Fixtures/                Every distinct BanchoBot line from a real bracket match, so the
+                           parser is checked against what Bancho says, not what it was assumed to
 samples/
 ```
 
@@ -231,7 +247,7 @@ The core library never references Avalonia. UI thread marshalling goes through t
 
 ```bash
 dotnet build              # whole solution
-dotnet test               # 149 tests, no network needed
+dotnet test               # 174 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
 
