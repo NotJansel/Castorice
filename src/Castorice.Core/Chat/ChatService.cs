@@ -229,17 +229,8 @@ public sealed class ChatService
             }
         });
 
-        if (isSelf)
-        {
-            return;
-        }
-
-        Append(target, new ChatMessage
-        {
-            Sender = message.Nick,
-            Text = joined ? "joined the channel" : "left the channel",
-            Kind = ChatMessageKind.System,
-        });
+        // Joins and parts deliberately produce no chat line. In a busy osu! channel they drown out
+        // the conversation, and the user list above the backlog already shows who is present.
     }
 
     private void HandleQuit(string nick)

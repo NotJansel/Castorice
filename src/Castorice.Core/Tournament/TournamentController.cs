@@ -181,6 +181,10 @@ public sealed class TournamentController
     public Task SetTeamAsync(string username, TeamColour team, CancellationToken cancellationToken = default) =>
         SendAsync(MpCommands.Team(username, team), cancellationToken);
 
+    /// <summary>Moves a player into a specific slot, 1-based.</summary>
+    public Task MoveAsync(string username, int slot, CancellationToken cancellationToken = default) =>
+        SendAsync(MpCommands.Move(username, slot), cancellationToken);
+
     public Task LockAsync(CancellationToken cancellationToken = default) =>
         SendAsync(MpCommands.Lock(), cancellationToken);
 

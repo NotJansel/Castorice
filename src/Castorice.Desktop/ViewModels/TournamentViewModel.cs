@@ -66,6 +66,10 @@ public sealed partial class TournamentViewModel : ViewModelBase
     [ObservableProperty]
     private bool _autoScore = true;
 
+    /// <summary>Check the lobby against the pool's FreeMod rule once everyone is ready.</summary>
+    [ObservableProperty]
+    private bool _autoFreeModCheck = true;
+
     public TournamentViewModel(AppServices services)
     {
         _services = services;
@@ -583,10 +587,83 @@ public sealed partial class TournamentViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private Task MoveAsync(RoomPlayerViewModel? player) =>
+        player is null
+            ? Task.CompletedTask
+            : RunAsync(
+                () => _services.Tournament.MoveAsync(player.Username, player.TargetSlot),
+                $"Moved {player.Username} to slot {player.TargetSlot}.");
+
+    [RelayCommand]
     private Task KickAsync(RoomPlayerViewModel? player) =>
         player is null
             ? Task.CompletedTask
             : RunAsync(() => _services.Tournament.KickAsync(player.Username), $"Kicked {player.Username}.");
+
+    /// <summary>
+    /// Refreshes the lobby, then checks every player against the pool's FreeMod rule. Only
+    /// meaningful on a FreeMod pick, where players choose their own mods.
+    /// </summary>
+    [RelayCommand]
+    private async Task CheckFreeModAsync()
+    {
+        if (!_services.Tournament.IsAttached)
+        {
+            Status = "No lobby is attached.";
+            return;
+        }
+
+        try
+        {
+            await _services.Tournament.RefreshSettingsAsync();
+            await Task.Delay(ScoreSettleDelay);
+            await RunFreeModCheckAsync(announce: true);
+        }
+        catch (Exception ex)
+        {
+            Status = $"FreeMod check failed: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Returns true when the lobby passes. With <paramref name="announce"/> the outcome goes into
+    /// the lobby; the automatic run only speaks up when something is actually wrong.
+    /// </summary>
+    private async Task<bool> RunFreeModCheckAsync(bool announce, CancellationToken cancellationToken = default)
+    {
+        var room = Room;
+        if (room is null)
+        {
+            return true;
+        }
+
+        if (!room.CurrentMods.HasFlag(Mods.FreeMod))
+        {
+            Status = "The current pick is not FreeMod, so there is nothing to check.";
+            return true;
+        }
+
+        var inputs = room.Players
+            .Select(p => new PlayerScoreInput(p.Username, p.Team, 0, true, p.Mods))
+            .ToList();
+
+        var result = FreeModCheck.Check(inputs, Pool.FreeModAllowedMods, Pool.FreeModRequiresAMod);
+
+        if (!result.HasData)
+        {
+            Status = "Nobody's mods are known yet — run Refresh settings first.";
+            return true;
+        }
+
+        Status = result.Summary;
+
+        if (announce || !result.IsClean)
+        {
+            await _services.Tournament.SendAsync(result.Summary, cancellationToken);
+        }
+
+        return result.IsClean;
+    }
 
     [RelayCommand]
     private void AddRedPoint() => RedScore++;
@@ -811,6 +888,12 @@ public sealed partial class TournamentViewModel : ViewModelBase
         if (evt is MatchFinished)
         {
             _ = HandleMatchFinishedAsync();
+        }
+
+        // "All players are ready" is the last moment a mod problem can still be fixed cheaply.
+        if (evt is AllPlayersReady && AutoFreeModCheck && !IsWarmup)
+        {
+            _ = RunFreeModCheckAsync(announce: false);
         }
     }
 

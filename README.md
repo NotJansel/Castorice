@@ -115,8 +115,27 @@ file, so a pool you share arrives with its artwork already set.
    refuse to be sent to the lobby until the ban is cleared, so a misclick cannot burn a map.
 5. **Start** runs the pool's countdown; **Start now** skips it; **Abort timer** and
    **Abort match** are one click away.
-6. The panel tracks slots, teams and per-player scores as BanchoBot reports them, and **+1 Red** /
-   **+1 Blue** keep the running score by hand whenever you want them to.
+6. The panel tracks slots, teams and per-player scores as BanchoBot reports them. Each player row
+   can **Move** them to a slot, swap their **Team** or **Kick** them, and **+1 Red** / **+1 Blue**
+   keep the running score by hand whenever you want them to.
+
+### FreeMod rule check
+
+On a FreeMod pick most brackets require every player to take at least one mod from an allowed set.
+With **FreeMod check** on, the lobby is checked the moment everyone is ready and a warning naming
+whoever is off goes into the chat:
+
+```
+FreeMod check: Blue Two: no mod
+```
+
+It stays quiet when the lobby is fine, and **Check FreeMod** runs it on demand. The allowed set
+lives in the pool file and defaults to HD, HR, EZ and FL; NoFail is tolerated on top but does not
+satisfy the requirement on its own:
+
+```json
+{ "freeModAllowedMods": "Hidden, HardRock, Easy, Flashlight", "freeModRequiresAMod": true }
+```
 
 ### Scoring a map
 
@@ -172,7 +191,9 @@ Everything the referee panel sends is an ordinary `!mp` command, and it all show
 ## Chat
 
 The Chat page is a normal IRC client: channel list with unread counts, private messages, message
-history on <kbd>↑</kbd>/<kbd>↓</kbd>, and a raw wire console for debugging. The usual commands work:
+history on <kbd>↑</kbd>/<kbd>↓</kbd>, and a raw wire console for debugging. Joins and parts produce
+no chat line — in a busy channel they drown out the conversation, and the user count above the
+backlog already says who is there. The usual commands work:
 
 | Command | Effect |
 | --- | --- |
@@ -210,7 +231,7 @@ The core library never references Avalonia. UI thread marshalling goes through t
 
 ```bash
 dotnet build              # whole solution
-dotnet test               # 138 tests, no network needed
+dotnet test               # 149 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
 

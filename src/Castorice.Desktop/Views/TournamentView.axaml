@@ -313,6 +313,8 @@
                               ToolTip.Tip="While this is on, a finished map is never scored." />
                 <ToggleButton Classes="compact" Content="Auto-score" IsChecked="{Binding AutoScore}"
                               ToolTip.Tip="Total the map when it ends, award the point and post the result to the lobby." />
+                <ToggleButton Classes="compact" Content="FreeMod check" IsChecked="{Binding AutoFreeModCheck}"
+                              ToolTip.Tip="When everyone is ready on a FreeMod pick, check the lobby against the pool's mod rule and warn if someone is off." />
               </WrapPanel>
 
               <Grid ColumnDefinitions="Auto,*">
@@ -352,6 +354,7 @@
                 <Button Content="Unlock" Command="{Binding UnlockCommand}" />
                 <Button Content="Clear host" Command="{Binding ClearHostCommand}" />
                 <Button Content="Invite refs" Command="{Binding InviteRefereesCommand}" />
+                <Button Content="Check FreeMod" Command="{Binding CheckFreeModCommand}" />
               </WrapPanel>
             </StackPanel>
 
@@ -372,8 +375,9 @@
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusMedium}"
                             Padding="10,8" Margin="0,0,0,6">
-                      <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                        <Border Grid.Column="0" Width="3" CornerRadius="{StaticResource RadiusPill}"
+                      <Grid ColumnDefinitions="Auto,*,Auto,Auto" RowDefinitions="Auto,Auto">
+                        <Border Grid.Column="0" Grid.RowSpan="2" Width="3"
+                                CornerRadius="{StaticResource RadiusPill}"
                                 Margin="0,0,10,0"
                                 Background="{Binding Team, Converter={x:Static views:ViewConverters.TeamToBrush}}" />
                         <StackPanel Grid.Column="1" Spacing="1">
@@ -391,6 +395,17 @@
                         <Button Grid.Column="3" Classes="danger compact" Content="Kick" Margin="4,0,0,0"
                                 Command="{Binding $parent[UserControl].((vm:TournamentViewModel)DataContext).KickCommand}"
                                 CommandParameter="{Binding}" />
+
+                        <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"
+                                    Orientation="Horizontal" Spacing="6" Margin="0,8,0,0">
+                          <TextBlock Classes="label" Text="SLOT" VerticalAlignment="Center" />
+                          <NumericUpDown Width="104" Minimum="1" Maximum="16" Increment="1"
+                                         FormatString="0" Value="{Binding TargetSlot}" />
+                          <Button Classes="ghost compact" Content="Move"
+                                  ToolTip.Tip="Send this player to the slot on the left"
+                                  Command="{Binding $parent[UserControl].((vm:TournamentViewModel)DataContext).MoveCommand}"
+                                  CommandParameter="{Binding}" />
+                        </StackPanel>
                       </Grid>
                     </Border>
                   </DataTemplate>

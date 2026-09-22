@@ -154,6 +154,16 @@ public sealed class Mappool
     /// <summary>Maps played in a match; the target is <c>BestOf / 2 + 1</c> points.</summary>
     public int BestOf { get; set; } = 13;
 
+    /// <summary>
+    /// The mods a player may take on a FreeMod pick. The FreeMod check flags anyone carrying
+    /// something outside this set, or carrying nothing at all.
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<Mods>))]
+    public Mods FreeModAllowedMods { get; set; } = FreeModCheck.DefaultAllowed;
+
+    /// <summary>Whether a FreeMod pick requires every player to take at least one mod.</summary>
+    public bool FreeModRequiresAMod { get; set; } = true;
+
     /// <summary>osu! usernames auto-added as referees with <c>!mp addref</c>.</summary>
     public List<string> Referees { get; set; } = [];
 
