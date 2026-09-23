@@ -39,16 +39,7 @@ public sealed class IrcClient : IAsyncDisposable
     public IrcConnectionState State
     {
         get => _state;
-        private set
-        {
-            if (_state == value)
-            {
-                return;
-            }
-
-            _state = value;
-            StateChanged?.Invoke(this, new IrcConnectionStateChanged(value));
-        }
+        private set => SetState(value);
     }
 
     public bool IsConnected => State is IrcConnectionState.Connected;
@@ -62,7 +53,10 @@ public sealed class IrcClient : IAsyncDisposable
     public async Task ConnectAsync(IrcCredentials credentials, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(credentials);
-        if (State is not IrcConnectionState.Disconnected)
+
+        // A connection that dropped on its own already reads Disconnected but still holds its
+        // socket and finished read loop, so leftovers are cleaned up either way.
+        if (State is not IrcConnectionState.Disconnected || _tcp is not null)
         {
             await DisconnectAsync().ConfigureAwait(false);
         }
@@ -253,21 +247,51 @@ public sealed class IrcClient : IAsyncDisposable
             }
 
             registered.TrySetResult("The connection closed before registration completed.");
+            MarkConnectionLost("Bancho closed the connection.");
         }
         catch (OperationCanceledException)
         {
+            // DisconnectAsync cancelled us; it sets the state itself.
             registered.TrySetResult("The connection was cancelled.");
         }
         catch (Exception ex) when (ex is IOException or SocketException or ObjectDisposedException)
         {
             registered.TrySetResult(ex.Message);
-            StateChanged?.Invoke(this, new IrcConnectionStateChanged(IrcConnectionState.Disconnected, ex.Message));
+            MarkConnectionLost(ex.Message);
+        }
+    }
+
+    private void SetState(IrcConnectionState state, string? detail = null)
+    {
+        if (_state == state)
+        {
+            return;
+        }
+
+        _state = state;
+        StateChanged?.Invoke(this, new IrcConnectionStateChanged(state, detail));
+    }
+
+    /// <summary>
+    /// Records that a live connection is gone. Before this, a dropped connection left the state at
+    /// Connected: the UI kept offering to send, and the next write threw. Registration failures
+    /// are left alone here — ConnectAsync owns that outcome and reports it itself.
+    /// </summary>
+    private void MarkConnectionLost(string detail)
+    {
+        if (_state is IrcConnectionState.Connected)
+        {
+            SetState(IrcConnectionState.Disconnected, detail);
         }
     }
 
     private async Task WriteLineAsync(string line, bool redact, CancellationToken cancellationToken)
     {
-        var stream = _stream ?? throw new InvalidOperationException("The client is not connected.");
+        var stream = _stream;
+        if (stream is null || _state is IrcConnectionState.Disconnected)
+        {
+            throw new IrcConnectionLostException("Not connected to Bancho.");
+        }
 
         await _writeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -275,6 +299,13 @@ public sealed class IrcClient : IAsyncDisposable
             var bytes = Wire.GetBytes(line + "\r\n");
             await stream.WriteAsync(bytes, cancellationToken).ConfigureAwait(false);
             await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is IOException or SocketException or ObjectDisposedException)
+        {
+            // A write that fails means the socket is gone, whether or not the read side has
+            // noticed yet.
+            MarkConnectionLost(ex.Message);
+            throw new IrcConnectionLostException("The connection to Bancho dropped.", ex);
         }
         finally
         {
@@ -319,3 +350,10 @@ public sealed class IrcClient : IAsyncDisposable
 }
 
 public sealed class IrcAuthenticationException(string message) : Exception(message);
+
+/// <summary>
+/// Thrown by every send when there is no live connection, or when it drops mid-write. It derives
+/// from <see cref="IOException"/> so callers that already treat I/O failure as expected keep working.
+/// </summary>
+public sealed class IrcConnectionLostException(string message, Exception? inner = null)
+    : IOException(message, inner);

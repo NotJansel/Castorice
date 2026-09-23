@@ -67,15 +67,34 @@ public sealed partial class ChatViewModel : ViewModelBase
         Draft = string.Empty;
         RememberInHistory(text);
 
-        var command = SlashCommand.Parse(text);
-        if (command.Kind is SlashCommandKind.None)
+        try
         {
-            await SendPlainTextAsync(SlashCommand.Unescape(text));
-            return;
-        }
+            var command = SlashCommand.Parse(text);
+            if (command.Kind is SlashCommandKind.None)
+            {
+                await SendPlainTextAsync(SlashCommand.Unescape(text));
+                return;
+            }
 
-        await RunSlashCommandAsync(command);
+            await RunSlashCommandAsync(command);
+        }
+        catch (IrcConnectionLostException ex)
+        {
+            // The connection can drop between the button enabling and the write going out.
+            // Report it where the user is looking, and hand the text back rather than losing it.
+            ReportNotSent(SelectedTarget, ex);
+
+            if (Draft.Length == 0)
+            {
+                Draft = text;
+            }
+        }
     }
+
+    private void ReportNotSent(ChatTarget? target, IrcConnectionLostException ex) =>
+        _services.Chat.AppendClientNotice(
+            target ?? _services.Chat.Server,
+            $"Not sent — {ex.Message} Reconnect from the rail; your message is back in the box.");
 
     private bool CanSend() => _services.Irc.IsConnected && SelectedTarget is not null;
 
@@ -194,9 +213,20 @@ public sealed partial class ChatViewModel : ViewModelBase
 
         SelectedTarget = _services.Chat.Open(channel);
 
-        if (_services.Irc.IsConnected)
+        if (!_services.Irc.IsConnected)
+        {
+            return;
+        }
+
+        try
         {
             await _services.Irc.JoinAsync(channel);
+        }
+        catch (IrcConnectionLostException ex)
+        {
+            _services.Chat.AppendClientNotice(
+                SelectedTarget,
+                $"Could not join {channel} — {ex.Message} It stays in the list; join again once reconnected.");
         }
     }
 
@@ -211,7 +241,7 @@ public sealed partial class ChatViewModel : ViewModelBase
 
         if (target.Kind is not ChatTargetKind.PrivateMessage && _services.Irc.IsConnected)
         {
-            _ = _services.Irc.PartAsync(target.Name);
+            _ = PartQuietlyAsync(target.Name);
         }
 
         _services.Chat.Close(target.Name);
@@ -219,6 +249,21 @@ public sealed partial class ChatViewModel : ViewModelBase
     }
 
     private bool CanCloseTarget() => SelectedTarget is { Kind: not ChatTargetKind.Server };
+
+    /// <summary>
+    /// Leaving a channel is best effort: the tab closes either way, and a dead connection has
+    /// already left every channel on the server's side.
+    /// </summary>
+    private async Task PartQuietlyAsync(string channel)
+    {
+        try
+        {
+            await _services.Irc.PartAsync(channel);
+        }
+        catch (IrcConnectionLostException)
+        {
+        }
+    }
 
     [RelayCommand]
     private void ClearRawLog() => RawLog.Clear();

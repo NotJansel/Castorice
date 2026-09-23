@@ -181,6 +181,22 @@
     <Setter Property="Foreground" Value="{DynamicResource CastoriceOnAccentBrush}" />
   </Style>
 
+  <!--
+    The accent and danger fills above would otherwise win over Fluent's own disabled look, and a
+    bright Send button while disconnected reads as "you can still send". Disabled means flat.
+  -->
+  <Style Selector="Button.accent:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource CastoriceSurfaceAltBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CastoriceBorderBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceFaintTextBrush}" />
+  </Style>
+
+  <Style Selector="Button.danger:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CastoriceBorderBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceFaintTextBrush}" />
+  </Style>
+
   <!-- Borderless button for icon-only and in-row actions. -->
   <Style Selector="Button.ghost /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="Transparent" />
