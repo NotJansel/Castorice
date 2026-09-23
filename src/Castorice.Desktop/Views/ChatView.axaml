@@ -6,6 +6,7 @@
              xmlns:vm="clr-namespace:Castorice.Desktop.ViewModels"
              xmlns:views="clr-namespace:Castorice.Desktop.Views"
              xmlns:chat="clr-namespace:Castorice.Core.Chat;assembly=Castorice.Core"
+             xmlns:svc="clr-namespace:Castorice.Desktop.Services"
              mc:Ignorable="d" d:DesignWidth="1120" d:DesignHeight="860"
              x:Class="Castorice.Desktop.Views.ChatView"
              x:DataType="vm:ChatViewModel">
@@ -85,8 +86,10 @@
         </StackPanel>
       </Border>
 
-      <ScrollViewer Grid.Row="1" Name="MessageScroller" Padding="20,12"
-                    HorizontalScrollBarVisibility="Disabled">
+      <Panel Grid.Row="1">
+      <ScrollViewer Name="MessageScroller" Padding="20,12"
+                    HorizontalScrollBarVisibility="Disabled"
+                    svc:AutoScroll.IsEnabled="True">
         <ItemsControl ItemsSource="{Binding SelectedTarget.Messages}">
           <ItemsControl.ItemTemplate>
             <DataTemplate DataType="chat:ChatMessage">
@@ -114,6 +117,13 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
       </ScrollViewer>
+
+      <!-- Shown only while the user has scrolled up, so it is clear why the view stopped following. -->
+      <Button Classes="accent pill" Content="Jump to latest ↓"
+              HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,14"
+              IsVisible="{Binding #MessageScroller.(svc:AutoScroll.IsPaused)}"
+              Click="OnJumpToLatest" />
+      </Panel>
 
       <!-- Composer -->
       <Border Grid.Row="2" Margin="20,10,20,16" Padding="6"
@@ -148,7 +158,8 @@
           <TextBlock Grid.Column="0" Classes="label" Text="RAW IRC" VerticalAlignment="Center" />
           <Button Grid.Column="1" Classes="ghost compact" Content="Clear" Command="{Binding ClearRawLogCommand}" />
         </Grid>
-        <ScrollViewer Grid.Row="1" Padding="12,0,12,12" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Row="1" Padding="12,0,12,12" HorizontalScrollBarVisibility="Disabled"
+                      svc:AutoScroll.IsEnabled="True">
           <ItemsControl ItemsSource="{Binding RawLog}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="sys:String">

@@ -1,7 +1,8 @@
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Threading;
+using Castorice.Desktop.Services;
 using Castorice.Desktop.ViewModels;
 
 namespace Castorice.Desktop.Views;
@@ -9,6 +10,7 @@ namespace Castorice.Desktop.Views;
 public partial class ChatView : UserControl
 {
     private ScrollViewer? _scroller;
+    private ChatViewModel? _viewModel;
 
     public ChatView() => InitializeComponent();
 
@@ -17,6 +19,37 @@ public partial class ChatView : UserControl
         base.OnLoaded(e);
         _scroller = this.FindControl<ScrollViewer>("MessageScroller");
     }
+
+    protected override void OnDataContextChanged(EventArgs e)
+    {
+        base.OnDataContextChanged(e);
+
+        if (_viewModel is not null)
+        {
+            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
+
+        _viewModel = DataContext as ChatViewModel;
+
+        if (_viewModel is not null)
+        {
+            _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        }
+    }
+
+    /// <summary>
+    /// A conversation opens at its newest message. Being scrolled up in one channel says nothing
+    /// about the next, so switching resumes following.
+    /// </summary>
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ChatViewModel.SelectedTarget))
+        {
+            ScrollToLatest();
+        }
+    }
+
+    private void OnJumpToLatest(object? sender, RoutedEventArgs e) => ScrollToLatest();
 
     private void OnDraftKeyDown(object? sender, KeyEventArgs e)
     {
@@ -34,7 +67,7 @@ public partial class ChatView : UserControl
                     viewModel.SendCommand.Execute(null);
                 }
 
-                ScrollToBottom();
+                ScrollToLatest();
                 break;
 
             case Key.Up:
@@ -65,12 +98,13 @@ public partial class ChatView : UserControl
         }
     }
 
-    /// <summary>
-    /// Keeps the newest message in view. Posted at background priority so the new item is measured
-    /// before the scroll offset is applied.
-    /// </summary>
-    private void ScrollToBottom() =>
-        Dispatcher.UIThread.Post(() => _scroller?.ScrollToEnd(), DispatcherPriority.Background);
+    private void ScrollToLatest()
+    {
+        if (_scroller is not null)
+        {
+            AutoScroll.ScrollToLatest(_scroller);
+        }
+    }
 
     private static void MoveCaretToEnd(object? sender)
     {
