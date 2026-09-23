@@ -13,14 +13,13 @@ public sealed record OsuScore
     [JsonPropertyName("max_combo")]
     public int MaxCombo { get; init; }
 
+    /// <summary>Acronyms, whichever of the API's two shapes the mods arrived in.</summary>
     [JsonPropertyName("mods")]
+    [JsonConverter(typeof(OsuModListConverter))]
     public IReadOnlyList<string> Mods { get; init; } = [];
 
     [JsonPropertyName("passed")]
     public bool Passed { get; init; }
-
-    [JsonPropertyName("perfect")]
-    public bool Perfect { get; init; }
 
     [JsonPropertyName("pp")]
     public double? Pp { get; init; }
@@ -28,11 +27,45 @@ public sealed record OsuScore
     [JsonPropertyName("rank")]
     public string Rank { get; init; } = string.Empty;
 
+    // The API's score payload changed shape with x-api-version 20220705. Both spellings are read
+    // and the properties below resolve them, so neither version leaves a field silently at zero.
+
     [JsonPropertyName("score")]
-    public long Score { get; init; }
+    public long? LegacyFormatScore { get; init; }
+
+    /// <summary>The stable score for a score set on stable; 0 for one set on lazer.</summary>
+    [JsonPropertyName("legacy_total_score")]
+    public long? LegacyTotalScore { get; init; }
+
+    [JsonPropertyName("total_score")]
+    public long? TotalScore { get; init; }
 
     [JsonPropertyName("created_at")]
     public DateTimeOffset? CreatedAt { get; init; }
+
+    [JsonPropertyName("ended_at")]
+    public DateTimeOffset? EndedAt { get; init; }
+
+    [JsonPropertyName("perfect")]
+    public bool? LegacyFormatPerfect { get; init; }
+
+    [JsonPropertyName("legacy_perfect")]
+    public bool? LegacyPerfect { get; init; }
+
+    [JsonPropertyName("is_perfect_combo")]
+    public bool? IsPerfectCombo { get; init; }
+
+    /// <summary>The score as the osu! website shows it: stable's number where there is one.</summary>
+    [JsonIgnore]
+    public long Score => LegacyTotalScore is > 0
+        ? LegacyTotalScore.Value
+        : TotalScore ?? LegacyFormatScore ?? 0;
+
+    [JsonIgnore]
+    public DateTimeOffset? PlayedAt => EndedAt ?? CreatedAt;
+
+    [JsonIgnore]
+    public bool Perfect => LegacyPerfect ?? IsPerfectCombo ?? LegacyFormatPerfect ?? false;
 
     [JsonPropertyName("beatmap")]
     public OsuBeatmap? Beatmap { get; init; }

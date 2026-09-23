@@ -123,12 +123,39 @@ public sealed class OsuApiClient : IDisposable
         }
     }
 
+    /// <summary>
+    /// Every failure here surfaces as <see cref="OsuApiException"/>. A response the models cannot
+    /// read, or a request that times out, is the API misbehaving, not the app — callers handle one
+    /// exception type and the UI shows a message instead of going down with it.
+    /// </summary>
     private async Task<T?> GetAsync<T>(string path, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await GetCoreAsync<T>(path, cancellationToken).ConfigureAwait(false);
+        }
+        catch (JsonException ex)
+        {
+            throw new OsuApiException(
+                $"The osu! API answered in a shape Castorice cannot read ({ex.Path ?? "unknown field"}). " +
+                "The API may have changed; please report this.");
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            // HttpClient reports its own timeout as a cancellation nobody asked for.
+            throw new OsuApiException("The osu! API did not answer in time.");
+        }
+    }
+
+    private async Task<T?> GetCoreAsync<T>(string path, CancellationToken cancellationToken)
     {
         var token = await GetTokenAsync(cancellationToken).ConfigureAwait(false);
 
         using var request = new HttpRequestMessage(HttpMethod.Get, BaseUrl + path);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Selects the current score format: mods as objects, total_score, ended_at. The models
+        // read the legacy shape too, so a change here cannot break deserialisation outright.
         request.Headers.Add("x-api-version", "20220705");
 
         using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
