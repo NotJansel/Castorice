@@ -362,6 +362,19 @@
     <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
   </Style>
 
+  <!--
+    The spinner buttons are square by default. The decrease button sits in the box's right-hand
+    corners, so it takes the inner radius there; the increase button sits in the middle and stays
+    square. Both the button and its presenter get it, since either may paint the background.
+  -->
+  <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton#PART_DecreaseButton">
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMediumInnerRight}" />
+  </Style>
+
+  <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton#PART_DecreaseButton /template/ ContentPresenter">
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMediumInnerRight}" />
+  </Style>
+
   <Style Selector="ToggleButton">
     <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
     <Setter Property="Padding" Value="13,7" />

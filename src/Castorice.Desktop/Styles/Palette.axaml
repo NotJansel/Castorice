@@ -122,6 +122,12 @@
   <!-- Corner radius scale. -->
   <CornerRadius x:Key="RadiusSmall">6</CornerRadius>
   <CornerRadius x:Key="RadiusMedium">10</CornerRadius>
+  <!--
+    The right-hand corners of a control whose outer edge is RadiusMedium, measured inside its 1px
+    border. Keep in step with RadiusMedium: the spinner button on a number box sits in that corner,
+    and a square one pokes out past the rounded border as a dark patch.
+  -->
+  <CornerRadius x:Key="RadiusMediumInnerRight">0,9,9,0</CornerRadius>
   <CornerRadius x:Key="RadiusLarge">14</CornerRadius>
   <CornerRadius x:Key="RadiusPill">999</CornerRadius>
 
