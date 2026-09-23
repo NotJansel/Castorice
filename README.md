@@ -210,7 +210,9 @@ Everything the referee panel sends is an ordinary `!mp` command, and it all show
 The Chat page is a normal IRC client: channel list with unread counts, private messages, message
 history on <kbd>↑</kbd>/<kbd>↓</kbd>, and a raw wire console for debugging. The view follows new
 messages as they arrive; scroll up to read and it stops, with a **Jump to latest** button to get
-back, and scrolling down to the bottom picks it up again. Joins and parts produce
+back, and scrolling down to the bottom picks it up again. If the connection drops, reconnecting
+rejoins every channel that was open — the attached lobby included — and asks BanchoBot for the
+lobby's current settings, so the referee buttons work again straight away. Joins and parts produce
 no chat line — in a busy channel they drown out the conversation, and the user count above the
 backlog already says who is there. The usual commands work:
 
@@ -252,7 +254,7 @@ The core library never references Avalonia. UI thread marshalling goes through t
 
 ```bash
 dotnet build              # whole solution
-dotnet test               # 219 tests, no network needed
+dotnet test               # 225 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
 

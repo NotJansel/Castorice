@@ -1,4 +1,5 @@
 using Avalonia.Styling;
+using Castorice.Core.Chat;
 using Castorice.Core.Configuration;
 using Castorice.Core.Irc;
 using Castorice.Desktop.Services;
@@ -105,14 +106,31 @@ public sealed partial class MainWindowViewModel : ViewModelBase
                 UseTls = _services.Settings.UseTls,
             });
 
-            foreach (var channel in _services.Settings.AutoJoinChannels)
+            // On a reconnect this also brings back every channel that was open before the drop,
+            // the attached lobby included; the server let go of all of them when the link died.
+            var lobby = _services.Tournament.Room;
+            var channels = ReconnectPlan.ChannelsToJoin(
+                _services.Settings.AutoJoinChannels,
+                _services.Chat.Targets,
+                lobby?.ChannelName);
+
+            foreach (var channel in channels)
             {
                 _services.Chat.Open(channel);
                 await _services.Irc.JoinAsync(channel);
             }
 
             // BanchoBot is where !mp make is answered, so keep that conversation open from the start.
-            _services.Chat.Open(Core.Chat.ChatTarget.BanchoBot);
+            _services.Chat.Open(ChatTarget.BanchoBot);
+
+            if (lobby is not null)
+            {
+                // Players may have joined, left or changed mods while we were away.
+                await _services.Tournament.RefreshSettingsAsync();
+                _services.Chat.AppendClientNotice(
+                    _services.Chat.Open(lobby.ChannelName),
+                    "Reconnected — rejoined the lobby and asked BanchoBot for its current settings.");
+            }
         }
         catch (IrcAuthenticationException ex)
         {
