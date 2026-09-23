@@ -254,7 +254,7 @@ The core library never references Avalonia. UI thread marshalling goes through t
 
 ```bash
 dotnet build              # whole solution
-dotnet test               # 225 tests, no network needed
+dotnet test               # 232 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
 

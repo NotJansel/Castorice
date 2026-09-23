@@ -219,13 +219,20 @@ public sealed class ChatService
 
         _dispatcher.Post(() =>
         {
+            if (joined && isSelf)
+            {
+                // Joining is followed by the server's full NAMES list. Starting from empty keeps
+                // anyone who left while we were away — say, across a reconnect — out of the count.
+                target.ClearUsers();
+            }
+
             if (joined)
             {
-                target.Users.Add(message.Nick);
+                target.AddUser(message.Nick);
             }
             else
             {
-                target.Users.Remove(message.Nick);
+                target.RemoveUser(message.Nick);
             }
         });
 
@@ -244,7 +251,7 @@ public sealed class ChatService
         {
             foreach (var target in _targets)
             {
-                target.Users.Remove(nick);
+                target.RemoveUser(nick);
             }
         });
     }
@@ -265,7 +272,7 @@ public sealed class ChatService
         {
             foreach (var name in names)
             {
-                target.Users.Add(name.TrimStart('@', '+', '%', '&', '~'));
+                target.AddUser(name.TrimStart('@', '+', '%', '&', '~'));
             }
         });
     }

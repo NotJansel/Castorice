@@ -81,8 +81,8 @@
               BorderThickness="0,0,0,1">
         <StackPanel Spacing="1">
           <TextBlock Classes="h1" Text="{Binding SelectedTarget.Name, FallbackValue='Server'}" />
-          <TextBlock Classes="faint" Text="{Binding SelectedTarget.Users.Count, StringFormat='{}{0} users'}"
-                     IsVisible="{Binding SelectedTarget.Users.Count, Converter={x:Static views:ViewConverters.CountToVisible}}" />
+          <TextBlock Classes="faint" Text="{Binding SelectedTarget.UserCount, StringFormat='{}{0} users'}"
+                     IsVisible="{Binding SelectedTarget.UserCount, Converter={x:Static views:ViewConverters.CountToVisible}}" />
         </StackPanel>
       </Border>
 
