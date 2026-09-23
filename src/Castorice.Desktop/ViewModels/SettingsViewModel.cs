@@ -18,6 +18,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         _services = services;
         Settings = services.Settings;
         AutoJoinChannels = string.Join(", ", Settings.AutoJoinChannels);
+        RefreshImageCacheSummary();
     }
 
     public AppSettings Settings { get; }
@@ -25,6 +26,12 @@ public sealed partial class SettingsViewModel : ViewModelBase
     public string ConfigDirectory => AppPaths.Root;
 
     public string MappoolDirectory => AppPaths.MappoolDirectory;
+
+    public string ImageCacheDirectory => RemoteImageLoader.CacheDirectory;
+
+    /// <summary>"12 images · 1.4 MB"; recomputed whenever the page is opened or the cache cleared.</summary>
+    [ObservableProperty]
+    private string _imageCacheSummary = string.Empty;
 
     public string IrcPasswordHelp =>
         "This is the IRC server password from osu.ppy.sh/home/account/edit (Legacy API), not your account password.";
@@ -143,6 +150,20 @@ public sealed partial class SettingsViewModel : ViewModelBase
         {
             Status = $"Could not save settings: {ex.Message}";
         }
+    }
+
+    public void RefreshImageCacheSummary() =>
+        ImageCacheSummary = RemoteImageLoader.DiskUsage.Describe();
+
+    [RelayCommand]
+    private void ClearImageCache()
+    {
+        var removed = RemoteImageLoader.ClearCache();
+        RefreshImageCacheSummary();
+
+        Status = removed == 0
+            ? "The image cache was already empty."
+            : $"Cleared {removed} cached {(removed == 1 ? "image" : "images")}. They download again when next shown.";
     }
 
     [RelayCommand]

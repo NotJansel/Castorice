@@ -88,6 +88,20 @@
             <TextBlock Classes="label" Text="MAPPOOL DIRECTORY" />
             <SelectableTextBlock Text="{Binding MappoolDirectory}" Classes="muted mono" TextWrapping="Wrap" />
           </StackPanel>
+
+          <StackPanel Spacing="4">
+            <TextBlock Classes="label" Text="IMAGE CACHE" />
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Grid.Column="0" Spacing="2" Margin="0,0,12,0">
+                <TextBlock Text="{Binding ImageCacheSummary}" FontWeight="SemiBold" />
+                <SelectableTextBlock Text="{Binding ImageCacheDirectory}" Classes="muted mono" TextWrapping="Wrap" />
+              </StackPanel>
+              <Button Grid.Column="1" Content="Clear image cache" VerticalAlignment="Center"
+                      Command="{Binding ClearImageCacheCommand}" />
+            </Grid>
+            <TextBlock Classes="faint" TextWrapping="Wrap"
+                       Text="Covers and avatars are kept on disk, so a pool opens instantly and even offline. Clearing only means they download again the next time they are shown." />
+          </StackPanel>
         </StackPanel>
       </Border>
 

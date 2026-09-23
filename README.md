@@ -32,8 +32,11 @@ window belongs to whichever page is open:
 ```
 
 Pick tiles show the beatmap's cover art behind the title, mods and difficulty stats, and the
-profile page loads avatars and banners the same way. Images are fetched once and cached under
-`cache/images` in the config directory, so reopening a pool costs nothing.
+profile page loads avatars and banners the same way. Images are fetched once and kept on disk
+under `cache/images` in the config directory, so a pool opens instantly — and still shows its
+covers with no connection at all. Settings shows how much the cache holds and has a button to
+clear it; anything cleared is simply downloaded again when next shown. A cached file that turns
+out to be cut short is thrown away and fetched again rather than shown as a blank tile.
 
 ## Getting started
 
@@ -247,7 +250,7 @@ The core library never references Avalonia. UI thread marshalling goes through t
 
 ```bash
 dotnet build              # whole solution
-dotnet test               # 174 tests, no network needed
+dotnet test               # 209 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
 

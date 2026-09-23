@@ -157,6 +157,11 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     partial void OnCurrentPageChanged(AppPage value)
     {
+        if (value is AppPage.Settings)
+        {
+            Settings.RefreshImageCacheSummary();
+        }
+
         OnPropertyChanged(nameof(IsChatPage));
         OnPropertyChanged(nameof(IsTournamentPage));
         OnPropertyChanged(nameof(IsProfilePage));

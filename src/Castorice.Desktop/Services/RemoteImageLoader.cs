@@ -1,9 +1,8 @@
 using System.Collections.Concurrent;
-using System.Security.Cryptography;
-using System.Text;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
+using Castorice.Core.Caching;
 using Castorice.Core.Configuration;
 
 namespace Castorice.Desktop.Services;
@@ -19,7 +18,11 @@ public static class RemoteImageLoader
 
     private static readonly ConcurrentDictionary<string, Task<Bitmap?>> Cache = new();
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
-    private static readonly string DiskCacheDirectory = Path.Combine(AppPaths.Root, "cache", "images");
+    private static readonly DiskByteCache Disk = new(Path.Combine(AppPaths.Root, "cache", "images"));
+
+    public static string CacheDirectory => Disk.Directory;
+
+    public static CacheUsage DiskUsage => Disk.GetUsage();
 
     /// <summary>The URL to display. Setting it to null or empty clears the image.</summary>
     public static readonly AttachedProperty<string?> SourceProperty =
@@ -70,49 +73,87 @@ public static class RemoteImageLoader
         }
     }
 
-    private static Task<Bitmap?> LoadAsync(string url, int decodeWidth)
+    /// <summary>
+    /// Drops every cached image, on disk and in memory, and returns how many files went. Images on
+    /// screen keep showing; anything shown later is simply downloaded again.
+    /// </summary>
+    public static int ClearCache()
+    {
+        Cache.Clear();
+        return Disk.Clear();
+    }
+
+    private static async Task<Bitmap?> LoadAsync(string url, int decodeWidth)
     {
         var key = decodeWidth > 0 ? $"{url}|{decodeWidth}" : url;
+        var load = Cache.GetOrAdd(key, _ => DownloadAsync(url, decodeWidth));
 
-        return Cache.GetOrAdd(key, _ => DownloadAsync(url, decodeWidth));
+        try
+        {
+            return await load.ConfigureAwait(false);
+        }
+        catch
+        {
+            // A failed load must not stick for the rest of the session: forget it, so the image is
+            // tried again the next time it is shown. Only this attempt is removed, not a newer one.
+            Cache.TryRemove(new KeyValuePair<string, Task<Bitmap?>>(key, load));
+            throw;
+        }
     }
 
     private static async Task<Bitmap?> DownloadAsync(string url, int decodeWidth)
     {
-        byte[] bytes;
-
-        var cacheFile = Path.Combine(DiskCacheDirectory, Fingerprint(url));
-        if (File.Exists(cacheFile))
+        if (await Disk.TryReadAsync(url).ConfigureAwait(false) is { } cached)
         {
-            bytes = await File.ReadAllBytesAsync(cacheFile).ConfigureAwait(false);
-        }
-        else
-        {
-            bytes = await Http.GetByteArrayAsync(url).ConfigureAwait(false);
+            if (TryDecode(cached, decodeWidth) is { } fromDisk)
+            {
+                TrimMemoryCache();
+                return fromDisk;
+            }
 
-            try
-            {
-                Directory.CreateDirectory(DiskCacheDirectory);
-                await File.WriteAllBytesAsync(cacheFile, bytes).ConfigureAwait(false);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                // Losing the disk cache costs a re-download, nothing more.
-            }
+            // Bytes that are cut short or do not decode are a broken entry, not an image —
+            // typically one left half-written by an older version. Drop it and fetch it again.
+            Disk.Remove(url);
         }
 
-        using var stream = new MemoryStream(bytes);
-        var bitmap = decodeWidth > 0
-            ? Bitmap.DecodeToWidth(stream, decodeWidth, BitmapInterpolationMode.HighQuality)
-            : new Bitmap(stream);
+        var bytes = await Http.GetByteArrayAsync(url).ConfigureAwait(false);
+
+        // Decoded before it is stored, so an error page served with status 200 is never cached.
+        var bitmap = TryDecode(bytes, decodeWidth)
+            ?? throw new InvalidDataException($"{url} did not return an image.");
+
+        await Disk.WriteAsync(url, bytes).ConfigureAwait(false);
 
         TrimMemoryCache();
         return bitmap;
     }
 
+    private static Bitmap? TryDecode(byte[] bytes, int decodeWidth)
+    {
+        // A cut-off file still "decodes" into a mostly blank picture, so completeness is checked
+        // first; otherwise one truncated download would stay cached as a grey tile for good.
+        if (!ImageBytes.LooksComplete(bytes))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var stream = new MemoryStream(bytes);
+            return decodeWidth > 0
+                ? Bitmap.DecodeToWidth(stream, decodeWidth, BitmapInterpolationMode.HighQuality)
+                : new Bitmap(stream);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // The decoder's failure types are not documented; any of them means "not an image".
+            return null;
+        }
+    }
+
     /// <summary>
-    /// Bitmaps hold unmanaged memory, so the in-memory map is bounded. Eviction is coarse — the
-    /// whole map is dropped — because covers are cheap to re-decode from the disk cache.
+    /// Bitmaps hold unmanaged memory, so the in-memory map is bounded. Eviction is coarse — half the
+    /// entries go, in no particular order — because covers are cheap to re-decode from disk.
     /// </summary>
     private static void TrimMemoryCache()
     {
@@ -125,11 +166,5 @@ public static class RemoteImageLoader
         {
             Cache.TryRemove(key, out _);
         }
-    }
-
-    private static string Fingerprint(string url)
-    {
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(url));
-        return Convert.ToHexStringLower(hash)[..32];
     }
 }
