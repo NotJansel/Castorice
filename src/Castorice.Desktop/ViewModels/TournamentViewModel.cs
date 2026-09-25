@@ -73,6 +73,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
     public TournamentViewModel(AppServices services)
     {
         _services = services;
+        Messages = new LobbyMessagesViewModel(_services.Settings.Announcements, _services.SaveSettings);
 
         _services.Tournament.RoomChanged += (_, room) => OnRoomChanged(room);
         _services.Tournament.RoomEvent += (_, evt) => OnRoomEvent(evt);
@@ -191,6 +192,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
             OnPropertyChanged();
             OnPropertyChanged(nameof(PointsToWin));
             OnPropertyChanged(nameof(MatchTargetDisplay));
+            RefreshDraft();
         }
     }
 
@@ -333,6 +335,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
         OnPropertyChanged(nameof(MatchTargetDisplay));
         OnPropertyChanged(nameof(EasyMultiplier));
         OnPropertyChanged(nameof(EasyHiddenMultiplier));
+        RefreshDraftRules();
     }
 
     private void RebuildGroups()
@@ -344,7 +347,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
             var slots = group.Select(slot =>
             {
                 var viewModel = new MappoolSlotViewModel(slot);
-                viewModel.AvailabilityChanged += OnSlotAvailabilityChanged;
+                viewModel.DraftMarkChanged += OnSlotDraftMarkChanged;
                 return viewModel;
             });
 
@@ -367,7 +370,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
             claimed |= group.AnyOf;
         }
 
-        OnPropertyChanged(nameof(BanSummary));
+        RefreshDraft();
         OnPropertyChanged(nameof(HasFreeModSlots));
         OnPropertyChanged(nameof(FreeModAllowedDisplay));
         OnPropertyChanged(nameof(IncludeStageInRoomName));
@@ -381,41 +384,6 @@ public sealed partial class TournamentViewModel : ViewModelBase
         {
             slot.PoolDefault = defaults;
         }
-    }
-
-    private void OnSlotAvailabilityChanged(object? sender, EventArgs e)
-    {
-        if (sender is MappoolSlotViewModel slot)
-        {
-            Status = slot.Availability is SlotAvailability.Available
-                ? $"Cleared {slot.Label}."
-                : $"{slot.Label}: {slot.AvailabilityLabel}.";
-        }
-
-        OnPropertyChanged(nameof(BanSummary));
-    }
-
-    /// <summary>One line naming every ban and protect, for the lobby panel.</summary>
-    public string BanSummary
-    {
-        get
-        {
-            var marked = AllSlots.Where(s => s.HasAvailabilityMark).ToList();
-            return marked.Count == 0
-                ? "No bans or protects yet."
-                : string.Join("   ", marked.Select(s => $"{s.Label} {s.AvailabilityLabel}"));
-        }
-    }
-
-    [RelayCommand]
-    private void ClearBansAndProtects()
-    {
-        foreach (var slot in AllSlots)
-        {
-            slot.Availability = SlotAvailability.Available;
-        }
-
-        Status = "Cleared every ban and protect.";
     }
 
     private IEnumerable<MappoolSlotViewModel> AllSlots => Groups.SelectMany(group => group.Slots);
@@ -507,6 +475,11 @@ public sealed partial class TournamentViewModel : ViewModelBase
             return Task.CompletedTask;
         }
 
+        if (TryMarkFromClick(slot))
+        {
+            return Task.CompletedTask;
+        }
+
         if (slot.IsBanned)
         {
             // Left as a refusal rather than a disabled tile, so the ban stays easy to take back.
@@ -523,6 +496,8 @@ public sealed partial class TournamentViewModel : ViewModelBase
                 {
                     candidate.IsCurrentPick = ReferenceEquals(candidate, slot);
                 }
+
+                RecordPick(slot);
             },
             $"Picked {slot.Label}.");
     }
@@ -687,7 +662,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
         Status = result.Summary;
 
-        if (announce || !result.IsClean)
+        if (announce || (!result.IsClean && Messages.FreeModWarnings))
         {
             await _services.Tournament.SendAsync(result.Summary, cancellationToken);
         }
@@ -696,16 +671,18 @@ public sealed partial class TournamentViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void AddRedPoint() => RedScore++;
+    private Task AddRedPointAsync() => AwardManualPointAsync(TeamColour.Red);
 
     [RelayCommand]
-    private void AddBluePoint() => BlueScore++;
+    private Task AddBluePointAsync() => AwardManualPointAsync(TeamColour.Blue);
 
     [RelayCommand]
     private void ResetScore()
     {
         RedScore = 0;
         BlueScore = 0;
+        _mapWinners.Clear();
+        RefreshDraft();
     }
 
     // ---- mappool editing -------------------------------------------------
@@ -895,6 +872,10 @@ public sealed partial class TournamentViewModel : ViewModelBase
         OnPropertyChanged(nameof(RedScore));
         OnPropertyChanged(nameof(BlueScore));
 
+        // A different lobby starts from its own score, so the map history goes with the old one.
+        _mapWinners.Clear();
+        RefreshDraft();
+
         if (room is null)
         {
             RoomLog.Clear();
@@ -1015,18 +996,21 @@ public sealed partial class TournamentViewModel : ViewModelBase
         OnPropertyChanged(nameof(RedScore));
         OnPropertyChanged(nameof(BlueScore));
 
-        var standing = new MatchStanding(
-            room.RedScore,
-            room.BlueScore,
-            Pool.PointsToWin,
-            RedTeam.Trim() is { Length: > 0 } red ? red : "Red",
-            BlueTeam.Trim() is { Length: > 0 } blue ? blue : "Blue");
+        if (result.HasTeams)
+        {
+            _mapWinners.Add(result.Winner);
+        }
+
+        RefreshDraft();
 
         var messages = MatchAnnouncer.BuildResultMessages(
             result,
             pick?.Label ?? string.Empty,
             room.CurrentBeatmapName,
-            standing);
+            CurrentStanding(),
+            Messages.Model).ToList();
+
+        AppendNextTurn(messages);
 
         foreach (var message in messages)
         {
@@ -1034,7 +1018,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
         }
 
         Status = result.Winner is { } winner
-            ? $"{winner} takes the map. Match: {room.RedScore} - {room.BlueScore}."
+            ? $"{Names.For(winner)} takes the map. Match: {room.RedScore} - {room.BlueScore}."
             : $"The map was tied at {result.RedTotal:N0}. No point awarded.";
     }
 

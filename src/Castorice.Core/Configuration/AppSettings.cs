@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Castorice.Core.Tournament;
 
 namespace Castorice.Core.Configuration;
 
@@ -36,6 +37,9 @@ public sealed class AppSettings
 
     /// <summary>Ask before sending destructive commands such as <c>!mp close</c>.</summary>
     public bool ConfirmDestructiveCommands { get; set; } = true;
+
+    /// <summary>What the tournament panel posts into the lobby without being asked.</summary>
+    public LobbyAnnouncements Announcements { get; set; } = new();
 
     [JsonIgnore]
     public bool HasIrcCredentials =>

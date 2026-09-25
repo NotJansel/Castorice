@@ -115,13 +115,67 @@ file, so a pool you share arrives with its artwork already set.
    unless you tick **Put the stage in the lobby name**.
    Already have a lobby? Paste its id, `#mp_` channel or match-history link and press **Attach**.
 3. Invite players, then click a mappool button to set the map and its mods.
-4. Right-click a pick to **ban** or **protect** it for either team. Banned picks grey out and
-   refuse to be sent to the lobby until the ban is cleared, so a misclick cannot burn a map.
+4. Protects and bans follow the pool's **draft order** (below): while one is due, clicking a map
+   marks it for the team in turn. Right-click any pick to set or correct a ban, protect or pick by
+   hand. Banned picks grey out and refuse to be sent to the lobby until the ban is cleared, so a
+   misclick cannot burn a map.
 5. **Start** runs the pool's countdown; **Start now** skips it; **Abort timer** and
    **Abort match** are one click away.
 6. The panel tracks slots, teams and per-player scores as BanchoBot reports them. Each player row
    can **Move** them to a slot, swap their **Team** or **Kick** them, and **+1 Red** / **+1 Blue**
    keep the running score by hand whenever you want them to.
+
+### Draft order: protects, bans and picks
+
+Every pool carries its bracket's draft order, edited in the **Draft order** card and saved with the
+pool:
+
+| Setting | Options |
+| --- | --- |
+| Protects per team | 0 turns them off |
+| Protect order, ban order | **ABAB** (alternating) or **ABBA** (snake) |
+| Bans per team | before the first pick |
+| Pick order | **ABAB**, **ABBA**, **loser of the last map picks**, **winner of the last map picks** |
+| Second ban round | after N picks, with its own number of bans; optionally opened by the other team |
+
+```json
+{
+  "draft": {
+    "protectsPerTeam": 1, "protectOrder": "Alternating",
+    "bansPerTeam": 2,     "banOrder": "Snake",
+    "pickOrder": "LoserPicks",
+    "secondBanRoundAfterPicks": 4, "secondRoundBansPerTeam": 1, "secondRoundOtherTeamFirst": false
+  }
+}
+```
+
+Who opens each phase is a per-match choice — **First protect**, **First ban** and **First pick** in
+the lobby panel, set after the roll. The panel then always shows whose turn it is (`Poland bans ·
+3 of 4`), with every protect, ban and pick so far listed underneath. Picks outside warmup are
+credited to the team in turn; once both teams are one point short the tiebreaker is called, and
+the draft ends with the match. **Undo** takes back the newest mark without posting anything.
+
+The draft counts each team's own marks rather than the position in the sequence, so if a ban is
+marked for the wrong team the other team's turn does not get skipped — the step it still owes stays
+next.
+
+### Lobby messages
+
+Everything the panel posts on its own can be switched off line by line under **Post to the lobby
+automatically**, and the choice is remembered:
+
+| Switch | Example |
+| --- | --- |
+| Map result | `[NM1] Artist - Title [Diff] \| Red 1,234,567 - 1,000,000 Blue \| Red wins by 234,567` |
+| FreeMod multipliers | `Multipliers: SomePlayer EZ x1.75 (100,000 -> 175,000)` |
+| Match score after each map | `Match score: Red 3 - 2 Blue (first to 7)`, or `Red wins the match 7 - 5` |
+| Match score after +1 | the same line when a point is awarded by hand |
+| Protects, bans and picks | `Poland bans NM1`, `Germany picks DT1: Artist - Title [Diff]` |
+| Whose turn is next | `Next: Germany bans (2/4)` — after each protect or ban and after each scored map |
+| FreeMod check warnings | `FreeMod check: Red needs 1x HR` |
+
+**Post score** and the draft panel's **Post** send the score or the draft on demand, whatever the
+switches say.
 
 ### FreeMod rule check
 
@@ -157,7 +211,7 @@ the Tournament page:
 ### Scoring a map
 
 With **Auto-score** on, a finished map is totalled by team, the point is awarded, and the result is
-posted into the lobby:
+posted into the lobby (each line can be switched off, see [Lobby messages](#lobby-messages)):
 
 ```
 [FM1] Kobaryo - Ironclad [Overkill] | Red 1,234,567 - 1,000,000 Blue | Red wins by 234,567
@@ -254,7 +308,7 @@ The core library never references Avalonia. UI thread marshalling goes through t
 
 ```bash
 dotnet build              # whole solution
-dotnet test               # 232 tests, no network needed
+dotnet test               # 259 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
 

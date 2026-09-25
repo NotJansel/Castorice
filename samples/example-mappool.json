@@ -9,6 +9,16 @@
   "startTimerSeconds": 10,
   "readyTimerSeconds": 120,
   "referees": [],
+  "draft": {
+    "protectsPerTeam": 1,
+    "protectOrder": "Alternating",
+    "bansPerTeam": 2,
+    "banOrder": "Snake",
+    "pickOrder": "Alternating",
+    "secondBanRoundAfterPicks": 0,
+    "secondRoundBansPerTeam": 1,
+    "secondRoundOtherTeamFirst": false
+  },
   "slots": [
     { "label": "NM1", "category": "NoMod",      "beatmapId": 1234567, "mods": "None" },
     { "label": "NM2", "category": "NoMod",      "beatmapId": 1234568, "mods": "None" },

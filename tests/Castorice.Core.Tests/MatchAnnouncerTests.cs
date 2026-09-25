@@ -115,4 +115,79 @@ public class MatchAnnouncerTests
         Assert.Contains("Gravity 600,000 - 100,000 Phantom", messages[0]);
         Assert.Contains("Gravity wins by 500,000", messages[0]);
     }
+
+    [Fact]
+    public void Each_result_line_can_be_switched_off_on_its_own()
+    {
+        var result = MatchScoring.Score(
+            [
+                new PlayerScoreInput("A", TeamColour.Red, 600_000, true, Mods.Easy),
+                new PlayerScoreInput("B", TeamColour.Blue, 900_000, true, Mods.None),
+            ],
+            Mods.FreeMod,
+            new ScoreMultipliers(1.75, 1.75));
+
+        var all = MatchAnnouncer.BuildResultMessages(result, "FM1", "Map", Standing());
+        Assert.Equal(3, all.Count);
+
+        var noResult = MatchAnnouncer.BuildResultMessages(
+            result, "FM1", "Map", Standing(), new LobbyAnnouncements { MapResult = false });
+        Assert.Equal(2, noResult.Count);
+        Assert.StartsWith("Multipliers:", noResult[0]);
+        Assert.StartsWith("Match score:", noResult[1]);
+
+        var noMultipliers = MatchAnnouncer.BuildResultMessages(
+            result, "FM1", "Map", Standing(), new LobbyAnnouncements { Multipliers = false });
+        Assert.Equal(2, noMultipliers.Count);
+        Assert.DoesNotContain(noMultipliers, line => line.StartsWith("Multipliers:", StringComparison.Ordinal));
+
+        var noScore = MatchAnnouncer.BuildResultMessages(
+            result, "FM1", "Map", Standing(), new LobbyAnnouncements { MatchScore = false });
+        Assert.DoesNotContain(noScore, line => line.StartsWith("Match score:", StringComparison.Ordinal));
+
+        var silent = MatchAnnouncer.BuildResultMessages(
+            result,
+            "FM1",
+            "Map",
+            Standing(),
+            new LobbyAnnouncements { MapResult = false, Multipliers = false, MatchScore = false });
+        Assert.Empty(silent);
+    }
+
+    [Fact]
+    public void Names_each_draft_action_with_the_team()
+    {
+        var names = TeamNames.From("Germany", "Poland");
+
+        Assert.Equal("Germany protects HD1", MatchAnnouncer.DraftActionLine(DraftPhase.Protect, TeamColour.Red, "HD1", "X", names));
+        Assert.Equal("Poland bans NM2", MatchAnnouncer.DraftActionLine(DraftPhase.Ban, TeamColour.Blue, "NM2", "X", names));
+        Assert.Equal(
+            "Germany picks DT1: Artist - Title [Diff]",
+            MatchAnnouncer.DraftActionLine(DraftPhase.Pick, TeamColour.Red, "DT1", "Artist - Title [Diff]", names));
+        Assert.Equal("Tiebreaker: Song", MatchAnnouncer.DraftActionLine(DraftPhase.Tiebreaker, null, "TB", "Song", names));
+    }
+
+    [Fact]
+    public void Announces_whose_turn_is_next()
+    {
+        var names = TeamNames.From("Germany", "Poland");
+
+        Assert.Equal("Next: Poland bans (2/4)", MatchAnnouncer.NextTurnLine(new DraftTurn(DraftPhase.Ban, TeamColour.Blue, 2, 4), names));
+        Assert.Equal(
+            "Next: Germany bans (second round) (1/2)",
+            MatchAnnouncer.NextTurnLine(new DraftTurn(DraftPhase.Ban, TeamColour.Red, 1, 2, Round: 2), names));
+        Assert.Equal("Next: Germany picks", MatchAnnouncer.NextTurnLine(new DraftTurn(DraftPhase.Pick, TeamColour.Red, 3), names));
+    }
+
+    [Fact]
+    public void Summarises_the_draft_on_one_line()
+    {
+        var line = MatchAnnouncer.DraftSummaryLine(
+            [("HD1", SlotAvailability.ProtectedByRed), ("NM2", SlotAvailability.BannedByBlue), ("HR1", SlotAvailability.BannedByRed)],
+            [("DT1", TeamColour.Red), ("TB", null)],
+            TeamNames.Default);
+
+        Assert.Equal("Protects: Red HD1 | Bans: Blue NM2, Red HR1 | Picks: DT1 (Red), TB", line);
+        Assert.Equal("No protects, bans or picks yet.", MatchAnnouncer.DraftSummaryLine([], [], TeamNames.Default));
+    }
 }

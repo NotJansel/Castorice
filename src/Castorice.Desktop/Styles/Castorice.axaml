@@ -307,6 +307,11 @@
     <Setter Property="Opacity" Value="0.42" />
   </Style>
 
+  <!-- Already played this match: still clickable for a replay, just quieter than the rest. -->
+  <Style Selector="Button.pick.picked:not(.current)">
+    <Setter Property="Opacity" Value="0.7" />
+  </Style>
+
   <Style Selector="Button.pick.current /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="BorderBrush" Value="{DynamicResource CastoriceAccentBrush}" />
     <Setter Property="BorderThickness" Value="2" />

@@ -168,6 +168,9 @@ public sealed class Mappool
     /// </summary>
     public List<FreeModGroup> FreeModGroups { get; set; } = FreeModCheck.DefaultGroups();
 
+    /// <summary>Protect, ban and pick order for matches played on this pool.</summary>
+    public DraftRules Draft { get; set; } = new();
+
     /// <summary>osu! usernames auto-added as referees with <c>!mp addref</c>.</summary>
     public List<string> Referees { get; set; } = [];
 

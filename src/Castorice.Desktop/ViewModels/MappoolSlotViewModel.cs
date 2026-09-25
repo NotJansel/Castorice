@@ -4,6 +4,21 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace Castorice.Desktop.ViewModels;
 
+public enum DraftMarkKind
+{
+    /// <summary>A ban or protect.</summary>
+    Availability,
+    Pick,
+}
+
+public sealed class DraftMarkChangedEventArgs(DraftMarkKind kind, bool added) : EventArgs
+{
+    public DraftMarkKind Kind { get; } = kind;
+
+    /// <summary>True when a mark was set, false when one was cleared.</summary>
+    public bool Added { get; } = added;
+}
+
 /// <summary>One mappool button. Wraps the model so edits show up without rebuilding the grid.</summary>
 public sealed partial class MappoolSlotViewModel : ViewModelBase
 {
@@ -21,10 +36,62 @@ public sealed partial class MappoolSlotViewModel : ViewModelBase
     public MappoolSlot Model { get; }
 
     /// <summary>
-    /// Ban and protect state belongs to the match, not the pool, so it is never written to the
-    /// pool file. Every change flows back through here to the page that owns the match.
+    /// Ban, protect and pick state belongs to the match, not the pool, so it is never written to
+    /// the pool file. Every change flows back through here to the page that owns the match.
     /// </summary>
-    public event EventHandler? AvailabilityChanged;
+    public event EventHandler<DraftMarkChangedEventArgs>? DraftMarkChanged;
+
+    /// <summary>When the current ban or protect was set, so the page can undo marks newest first.</summary>
+    public long AvailabilityStamp { get; set; }
+
+    /// <summary>When the pick was set; also orders the picks for the draft.</summary>
+    public long PickStamp { get; set; }
+
+    public string PickLabel => !IsPicked ? string.Empty : PickedBy switch
+    {
+        TeamColour.Red => "PICK R",
+        TeamColour.Blue => "PICK B",
+        _ => "TB",
+    };
+
+    /// <summary>Whether the map has been picked in this match; <see cref="PickedBy"/> says by whom.</summary>
+    public bool IsPicked { get; private set; }
+
+    /// <summary>The picking team, or <c>null</c> for the tiebreaker.</summary>
+    public TeamColour? PickedBy { get; private set; }
+
+    /// <summary>Marks the map as picked. A team of <c>null</c> is the tiebreaker.</summary>
+    public void MarkPicked(TeamColour? team)
+    {
+        if (IsPicked && PickedBy == team)
+        {
+            return;
+        }
+
+        IsPicked = true;
+        PickedBy = team;
+        RaisePickChanged(added: true);
+    }
+
+    public void ClearPick()
+    {
+        if (!IsPicked)
+        {
+            return;
+        }
+
+        IsPicked = false;
+        PickedBy = null;
+        RaisePickChanged(added: false);
+    }
+
+    private void RaisePickChanged(bool added)
+    {
+        OnPropertyChanged(nameof(IsPicked));
+        OnPropertyChanged(nameof(PickedBy));
+        OnPropertyChanged(nameof(PickLabel));
+        DraftMarkChanged?.Invoke(this, new DraftMarkChangedEventArgs(DraftMarkKind.Pick, added));
+    }
 
     public bool IsBanned => Availability.IsBanned();
 
@@ -111,7 +178,16 @@ public sealed partial class MappoolSlotViewModel : ViewModelBase
     private void ProtectBlue() => Availability = SlotAvailability.ProtectedByBlue;
 
     [RelayCommand]
+    private void PickedByRed() => MarkPicked(TeamColour.Red);
+
+    [RelayCommand]
+    private void PickedByBlue() => MarkPicked(TeamColour.Blue);
+
+    [RelayCommand]
     private void ClearAvailability() => Availability = SlotAvailability.Available;
+
+    [RelayCommand]
+    private void ClearPickMark() => ClearPick();
 
     partial void OnAvailabilityChanged(SlotAvailability value)
     {
@@ -120,7 +196,9 @@ public sealed partial class MappoolSlotViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasAvailabilityMark));
         OnPropertyChanged(nameof(AvailabilityLabel));
         OnPropertyChanged(nameof(AvailabilityTeam));
-        AvailabilityChanged?.Invoke(this, EventArgs.Empty);
+        DraftMarkChanged?.Invoke(
+            this,
+            new DraftMarkChangedEventArgs(DraftMarkKind.Availability, value is not SlotAvailability.Available));
     }
 
     public string Label

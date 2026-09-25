@@ -87,6 +87,7 @@
                         <Button Classes="pick"
                                 Classes.current="{Binding IsCurrentPick}"
                                 Classes.banned="{Binding IsBanned}"
+                                Classes.picked="{Binding IsPicked}"
                                 Command="{Binding $parent[UserControl].((vm:TournamentViewModel)DataContext).PickCommand}"
                                 CommandParameter="{Binding}"
                                 ToolTip.Tip="{Binding DisplayName}">
@@ -98,7 +99,11 @@
                               <MenuItem Header="Protect for Red" Command="{Binding ProtectRedCommand}" />
                               <MenuItem Header="Protect for Blue" Command="{Binding ProtectBlueCommand}" />
                               <Separator />
-                              <MenuItem Header="Clear" Command="{Binding ClearAvailabilityCommand}" />
+                              <MenuItem Header="Clear ban / protect" Command="{Binding ClearAvailabilityCommand}" />
+                              <Separator />
+                              <MenuItem Header="Picked by Red" Command="{Binding PickedByRedCommand}" />
+                              <MenuItem Header="Picked by Blue" Command="{Binding PickedByBlueCommand}" />
+                              <MenuItem Header="Clear pick" Command="{Binding ClearPickMarkCommand}" />
                             </ContextMenu>
                           </Button.ContextMenu>
                           <Border CornerRadius="{StaticResource RadiusMedium}" ClipToBounds="True"
@@ -116,12 +121,19 @@
                                   <TextBlock Grid.Column="0" Text="{Binding Label}"
                                              FontWeight="Bold" FontSize="14"
                                              Foreground="{DynamicResource CastoriceAccentBrush}" />
-                                  <Border Grid.Column="1" Classes="badge" Margin="8,0,0,0"
-                                          HorizontalAlignment="Left"
-                                          IsVisible="{Binding HasAvailabilityMark}"
-                                          Background="{Binding AvailabilityTeam, Converter={x:Static views:ViewConverters.TeamToBrush}}">
-                                    <TextBlock Text="{Binding AvailabilityLabel}" />
-                                  </Border>
+                                  <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4"
+                                              Margin="8,0,0,0" HorizontalAlignment="Left">
+                                    <Border Classes="badge"
+                                            IsVisible="{Binding HasAvailabilityMark}"
+                                            Background="{Binding AvailabilityTeam, Converter={x:Static views:ViewConverters.TeamToBrush}}">
+                                      <TextBlock Text="{Binding AvailabilityLabel}" />
+                                    </Border>
+                                    <Border Classes="badge"
+                                            IsVisible="{Binding IsPicked}"
+                                            Background="{Binding PickedBy, Converter={x:Static views:ViewConverters.TeamToBrush}}">
+                                      <TextBlock Text="{Binding PickLabel}" />
+                                    </Border>
+                                  </StackPanel>
                                   <Border Grid.Column="2" Classes="badge">
                                     <TextBlock Text="{Binding ModsBadge}" />
                                   </Border>
@@ -165,6 +177,50 @@
               </WrapPanel>
               <TextBlock Classes="muted" TextWrapping="Wrap"
                          Text="The beatmap id is the last number of an osu.ppy.sh/b/… link — the difficulty, not the set. Run Fetch metadata afterwards to pull in titles and cover art." />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="card">
+            <StackPanel Spacing="12">
+              <TextBlock Classes="h2" Text="Draft order" />
+              <TextBlock Classes="faint" TextWrapping="Wrap"
+                         Text="Protects come first, then bans, then picks. Who opens each phase is set per match in the lobby panel. Saved with the pool." />
+              <Grid ColumnDefinitions="110,*,110,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="PROTECTS" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="4" Increment="1" FormatString="0"
+                               Value="{Binding ProtectsPerTeam}" Margin="0,0,16,0"
+                               ToolTip.Tip="Per team. 0 turns protects off." />
+                <TextBlock Grid.Row="0" Grid.Column="2" Classes="label" Text="ORDER" VerticalAlignment="Center" />
+                <ComboBox Grid.Row="0" Grid.Column="3" HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding TurnOrderChoices}" SelectedItem="{Binding ProtectOrderChoice}" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Classes="label" Text="BANS" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="6" Increment="1" FormatString="0"
+                               Value="{Binding BansPerTeam}" Margin="0,0,16,0"
+                               ToolTip.Tip="Per team, before the first pick." />
+                <TextBlock Grid.Row="1" Grid.Column="2" Classes="label" Text="ORDER" VerticalAlignment="Center" />
+                <ComboBox Grid.Row="1" Grid.Column="3" HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding TurnOrderChoices}" SelectedItem="{Binding BanOrderChoice}" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Classes="label" Text="PICKS" VerticalAlignment="Center" />
+                <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding PickOrderChoices}" SelectedItem="{Binding PickOrderChoice}" />
+              </Grid>
+
+              <TextBlock Classes="label" Text="SECOND BAN ROUND" Margin="0,4,0,0" />
+              <Grid ColumnDefinitions="110,*,110,*">
+                <TextBlock Grid.Column="0" Classes="label" Text="AFTER PICK" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Column="1" Minimum="0" Maximum="12" Increment="1" FormatString="0"
+                               Value="{Binding SecondBanRoundAfterPicks}" Margin="0,0,16,0"
+                               ToolTip.Tip="How many picks come before the second round. 0 means the bracket bans once." />
+                <TextBlock Grid.Column="2" Classes="label" Text="BANS" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Column="3" Minimum="0" Maximum="4" Increment="1" FormatString="0"
+                               Value="{Binding SecondRoundBansPerTeam}" IsEnabled="{Binding HasSecondBanRound}"
+                               ToolTip.Tip="Per team, in the second round. Uses the same order as the first." />
+              </Grid>
+              <CheckBox Content="The other team opens the second round"
+                        IsChecked="{Binding SecondRoundOtherTeamFirst}"
+                        IsEnabled="{Binding HasSecondBanRound}" />
             </StackPanel>
           </Border>
 
@@ -330,6 +386,8 @@
               <Button Classes="ghost compact" Content="+1 Red" Command="{Binding AddRedPointCommand}" />
               <Button Classes="ghost compact" Content="+1 Blue" Command="{Binding AddBluePointCommand}" />
               <Button Classes="ghost compact" Content="Reset" Command="{Binding ResetScoreCommand}" />
+              <Button Classes="ghost compact" Content="Post score" Command="{Binding PostScoreCommand}"
+                      ToolTip.Tip="Post the match score to the lobby now." />
             </WrapPanel>
 
             <StackPanel Spacing="8">
@@ -360,15 +418,62 @@
 
             <StackPanel Spacing="8">
               <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Grid.Column="0" Classes="label" Text="BANS &amp; PROTECTS" VerticalAlignment="Center" />
-                <Button Grid.Column="1" Classes="ghost compact" Content="Clear"
-                        Command="{Binding ClearBansAndProtectsCommand}" />
+                <TextBlock Grid.Column="0" Classes="label" Text="DRAFT" VerticalAlignment="Center" />
+                <WrapPanel Grid.Column="1" Orientation="Horizontal" Classes="tight">
+                  <Button Classes="ghost compact" Content="Undo" Command="{Binding UndoDraftMarkCommand}"
+                          ToolTip.Tip="Take back the newest protect, ban or pick." />
+                  <Button Classes="ghost compact" Content="Clear" Command="{Binding ClearDraftCommand}" />
+                  <Button Classes="ghost compact" Content="Post" Command="{Binding PostDraftCommand}"
+                          ToolTip.Tip="Post every protect, ban and pick so far, and whose turn it is." />
+                </WrapPanel>
               </Grid>
+
               <Border Classes="well">
-                <TextBlock Text="{Binding BanSummary}" Classes="muted" TextWrapping="Wrap" />
+                <StackPanel Spacing="8">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Ellipse Width="9" Height="9" VerticalAlignment="Center"
+                             Fill="{Binding NextTurnTeam, Converter={x:Static views:ViewConverters.TeamToBrush}}" />
+                    <TextBlock Text="{Binding NextTurnDisplay}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                  </StackPanel>
+                  <TextBlock Text="{Binding DraftSummary}" Classes="muted" TextWrapping="Wrap" />
+                </StackPanel>
               </Border>
+
+              <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6" RowDefinitions="Auto,Auto" RowSpacing="4">
+                <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="FIRST PROTECT" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Classes="label" Text="FIRST BAN" />
+                <TextBlock Grid.Row="0" Grid.Column="2" Classes="label" Text="FIRST PICK" />
+                <ComboBox Grid.Row="1" Grid.Column="0" HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding Teams}" SelectedItem="{Binding FirstProtect}" />
+                <ComboBox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding Teams}" SelectedItem="{Binding FirstBan}" />
+                <ComboBox Grid.Row="1" Grid.Column="2" HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding Teams}" SelectedItem="{Binding FirstPick}" />
+              </Grid>
+
+              <CheckBox Content="Clicking a map marks the protect or ban that is due"
+                        IsChecked="{Binding ClickFollowsDraft}"
+                        ToolTip.Tip="While a protect or ban is due, a click marks the map for the team in turn instead of sending it to the lobby. Warmup picks always go to the lobby." />
               <TextBlock Classes="faint" TextWrapping="Wrap"
-                         Text="Right-click a pick to ban or protect it for either team." />
+                         Text="Picks outside warmup are credited to the team in turn. Right-click a map to set or correct any mark by hand." />
+            </StackPanel>
+
+            <StackPanel Spacing="6">
+              <TextBlock Classes="label" Text="POST TO THE LOBBY AUTOMATICALLY" />
+              <CheckBox Content="Map result" IsChecked="{Binding Messages.MapResult}"
+                        ToolTip.Tip="NM1 | Red 1,234,567 - 1,000,000 Blue | Red wins by 234,567" />
+              <CheckBox Content="FreeMod multipliers" IsChecked="{Binding Messages.Multipliers}"
+                        ToolTip.Tip="Multipliers: player EZ x1.75 (500,000 -> 875,000)" />
+              <CheckBox Content="Match score after each map" IsChecked="{Binding Messages.MatchScore}"
+                        ToolTip.Tip="Match score: Red 3 - 2 Blue (first to 7), or who won the match" />
+              <CheckBox Content="Match score after +1" IsChecked="{Binding Messages.ScoreOnManualPoint}"
+                        ToolTip.Tip="Also post the score when a point is awarded by hand." />
+              <CheckBox Content="Protects, bans and picks" IsChecked="{Binding Messages.DraftActions}"
+                        ToolTip.Tip="Red bans NM2 · Blue picks DT1: Artist - Title [Diff]" />
+              <CheckBox Content="Whose turn is next" IsChecked="{Binding Messages.NextTurn}"
+                        ToolTip.Tip="Next: Blue bans (2/4) — after each protect or ban and after each scored map." />
+              <CheckBox Content="FreeMod check warnings" IsChecked="{Binding Messages.FreeModWarnings}"
+                        ToolTip.Tip="The automatic check's warning when someone's mods break the rule. The Check FreeMod button always posts." />
             </StackPanel>
 
             <StackPanel Spacing="8">
