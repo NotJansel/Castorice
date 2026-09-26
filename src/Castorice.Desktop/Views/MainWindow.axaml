@@ -9,6 +9,7 @@
         x:Class="Castorice.Desktop.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="{Binding WindowTitle}"
+        Icon="/Assets/castorice.ico"
         Width="1400" Height="880"
         MinWidth="1100" MinHeight="660"
         Background="{DynamicResource CastoriceBackgroundBrush}">
@@ -41,10 +42,9 @@
         <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="20,22,16,20">
           <Border Width="28" Height="28"
                   CornerRadius="{StaticResource RadiusMedium}"
-                  Background="{StaticResource CastoriceAccentGradient}">
-            <TextBlock Text="C" FontSize="16" FontWeight="Bold"
-                       Foreground="{DynamicResource CastoriceOnAccentBrush}"
-                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  ClipToBounds="True">
+            <Image Source="/Assets/castorice.png" Stretch="UniformToFill"
+                   RenderOptions.BitmapInterpolationMode="HighQuality" />
           </Border>
           <StackPanel VerticalAlignment="Center">
             <TextBlock Text="Castorice" FontSize="15" FontWeight="Bold" />

@@ -6,6 +6,8 @@
     <AssemblyName>Castorice</AssemblyName>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- The .exe icon on Windows. The window icon is set in MainWindow.axaml from the same file. -->
+    <ApplicationIcon>Assets\castorice.ico</ApplicationIcon>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <!-- Avalonia ships resources for many locales; keeping globalization on avoids surprises on macOS. -->
     <InvariantGlobalization>false</InvariantGlobalization>
