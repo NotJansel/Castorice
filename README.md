@@ -153,8 +153,18 @@ Who opens each phase is a per-match choice — **First protect**, **First ban** 
 the lobby panel, set after the roll. The panel then always shows whose turn it is (`Poland bans ·
 3 of 4`), with every protect, ban and pick so far listed underneath. Picks outside warmup are
 credited to the team in turn; once both teams are one point short the tiebreaker is called, and
-the draft ends with the match. Where a bracket lets a team pass on its protect, **Skip protect**
-appears while one is due, posts `Poland skips their protect` and moves the draft on. **Undo** takes back the newest mark without posting anything.
+the draft ends with the match.
+
+Protects and bans can also be given up:
+
+- **Skip** — while a protect or ban is due, a button lets the team in turn pass on it
+  (`Poland skips their protect`, `Germany skips a ban`) and the draft moves on.
+- **Late show** — **… loses bans** takes away every ban that team has left, second round
+  included, as brackets rule for a team that shows up late (`Poland forfeits 2 bans`). The other
+  team's bans then run back to back.
+
+Skips and forfeits are listed in the draft (`Bans: Germany NM1, Poland forfeited 2`), posted like
+any other draft action, and **Undo** takes them back — a forfeit as a whole. **Undo** takes back the newest mark without posting anything.
 
 The draft counts each team's own marks rather than the position in the sequence, so if a ban is
 marked for the wrong team the other team's turn does not get skipped — the step it still owes stays
@@ -171,7 +181,7 @@ automatically**, and the choice is remembered:
 | FreeMod multipliers | `Multipliers: SomePlayer EZ x1.75 (100,000 -> 175,000)` |
 | Match score after each map | `Match score: Red 3 - 2 Blue (first to 7)`, or `Red wins the match 7 - 5` |
 | Match score after +1 | the same line when a point is awarded by hand |
-| Protects, bans and picks | `Poland bans NM1`, `Germany picks DT1: Artist - Title [Diff]` |
+| Protects, bans and picks | `Poland bans NM1`, `Germany picks DT1: Artist - Title [Diff]`, skips and forfeits |
 | Whose turn is next | `Next: Germany bans (2/4)` — after each protect or ban and after each scored map |
 | FreeMod check warnings | `FreeMod check: Red needs 1x HR` |
 
@@ -309,7 +319,7 @@ The core library never references Avalonia. UI thread marshalling goes through t
 
 ```bash
 dotnet build              # whole solution
-dotnet test               # 262 tests, no network needed
+dotnet test               # 265 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
 

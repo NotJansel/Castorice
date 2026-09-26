@@ -21,8 +21,9 @@ public sealed partial class TournamentViewModel
     // Hands out ever-increasing stamps so Undo can find the newest mark.
     private long _markCounter;
 
-    // Protects a team passed on this match, stamped like the marks so Undo can take them back.
-    private readonly List<(TeamColour Team, long Stamp)> _skippedProtects = [];
+    // Protects and bans a team passed on or forfeited this match, stamped like the marks so Undo
+    // can take them back. A forfeit adds one entry per ban, all sharing a stamp, so it undoes whole.
+    private readonly List<(DraftSkip Skip, long Stamp)> _skips = [];
 
     // Set while clearing or undoing, which should never post anything into the lobby.
     private bool _quietMarks;
@@ -165,11 +166,13 @@ public sealed partial class TournamentViewModel
         return new DraftProgress
         {
             RedProtects = slots.Count(s => s.Availability is SlotAvailability.ProtectedByRed)
-                + _skippedProtects.Count(s => s.Team is TeamColour.Red),
+                + SkipCount(DraftPhase.Protect, TeamColour.Red),
             BlueProtects = slots.Count(s => s.Availability is SlotAvailability.ProtectedByBlue)
-                + _skippedProtects.Count(s => s.Team is TeamColour.Blue),
-            RedBans = slots.Count(s => s.Availability is SlotAvailability.BannedByRed),
-            BlueBans = slots.Count(s => s.Availability is SlotAvailability.BannedByBlue),
+                + SkipCount(DraftPhase.Protect, TeamColour.Blue),
+            RedBans = slots.Count(s => s.Availability is SlotAvailability.BannedByRed)
+                + SkipCount(DraftPhase.Ban, TeamColour.Red),
+            BlueBans = slots.Count(s => s.Availability is SlotAvailability.BannedByBlue)
+                + SkipCount(DraftPhase.Ban, TeamColour.Blue),
             Picks = slots.Where(s => s.IsPicked).OrderBy(s => s.PickStamp).Select(s => s.PickedBy).ToList(),
             MapWinners = _mapWinners.ToList(),
             RedScore = RedScore,
@@ -186,23 +189,53 @@ public sealed partial class TournamentViewModel
             slots.Where(s => s.HasAvailabilityMark).OrderBy(s => s.AvailabilityStamp).Select(s => (s.Label, s.Availability)),
             slots.Where(s => s.IsPicked).OrderBy(s => s.PickStamp).Select(s => (s.Label, s.PickedBy)),
             Names,
-            _skippedProtects.Select(s => s.Team));
+            _skips.Select(s => s.Skip));
     }
 
-    /// <summary>True while a protect is due, so the team in turn can pass on it.</summary>
-    public bool CanSkipProtect => CurrentDraft.Next is { Phase: DraftPhase.Protect, Team: not null };
+    private int SkipCount(DraftPhase phase, TeamColour team) =>
+        _skips.Count(s => s.Skip.Phase == phase && s.Skip.Team == team);
 
-    public string SkipProtectLabel => CurrentDraft.Next.Team is { } team
-        ? $"{Names.For(team)} skips protect"
-        : "Skip protect";
+    /// <summary>True while a protect or ban is due, so the team in turn can pass on it.</summary>
+    public bool CanSkipTurn => CurrentDraft.Next is { IsMark: true, Team: not null };
+
+    public string SkipTurnLabel => CurrentDraft.Next switch
+    {
+        { Phase: DraftPhase.Protect, Team: { } team } => $"{Names.For(team)} skips protect",
+        { Phase: DraftPhase.Ban, Team: { } team } => $"{Names.For(team)} skips ban",
+        _ => "Skip",
+    };
+
+    /// <summary>Whether the pool has bans at all, which is when a late team can lose them.</summary>
+    public bool HasBans => Pool.Draft.BansOwedPerTeam > 0;
+
+    public bool CanForfeitRedBans => RemainingBans(TeamColour.Red) > 0;
+
+    public bool CanForfeitBlueBans => RemainingBans(TeamColour.Blue) > 0;
+
+    public string ForfeitRedBansLabel => $"{Names.Red} loses bans";
+
+    public string ForfeitBlueBansLabel => $"{Names.Blue} loses bans";
+
+    /// <summary>Bans the team still has to make over the match, second round included.</summary>
+    private int RemainingBans(TeamColour team)
+    {
+        var mark = team is TeamColour.Red ? SlotAvailability.BannedByRed : SlotAvailability.BannedByBlue;
+        var used = AllSlots.Count(s => s.Availability == mark) + SkipCount(DraftPhase.Ban, team);
+        return Math.Max(0, Pool.Draft.BansOwedPerTeam - used);
+    }
 
     private void RefreshDraft()
     {
         OnPropertyChanged(nameof(NextTurnDisplay));
         OnPropertyChanged(nameof(NextTurnTeam));
         OnPropertyChanged(nameof(DraftSummary));
-        OnPropertyChanged(nameof(CanSkipProtect));
-        OnPropertyChanged(nameof(SkipProtectLabel));
+        OnPropertyChanged(nameof(CanSkipTurn));
+        OnPropertyChanged(nameof(SkipTurnLabel));
+        OnPropertyChanged(nameof(HasBans));
+        OnPropertyChanged(nameof(CanForfeitRedBans));
+        OnPropertyChanged(nameof(CanForfeitBlueBans));
+        OnPropertyChanged(nameof(ForfeitRedBansLabel));
+        OnPropertyChanged(nameof(ForfeitBlueBansLabel));
     }
 
     /// <summary>Re-raises every rule after a different pool was loaded.</summary>
@@ -389,20 +422,53 @@ public sealed partial class TournamentViewModel
         slot.Category.Equals("TB", StringComparison.OrdinalIgnoreCase)
         || slot.Category.Equals("Tiebreaker", StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>The team whose protect is due passes on it; the draft moves on as if it had protected.</summary>
+    /// <summary>The team in turn passes on its protect or ban; the draft moves on as if it had made it.</summary>
     [RelayCommand]
-    private void SkipProtect()
+    private void SkipTurn()
     {
-        if (CurrentDraft.Next is not { Phase: DraftPhase.Protect, Team: { } team })
+        if (CurrentDraft.Next is not { IsMark: true, Team: { } team } next)
         {
-            Status = "No protect is due.";
+            Status = "No protect or ban is due.";
             return;
         }
 
-        _skippedProtects.Add((team, ++_markCounter));
+        _skips.Add((new DraftSkip(next.Phase, team), ++_markCounter));
         RefreshDraft();
+        AnnounceDraftStep(MatchAnnouncer.SkipLine(next.Phase, team, Names));
+    }
 
-        var action = MatchAnnouncer.ProtectSkippedLine(team, Names);
+    [RelayCommand]
+    private void ForfeitRedBans() => ForfeitBans(TeamColour.Red);
+
+    [RelayCommand]
+    private void ForfeitBlueBans() => ForfeitBans(TeamColour.Blue);
+
+    /// <summary>
+    /// Takes away every ban the team has left, second round included, as brackets do for a late
+    /// show. Undo gives them all back in one go.
+    /// </summary>
+    private void ForfeitBans(TeamColour team)
+    {
+        var remaining = RemainingBans(team);
+        if (remaining == 0)
+        {
+            Status = $"{Names.For(team)} has no bans left to lose.";
+            return;
+        }
+
+        var stamp = ++_markCounter;
+        for (var i = 0; i < remaining; i++)
+        {
+            _skips.Add((new DraftSkip(DraftPhase.Ban, team, Forfeited: true), stamp));
+        }
+
+        RefreshDraft();
+        AnnounceDraftStep(MatchAnnouncer.BansForfeitedLine(team, remaining, Names));
+    }
+
+    /// <summary>Reports a skip or forfeit in the status bar and, per the switches, in the lobby.</summary>
+    private void AnnounceDraftStep(string action)
+    {
         var next = MatchAnnouncer.NextTurnLine(CurrentDraft.Next, Names);
         Status = next is null ? $"{action}." : $"{action}. {next}.";
 
@@ -440,7 +506,7 @@ public sealed partial class TournamentViewModel
             _quietMarks = false;
         }
 
-        _skippedProtects.Clear();
+        _skips.Clear();
         RefreshDraft();
         Status = "Cleared every protect, ban and pick.";
     }
@@ -458,7 +524,7 @@ public sealed partial class TournamentViewModel
 
         var markStamp = newestMark?.AvailabilityStamp ?? -1;
         var pickStamp = newestPick?.PickStamp ?? -1;
-        var skipStamp = _skippedProtects.Count > 0 ? _skippedProtects[^1].Stamp : -1;
+        var skipStamp = _skips.Count > 0 ? _skips[^1].Stamp : -1;
 
         if (newestMark is null && newestPick is null && skipStamp < 0)
         {
@@ -468,10 +534,15 @@ public sealed partial class TournamentViewModel
 
         if (skipStamp > markStamp && skipStamp > pickStamp)
         {
-            var skipped = _skippedProtects[^1].Team;
-            _skippedProtects.RemoveAt(_skippedProtects.Count - 1);
+            var newest = _skips[^1];
+            var undone = _skips.RemoveAll(s => s.Stamp == skipStamp);
             RefreshDraft();
-            Status = $"Took back {Names.For(skipped)}'s skipped protect.";
+            Status = newest.Skip switch
+            {
+                { Forfeited: true } => $"Gave {Names.For(newest.Skip.Team)} back {undone} forfeited {(undone == 1 ? "ban" : "bans")}.",
+                { Phase: DraftPhase.Protect } => $"Took back {Names.For(newest.Skip.Team)}'s skipped protect.",
+                _ => $"Took back {Names.For(newest.Skip.Team)}'s skipped ban.",
+            };
             return;
         }
 

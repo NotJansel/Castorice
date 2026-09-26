@@ -327,13 +327,68 @@ public class DraftOrderTests
     [Fact]
     public void Lists_a_skipped_protect_in_the_summary()
     {
+        var names = TeamNames.From("Germany", "Poland");
         var line = MatchAnnouncer.DraftSummaryLine(
             [("HD1", SlotAvailability.ProtectedByRed)],
             [],
-            TeamNames.From("Germany", "Poland"),
-            [B]);
+            names,
+            [new DraftSkip(DraftPhase.Protect, B)]);
 
         Assert.Equal("Protects: Germany HD1, Poland skipped", line);
-        Assert.Equal("Poland skips their protect", MatchAnnouncer.ProtectSkippedLine(B, TeamNames.From("Germany", "Poland")));
+        Assert.Equal("Poland skips their protect", MatchAnnouncer.SkipLine(DraftPhase.Protect, B, names));
+    }
+
+    [Fact]
+    public void Lists_skipped_and_forfeited_bans_in_the_summary()
+    {
+        var names = TeamNames.From("Germany", "Poland");
+        var line = MatchAnnouncer.DraftSummaryLine(
+            [("NM1", SlotAvailability.BannedByRed)],
+            [],
+            names,
+            [
+                new DraftSkip(DraftPhase.Ban, R),
+                new DraftSkip(DraftPhase.Ban, B, Forfeited: true),
+                new DraftSkip(DraftPhase.Ban, B, Forfeited: true),
+            ]);
+
+        Assert.Equal("Bans: Germany NM1, Germany skipped, Poland forfeited 2", line);
+        Assert.Equal("Germany skips a ban", MatchAnnouncer.SkipLine(DraftPhase.Ban, R, names));
+        Assert.Equal("Poland forfeits 2 bans", MatchAnnouncer.BansForfeitedLine(B, 2, names));
+        Assert.Equal("Poland forfeits 1 ban", MatchAnnouncer.BansForfeitedLine(B, 1, names));
+    }
+
+    [Fact]
+    public void A_team_that_lost_its_bans_is_never_asked_to_ban()
+    {
+        // ABBA, Red first, two each. Blue forfeited both before the phase started: the page
+        // counts those as Blue's bans used, so only Red's two remain and they run back to back.
+        var rules = Rules(bans: 2, banOrder: TurnOrder.Snake);
+
+        var first = Next(rules, new DraftProgress { BlueBans = 2, PointsToWin = 7 });
+        Assert.Equal(new DraftTurn(DraftPhase.Ban, R, 1, 4), first);
+
+        var second = Next(rules, new DraftProgress { RedBans = 1, BlueBans = 2, PointsToWin = 7 });
+        Assert.Equal(new DraftTurn(DraftPhase.Ban, R, 4, 4), second);
+
+        var picks = Next(rules, new DraftProgress { RedBans = 2, BlueBans = 2, PointsToWin = 7 });
+        Assert.Equal(DraftPhase.Pick, picks.Phase);
+    }
+
+    [Fact]
+    public void A_forfeit_covers_the_second_ban_round_too()
+    {
+        var rules = Rules(bans: 1);
+        rules.SecondBanRoundAfterPicks = 2;
+        rules.SecondRoundBansPerTeam = 1;
+
+        Assert.Equal(2, rules.BansOwedPerTeam);
+
+        // Blue lost both of its bans; the second round asks only Red.
+        var round = Next(rules, new DraftProgress { RedBans = 1, BlueBans = 2, Picks = [R, B], PointsToWin = 7 });
+        Assert.Equal(new DraftTurn(DraftPhase.Ban, R, 1, 2, Round: 2), round);
+
+        var after = Next(rules, new DraftProgress { RedBans = 2, BlueBans = 2, Picks = [R, B], PointsToWin = 7 });
+        Assert.Equal(DraftPhase.Pick, after.Phase);
     }
 }

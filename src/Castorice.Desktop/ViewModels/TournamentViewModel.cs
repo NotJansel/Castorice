@@ -341,7 +341,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
     private void RebuildGroups()
     {
         // New tiles carry no marks, so a skipped protect from the old ones would be orphaned.
-        _skippedProtects.Clear();
+        _skips.Clear();
         Groups.Clear();
 
         foreach (var group in Pool.Slots.GroupBy(slot => slot.EffectiveCategory))

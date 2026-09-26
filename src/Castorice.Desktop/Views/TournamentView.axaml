@@ -442,10 +442,10 @@
                   </StackPanel>
                   <TextBlock Text="{Binding DraftSummary}" Classes="muted" TextWrapping="Wrap" />
                   <Button Classes="ghost compact" HorizontalAlignment="Left"
-                          Content="{Binding SkipProtectLabel}"
-                          Command="{Binding SkipProtectCommand}"
-                          IsVisible="{Binding CanSkipProtect}"
-                          ToolTip.Tip="The team in turn passes on its protect; the draft moves on." />
+                          Content="{Binding SkipTurnLabel}"
+                          Command="{Binding SkipTurnCommand}"
+                          IsVisible="{Binding CanSkipTurn}"
+                          ToolTip.Tip="The team in turn passes on this protect or ban; the draft moves on." />
                 </StackPanel>
               </Border>
 
@@ -461,6 +461,18 @@
                 <ComboBox Grid.Row="1" Grid.Column="2" HorizontalAlignment="Stretch"
                           ItemsSource="{Binding Teams}" SelectedItem="{Binding FirstPick}" />
               </Grid>
+
+              <StackPanel Spacing="4" IsVisible="{Binding HasBans}">
+                <TextBlock Classes="label" Text="LATE SHOW" />
+                <WrapPanel Orientation="Horizontal" Classes="tight">
+                  <Button Classes="ghost compact" Content="{Binding ForfeitRedBansLabel}"
+                          Command="{Binding ForfeitRedBansCommand}" IsEnabled="{Binding CanForfeitRedBans}"
+                          ToolTip.Tip="Take away every ban this team has left, second round included. Undo gives them back." />
+                  <Button Classes="ghost compact" Content="{Binding ForfeitBlueBansLabel}"
+                          Command="{Binding ForfeitBlueBansCommand}" IsEnabled="{Binding CanForfeitBlueBans}"
+                          ToolTip.Tip="Take away every ban this team has left, second round included. Undo gives them back." />
+                </WrapPanel>
+              </StackPanel>
 
               <CheckBox Content="Clicking a map marks the protect or ban that is due"
                         IsChecked="{Binding ClickFollowsDraft}"

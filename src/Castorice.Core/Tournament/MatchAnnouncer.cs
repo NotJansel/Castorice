@@ -118,12 +118,22 @@ public static class MatchAnnouncer
         };
     }
 
-    /// <summary>A team passing on its protect, which some brackets allow.</summary>
-    public static string ProtectSkippedLine(TeamColour team, TeamNames names)
+    /// <summary>A team passing on the protect or ban that was due.</summary>
+    public static string SkipLine(DraftPhase phase, TeamColour team, TeamNames names)
     {
         ArgumentNullException.ThrowIfNull(names);
 
-        return $"{names.For(team)} skips their protect";
+        return phase is DraftPhase.Protect
+            ? $"{names.For(team)} skips their protect"
+            : $"{names.For(team)} skips a ban";
+    }
+
+    /// <summary>A team losing its remaining bans, e.g. <c>Poland forfeits 2 bans</c>.</summary>
+    public static string BansForfeitedLine(TeamColour team, int count, TeamNames names)
+    {
+        ArgumentNullException.ThrowIfNull(names);
+
+        return $"{names.For(team)} forfeits {count} {(count == 1 ? "ban" : "bans")}";
     }
 
     /// <summary>
@@ -156,29 +166,41 @@ public static class MatchAnnouncer
         IEnumerable<(string Label, SlotAvailability Mark)> marks,
         IEnumerable<(string Label, TeamColour? Team)> picks,
         TeamNames names,
-        IEnumerable<TeamColour>? skippedProtects = null)
+        IEnumerable<DraftSkip>? skips = null)
     {
         ArgumentNullException.ThrowIfNull(marks);
         ArgumentNullException.ThrowIfNull(picks);
         ArgumentNullException.ThrowIfNull(names);
 
         var markList = marks.ToList();
+        var skipList = (skips ?? []).ToList();
         var parts = new List<string>(3);
 
         var protects = markList
             .Where(m => m.Mark.IsProtected())
             .Select(m => $"{names.For(m.Mark.Team())} {m.Label}")
-            .Concat((skippedProtects ?? []).Select(team => $"{names.For(team)} skipped"))
+            .Concat(skipList
+                .Where(s => s.Phase is DraftPhase.Protect)
+                .Select(s => $"{names.For(s.Team)} skipped"))
             .ToList();
         if (protects.Count > 0)
         {
             parts.Add("Protects: " + string.Join(", ", protects));
         }
 
-        var bans = markList.Where(m => m.Mark.IsBanned()).ToList();
+        var banSkips = skipList.Where(s => s.Phase is DraftPhase.Ban).ToList();
+        var bans = markList
+            .Where(m => m.Mark.IsBanned())
+            .Select(m => $"{names.For(m.Mark.Team())} {m.Label}")
+            .Concat(banSkips.Where(s => !s.Forfeited).Select(s => $"{names.For(s.Team)} skipped"))
+            .Concat(banSkips
+                .Where(s => s.Forfeited)
+                .GroupBy(s => s.Team)
+                .Select(g => $"{names.For(g.Key)} forfeited {g.Count()}"))
+            .ToList();
         if (bans.Count > 0)
         {
-            parts.Add("Bans: " + string.Join(", ", bans.Select(m => $"{names.For(m.Mark.Team())} {m.Label}")));
+            parts.Add("Bans: " + string.Join(", ", bans));
         }
 
         var pickList = picks.ToList();

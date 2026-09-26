@@ -81,8 +81,19 @@ public sealed class DraftRules
     [JsonIgnore]
     public bool HasSecondBanRound => SecondBanRoundAfterPicks > 0 && SecondRoundBansPerTeam > 0;
 
+    /// <summary>Every ban one team makes over the match, across both rounds.</summary>
+    [JsonIgnore]
+    public int BansOwedPerTeam =>
+        Math.Max(0, BansPerTeam) + (HasSecondBanRound ? SecondRoundBansPerTeam : 0);
+
     public DraftRules Clone() => (DraftRules)MemberwiseClone();
 }
+
+/// <summary>
+/// A protect or ban a team gave up. <see cref="Forfeited"/> marks bans lost as a penalty, such as
+/// for showing up late, rather than a turn the team chose to pass on.
+/// </summary>
+public sealed record DraftSkip(DraftPhase Phase, TeamColour Team, bool Forfeited = false);
 
 /// <summary>Which team opens each phase. Settled per match, usually by the roll.</summary>
 public sealed record DraftStart(TeamColour FirstProtect, TeamColour FirstBan, TeamColour FirstPick)
