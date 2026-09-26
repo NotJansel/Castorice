@@ -97,12 +97,13 @@ public static class MpCommands
     }
 
     /// <summary>The two commands that put a pick on the board, in the order BanchoBot expects.</summary>
-    public static IEnumerable<string> PickSlot(MappoolSlot slot, PlayMode playMode)
+    /// <param name="mods">What to send instead of the slot's own mods, e.g. with NoFail added.</param>
+    public static IEnumerable<string> PickSlot(MappoolSlot slot, PlayMode playMode, Mods? mods = null)
     {
         ArgumentNullException.ThrowIfNull(slot);
 
         yield return Map(slot.BeatmapId, playMode);
-        yield return SetMods(slot.Mods);
+        yield return SetMods(mods ?? slot.Mods);
     }
 
     /// <summary>

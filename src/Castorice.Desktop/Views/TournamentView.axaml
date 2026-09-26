@@ -256,6 +256,9 @@
               <CheckBox Content="Put the stage in the lobby name"
                         IsChecked="{Binding IncludeStageInRoomName}"
                         ToolTip.Tip="Off by default: brackets normally name a lobby &quot;TP: (Red) vs (Blue)&quot;." />
+              <CheckBox Content="Add NoFail to every pick except FreeMod"
+                        IsChecked="{Binding ForceNoFail}"
+                        ToolTip.Tip="NM goes out as NF, HD as NF HD, DT as NF DT. On a FreeMod pick players choose their own mods." />
 
               <Separator />
 

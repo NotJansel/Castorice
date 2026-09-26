@@ -146,7 +146,8 @@ public sealed class TournamentController
             return;
         }
 
-        foreach (var command in MpCommands.PickSlot(slot, Pool?.PlayMode ?? PlayMode.Osu))
+        var mods = Pool?.ModsToSend(slot) ?? slot.Mods;
+        foreach (var command in MpCommands.PickSlot(slot, Pool?.PlayMode ?? PlayMode.Osu, mods))
         {
             await SendAsync(command, cancellationToken).ConfigureAwait(false);
         }

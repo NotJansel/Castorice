@@ -65,6 +65,40 @@ public class MpCommandTests
         Assert.Equal(["!mp map 42 0", "!mp mods HD"], MpCommands.PickSlot(slot, PlayMode.Osu).ToArray());
     }
 
+    [Theory]
+    [InlineData(Mods.None, "!mp mods NF")]
+    [InlineData(Mods.Hidden, "!mp mods NF HD")]
+    [InlineData(Mods.Hidden | Mods.HardRock, "!mp mods NF HD HR")]
+    [InlineData(Mods.DoubleTime, "!mp mods NF DT")]
+    [InlineData(Mods.FreeMod, "!mp mods Freemod")]
+    [InlineData(Mods.HardRock | Mods.FreeMod, "!mp mods HR Freemod")]
+    public void Adds_NoFail_to_every_pick_but_FreeMod(Mods slotMods, string expected)
+    {
+        var pool = new Mappool();
+        var slot = new MappoolSlot { Label = "X1", BeatmapId = 42, Mods = slotMods };
+
+        Assert.True(pool.ForceNoFail);
+        Assert.Equal(expected, MpCommands.PickSlot(slot, PlayMode.Osu, pool.ModsToSend(slot)).Last());
+    }
+
+    [Fact]
+    public void A_pool_can_leave_NoFail_off()
+    {
+        var pool = new Mappool { ForceNoFail = false };
+        var slot = new MappoolSlot { Label = "HD1", BeatmapId = 42, Mods = Mods.Hidden };
+
+        Assert.Equal(Mods.Hidden, pool.ModsToSend(slot));
+    }
+
+    [Fact]
+    public void A_slot_that_already_has_NoFail_is_not_doubled()
+    {
+        var pool = new Mappool();
+        var slot = new MappoolSlot { Label = "NM1", BeatmapId = 42, Mods = Mods.NoFail };
+
+        Assert.Equal("!mp mods NF", MpCommands.SetMods(pool.ModsToSend(slot)));
+    }
+
     [Fact]
     public void Configuring_a_room_sets_the_mode_and_adds_referees()
     {

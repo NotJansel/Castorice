@@ -121,6 +121,22 @@ public sealed partial class TournamentViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Whether picks go out with NoFail added. FreeMod picks are always left alone.</summary>
+    public bool ForceNoFail
+    {
+        get => Pool.ForceNoFail;
+        set
+        {
+            if (Pool.ForceNoFail == value)
+            {
+                return;
+            }
+
+            Pool.ForceNoFail = value;
+            OnPropertyChanged();
+        }
+    }
+
     public bool HasFreeModSlots => FreeModSlots.Count > 0;
 
     public ObservableCollection<string> RoomLog { get; } = [];
@@ -376,6 +392,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasFreeModSlots));
         OnPropertyChanged(nameof(FreeModAllowedDisplay));
         OnPropertyChanged(nameof(IncludeStageInRoomName));
+        OnPropertyChanged(nameof(ForceNoFail));
     }
 
     /// <summary>Keeps every pick's fallback in step with the pool-level default.</summary>

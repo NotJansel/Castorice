@@ -168,6 +168,22 @@ public sealed class Mappool
     /// </summary>
     public List<FreeModGroup> FreeModGroups { get; set; } = FreeModCheck.DefaultGroups();
 
+    /// <summary>
+    /// Adds NoFail to every pick that is not FreeMod, whatever its slot, so a player who fails
+    /// still posts a score. On a FreeMod pick players choose their own mods, NoFail included.
+    /// </summary>
+    public bool ForceNoFail { get; set; } = true;
+
+    /// <summary>The mods a pick is sent to the lobby with, NoFail included where the pool adds it.</summary>
+    public Mods ModsToSend(MappoolSlot slot)
+    {
+        ArgumentNullException.ThrowIfNull(slot);
+
+        return ForceNoFail && !slot.Mods.HasFlag(Mods.FreeMod)
+            ? slot.Mods | Mods.NoFail
+            : slot.Mods;
+    }
+
     /// <summary>Protect, ban and pick order for matches played on this pool.</summary>
     public DraftRules Draft { get; set; } = new();
 

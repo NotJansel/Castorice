@@ -114,7 +114,10 @@ file, so a pool you share arrives with its artwork already set.
    pool's `!mp set` configuration. The title is `TP: (Red) vs (Blue)` — the stage is left out
    unless you tick **Put the stage in the lobby name**.
    Already have a lobby? Paste its id, `#mp_` channel or match-history link and press **Attach**.
-3. Invite players, then click a mappool button to set the map and its mods.
+3. Invite players, then click a mappool button to set the map and its mods. NoFail is added to
+   every pick that is not FreeMod — `NM1` goes out as `!mp mods NF`, `DT1` as `!mp mods NF DT` —
+   so a player who fails still posts a score; FreeMod picks stay `!mp mods Freemod`. Untick
+   **Add NoFail to every pick except FreeMod** (`"forceNoFail": false`) for a bracket without it.
 4. Protects and bans follow the pool's **draft order** (below): while one is due, clicking a map
    marks it for the team in turn. Right-click any pick to set or correct a ban, protect or pick by
    hand. Banned picks grey out and refuse to be sent to the lobby until the ban is cleared, so a
@@ -319,7 +322,7 @@ The core library never references Avalonia. UI thread marshalling goes through t
 
 ```bash
 dotnet build              # whole solution
-dotnet test               # 265 tests, no network needed
+dotnet test               # 273 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
 

@@ -9,6 +9,7 @@
   "startTimerSeconds": 10,
   "readyTimerSeconds": 120,
   "referees": [],
+  "forceNoFail": true,
   "draft": {
     "protectsPerTeam": 1,
     "protectOrder": "Alternating",
