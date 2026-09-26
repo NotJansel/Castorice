@@ -303,4 +303,37 @@ public class DraftOrderTests
         Assert.Equal(1, loaded.Draft.BansPerTeam);
         Assert.Equal(TurnOrder.Alternating, loaded.Draft.BanOrder);
     }
+
+    [Fact]
+    public void A_new_pool_has_no_protects()
+    {
+        var rules = new DraftRules();
+
+        Assert.False(rules.HasProtects);
+        Assert.Equal(DraftPhase.Ban, Next(rules, new DraftProgress { PointsToWin = 7 }).Phase);
+    }
+
+    [Fact]
+    public void A_skipped_protect_counts_as_used_and_the_draft_moves_on()
+    {
+        var rules = Rules(protects: 1, bans: 1);
+
+        // Red passed on its protect; the page counts that as Red's protect being used.
+        var next = Next(rules, new DraftProgress { RedProtects = 1, PointsToWin = 7 });
+
+        Assert.Equal(new DraftTurn(DraftPhase.Protect, B, 2, 2), next);
+    }
+
+    [Fact]
+    public void Lists_a_skipped_protect_in_the_summary()
+    {
+        var line = MatchAnnouncer.DraftSummaryLine(
+            [("HD1", SlotAvailability.ProtectedByRed)],
+            [],
+            TeamNames.From("Germany", "Poland"),
+            [B]);
+
+        Assert.Equal("Protects: Germany HD1, Poland skipped", line);
+        Assert.Equal("Poland skips their protect", MatchAnnouncer.ProtectSkippedLine(B, TeamNames.From("Germany", "Poland")));
+    }
 }

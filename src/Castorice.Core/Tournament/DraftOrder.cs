@@ -43,7 +43,11 @@ public enum DraftPhase
 /// </summary>
 public sealed class DraftRules
 {
-    public int ProtectsPerTeam { get; set; } = 1;
+    /// <summary>
+    /// Protects each team gets. Brackets differ on whether they have protects at all, so a new
+    /// pool starts without them; 0 turns the phase off.
+    /// </summary>
+    public int ProtectsPerTeam { get; set; }
 
     [JsonConverter(typeof(JsonStringEnumConverter<TurnOrder>))]
     public TurnOrder ProtectOrder { get; set; } = TurnOrder.Alternating;
@@ -72,6 +76,9 @@ public sealed class DraftRules
     public bool SecondRoundOtherTeamFirst { get; set; }
 
     [JsonIgnore]
+    public bool HasProtects => ProtectsPerTeam > 0;
+
+    [JsonIgnore]
     public bool HasSecondBanRound => SecondBanRoundAfterPicks > 0 && SecondRoundBansPerTeam > 0;
 
     public DraftRules Clone() => (DraftRules)MemberwiseClone();
@@ -86,6 +93,7 @@ public sealed record DraftStart(TeamColour FirstProtect, TeamColour FirstBan, Te
 /// <summary>What has happened in the match so far, as far as the draft is concerned.</summary>
 public sealed record DraftProgress
 {
+    /// <summary>Protects the team has used up, including any it chose to skip.</summary>
     public int RedProtects { get; init; }
 
     public int BlueProtects { get; init; }

@@ -118,6 +118,14 @@ public static class MatchAnnouncer
         };
     }
 
+    /// <summary>A team passing on its protect, which some brackets allow.</summary>
+    public static string ProtectSkippedLine(TeamColour team, TeamNames names)
+    {
+        ArgumentNullException.ThrowIfNull(names);
+
+        return $"{names.For(team)} skips their protect";
+    }
+
     /// <summary>
     /// Whose turn it is, e.g. <c>Next: Blue bans (2/4)</c>. <c>null</c> when there is nothing
     /// worth saying: the match is over, or the next picker hangs on a map still being played.
@@ -147,7 +155,8 @@ public static class MatchAnnouncer
     public static string DraftSummaryLine(
         IEnumerable<(string Label, SlotAvailability Mark)> marks,
         IEnumerable<(string Label, TeamColour? Team)> picks,
-        TeamNames names)
+        TeamNames names,
+        IEnumerable<TeamColour>? skippedProtects = null)
     {
         ArgumentNullException.ThrowIfNull(marks);
         ArgumentNullException.ThrowIfNull(picks);
@@ -156,10 +165,14 @@ public static class MatchAnnouncer
         var markList = marks.ToList();
         var parts = new List<string>(3);
 
-        var protects = markList.Where(m => m.Mark.IsProtected()).ToList();
+        var protects = markList
+            .Where(m => m.Mark.IsProtected())
+            .Select(m => $"{names.For(m.Mark.Team())} {m.Label}")
+            .Concat((skippedProtects ?? []).Select(team => $"{names.For(team)} skipped"))
+            .ToList();
         if (protects.Count > 0)
         {
-            parts.Add("Protects: " + string.Join(", ", protects.Select(m => $"{names.For(m.Mark.Team())} {m.Label}")));
+            parts.Add("Protects: " + string.Join(", ", protects));
         }
 
         var bans = markList.Where(m => m.Mark.IsBanned()).ToList();

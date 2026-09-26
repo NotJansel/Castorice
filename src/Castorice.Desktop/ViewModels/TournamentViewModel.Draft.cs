@@ -21,6 +21,9 @@ public sealed partial class TournamentViewModel
     // Hands out ever-increasing stamps so Undo can find the newest mark.
     private long _markCounter;
 
+    // Protects a team passed on this match, stamped like the marks so Undo can take them back.
+    private readonly List<(TeamColour Team, long Stamp)> _skippedProtects = [];
+
     // Set while clearing or undoing, which should never post anything into the lobby.
     private bool _quietMarks;
 
@@ -60,10 +63,27 @@ public sealed partial class TournamentViewModel
 
     // ---- pool rules --------------------------------------------------------
 
+    /// <summary>Whether this bracket has protects at all. Turning it on starts at one per team.</summary>
+    public bool UseProtects
+    {
+        get => Pool.Draft.HasProtects;
+        set
+        {
+            if (value != Pool.Draft.HasProtects)
+            {
+                ProtectsPerTeam = value ? 1 : 0;
+            }
+        }
+    }
+
     public int ProtectsPerTeam
     {
         get => Pool.Draft.ProtectsPerTeam;
-        set => SetDraftRule(Pool.Draft.ProtectsPerTeam, Math.Max(0, value), v => Pool.Draft.ProtectsPerTeam = v);
+        set => SetDraftRule(
+            Pool.Draft.ProtectsPerTeam,
+            Math.Max(0, value),
+            v => Pool.Draft.ProtectsPerTeam = v,
+            nameof(UseProtects));
     }
 
     public Choice<TurnOrder> ProtectOrderChoice
@@ -144,8 +164,10 @@ public sealed partial class TournamentViewModel
 
         return new DraftProgress
         {
-            RedProtects = slots.Count(s => s.Availability is SlotAvailability.ProtectedByRed),
-            BlueProtects = slots.Count(s => s.Availability is SlotAvailability.ProtectedByBlue),
+            RedProtects = slots.Count(s => s.Availability is SlotAvailability.ProtectedByRed)
+                + _skippedProtects.Count(s => s.Team is TeamColour.Red),
+            BlueProtects = slots.Count(s => s.Availability is SlotAvailability.ProtectedByBlue)
+                + _skippedProtects.Count(s => s.Team is TeamColour.Blue),
             RedBans = slots.Count(s => s.Availability is SlotAvailability.BannedByRed),
             BlueBans = slots.Count(s => s.Availability is SlotAvailability.BannedByBlue),
             Picks = slots.Where(s => s.IsPicked).OrderBy(s => s.PickStamp).Select(s => s.PickedBy).ToList(),
@@ -163,19 +185,30 @@ public sealed partial class TournamentViewModel
         return MatchAnnouncer.DraftSummaryLine(
             slots.Where(s => s.HasAvailabilityMark).OrderBy(s => s.AvailabilityStamp).Select(s => (s.Label, s.Availability)),
             slots.Where(s => s.IsPicked).OrderBy(s => s.PickStamp).Select(s => (s.Label, s.PickedBy)),
-            Names);
+            Names,
+            _skippedProtects.Select(s => s.Team));
     }
+
+    /// <summary>True while a protect is due, so the team in turn can pass on it.</summary>
+    public bool CanSkipProtect => CurrentDraft.Next is { Phase: DraftPhase.Protect, Team: not null };
+
+    public string SkipProtectLabel => CurrentDraft.Next.Team is { } team
+        ? $"{Names.For(team)} skips protect"
+        : "Skip protect";
 
     private void RefreshDraft()
     {
         OnPropertyChanged(nameof(NextTurnDisplay));
         OnPropertyChanged(nameof(NextTurnTeam));
         OnPropertyChanged(nameof(DraftSummary));
+        OnPropertyChanged(nameof(CanSkipProtect));
+        OnPropertyChanged(nameof(SkipProtectLabel));
     }
 
     /// <summary>Re-raises every rule after a different pool was loaded.</summary>
     private void RefreshDraftRules()
     {
+        OnPropertyChanged(nameof(UseProtects));
         OnPropertyChanged(nameof(ProtectsPerTeam));
         OnPropertyChanged(nameof(ProtectOrderChoice));
         OnPropertyChanged(nameof(BansPerTeam));
@@ -356,6 +389,40 @@ public sealed partial class TournamentViewModel
         slot.Category.Equals("TB", StringComparison.OrdinalIgnoreCase)
         || slot.Category.Equals("Tiebreaker", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>The team whose protect is due passes on it; the draft moves on as if it had protected.</summary>
+    [RelayCommand]
+    private void SkipProtect()
+    {
+        if (CurrentDraft.Next is not { Phase: DraftPhase.Protect, Team: { } team })
+        {
+            Status = "No protect is due.";
+            return;
+        }
+
+        _skippedProtects.Add((team, ++_markCounter));
+        RefreshDraft();
+
+        var action = MatchAnnouncer.ProtectSkippedLine(team, Names);
+        var next = MatchAnnouncer.NextTurnLine(CurrentDraft.Next, Names);
+        Status = next is null ? $"{action}." : $"{action}. {next}.";
+
+        var parts = new List<string>(2);
+        if (Messages.DraftActions)
+        {
+            parts.Add(action);
+        }
+
+        if (Messages.NextTurn && next is not null)
+        {
+            parts.Add(next);
+        }
+
+        if (parts.Count > 0)
+        {
+            _ = PostQuietlyAsync([string.Join(" | ", parts)]);
+        }
+    }
+
     [RelayCommand]
     private void ClearDraft()
     {
@@ -373,6 +440,7 @@ public sealed partial class TournamentViewModel
             _quietMarks = false;
         }
 
+        _skippedProtects.Clear();
         RefreshDraft();
         Status = "Cleared every protect, ban and pick.";
     }
@@ -390,10 +458,20 @@ public sealed partial class TournamentViewModel
 
         var markStamp = newestMark?.AvailabilityStamp ?? -1;
         var pickStamp = newestPick?.PickStamp ?? -1;
+        var skipStamp = _skippedProtects.Count > 0 ? _skippedProtects[^1].Stamp : -1;
 
-        if (newestMark is null && newestPick is null)
+        if (newestMark is null && newestPick is null && skipStamp < 0)
         {
             Status = "Nothing to undo.";
+            return;
+        }
+
+        if (skipStamp > markStamp && skipStamp > pickStamp)
+        {
+            var skipped = _skippedProtects[^1].Team;
+            _skippedProtects.RemoveAt(_skippedProtects.Count - 1);
+            RefreshDraft();
+            Status = $"Took back {Names.For(skipped)}'s skipped protect.";
             return;
         }
 

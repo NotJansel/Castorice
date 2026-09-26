@@ -132,7 +132,7 @@ pool:
 
 | Setting | Options |
 | --- | --- |
-| Protects per team | 0 turns them off |
+| Protects | optional: off for a new pool, tick **Protects** and set how many per team |
 | Protect order, ban order | **ABAB** (alternating) or **ABBA** (snake) |
 | Bans per team | before the first pick |
 | Pick order | **ABAB**, **ABBA**, **loser of the last map picks**, **winner of the last map picks** |
@@ -153,7 +153,8 @@ Who opens each phase is a per-match choice — **First protect**, **First ban** 
 the lobby panel, set after the roll. The panel then always shows whose turn it is (`Poland bans ·
 3 of 4`), with every protect, ban and pick so far listed underneath. Picks outside warmup are
 credited to the team in turn; once both teams are one point short the tiebreaker is called, and
-the draft ends with the match. **Undo** takes back the newest mark without posting anything.
+the draft ends with the match. Where a bracket lets a team pass on its protect, **Skip protect**
+appears while one is due, posts `Poland skips their protect` and moves the draft on. **Undo** takes back the newest mark without posting anything.
 
 The draft counts each team's own marks rather than the position in the sequence, so if a ban is
 marked for the wrong team the other team's turn does not get skipped — the step it still owes stays
@@ -308,7 +309,7 @@ The core library never references Avalonia. UI thread marshalling goes through t
 
 ```bash
 dotnet build              # whole solution
-dotnet test               # 259 tests, no network needed
+dotnet test               # 262 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
 

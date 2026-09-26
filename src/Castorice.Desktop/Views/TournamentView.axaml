@@ -186,12 +186,17 @@
               <TextBlock Classes="faint" TextWrapping="Wrap"
                          Text="Protects come first, then bans, then picks. Who opens each phase is set per match in the lobby panel. Saved with the pool." />
               <Grid ColumnDefinitions="110,*,110,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
-                <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="PROTECTS" VerticalAlignment="Center" />
+                <CheckBox Grid.Row="0" Grid.Column="0" IsChecked="{Binding UseProtects}" VerticalAlignment="Center"
+                          ToolTip.Tip="Leave off for a bracket without protects. A team can still pass on its protect during a match.">
+                  <TextBlock Classes="label" Text="PROTECTS" />
+                </CheckBox>
                 <NumericUpDown Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="4" Increment="1" FormatString="0"
                                Value="{Binding ProtectsPerTeam}" Margin="0,0,16,0"
-                               ToolTip.Tip="Per team. 0 turns protects off." />
+                               IsEnabled="{Binding UseProtects}"
+                               ToolTip.Tip="Per team. 0 is the same as turning protects off." />
                 <TextBlock Grid.Row="0" Grid.Column="2" Classes="label" Text="ORDER" VerticalAlignment="Center" />
                 <ComboBox Grid.Row="0" Grid.Column="3" HorizontalAlignment="Stretch"
+                          IsEnabled="{Binding UseProtects}"
                           ItemsSource="{Binding TurnOrderChoices}" SelectedItem="{Binding ProtectOrderChoice}" />
 
                 <TextBlock Grid.Row="1" Grid.Column="0" Classes="label" Text="BANS" VerticalAlignment="Center" />
@@ -436,6 +441,11 @@
                     <TextBlock Text="{Binding NextTurnDisplay}" FontWeight="SemiBold" TextWrapping="Wrap" />
                   </StackPanel>
                   <TextBlock Text="{Binding DraftSummary}" Classes="muted" TextWrapping="Wrap" />
+                  <Button Classes="ghost compact" HorizontalAlignment="Left"
+                          Content="{Binding SkipProtectLabel}"
+                          Command="{Binding SkipProtectCommand}"
+                          IsVisible="{Binding CanSkipProtect}"
+                          ToolTip.Tip="The team in turn passes on its protect; the draft moves on." />
                 </StackPanel>
               </Border>
 
@@ -444,6 +454,7 @@
                 <TextBlock Grid.Row="0" Grid.Column="1" Classes="label" Text="FIRST BAN" />
                 <TextBlock Grid.Row="0" Grid.Column="2" Classes="label" Text="FIRST PICK" />
                 <ComboBox Grid.Row="1" Grid.Column="0" HorizontalAlignment="Stretch"
+                          IsEnabled="{Binding UseProtects}"
                           ItemsSource="{Binding Teams}" SelectedItem="{Binding FirstProtect}" />
                 <ComboBox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch"
                           ItemsSource="{Binding Teams}" SelectedItem="{Binding FirstBan}" />
