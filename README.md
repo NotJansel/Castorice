@@ -50,6 +50,25 @@ out to be cut short is thrown away and fetched again rather than shown as a blan
 dotnet run --project src/Castorice.Desktop
 ```
 
+### macOS app
+
+To get a `Castorice.app` for the Applications folder, with its icon in Finder, Launchpad and the
+Dock, run on the Mac:
+
+```bash
+build/package-macos.sh              # this Mac's processor; or pass osx-arm64 / osx-x64
+```
+
+The bundle lands in `artifacts/macos/<rid>/Castorice.app`. It is self-contained, so the Mac it
+runs on does not need .NET, and it is signed ad hoc, which is enough to run it on the Mac that
+built it. A copy passed to someone else is not notarised: they open it the first time with
+right-click → **Open**.
+
+The app icon is built from `src/Castorice.Desktop/Assets/castorice-dock.png`, the same artwork the
+Dock uses when the app is started with `dotnet run`. To change it, replace that file (a 512×512
+PNG with a transparent margin, like other Mac icons) and `castorice.ico` / `castorice.png` next to
+it for Windows, Linux and the sidebar.
+
 ### Credentials
 
 Castorice needs two sets of credentials, both entered on the **Settings** page.
@@ -309,6 +328,7 @@ src/Castorice.Core/        No UI dependencies; all of it is unit-testable
   Osu/                     osu! API v2 client (client-credentials grant)
   Configuration/           Settings model, atomic writes, platform paths
 src/Castorice.Desktop/     Avalonia UI (MVVM, CommunityToolkit.Mvvm)
+build/                     package-macos.sh and the Castorice.app template (Info.plist, icon)
 tests/Castorice.Core.Tests/
   Fixtures/                Every distinct BanchoBot line from a real bracket match, so the
                            parser is checked against what Bancho says, not what it was assumed to
