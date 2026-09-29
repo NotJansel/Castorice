@@ -56,6 +56,13 @@ public sealed class MappoolSlot
 
     public string Notes { get; set; } = string.Empty;
 
+    /// <summary>
+    /// The slot's id in the Mappool Builder when the pool was imported from there. It survives
+    /// reordering and mod changes on the server, so an update can find this pick again and keep
+    /// what was set on it locally.
+    /// </summary>
+    public string? RemoteId { get; set; }
+
     [JsonIgnore]
     public string DisplayName => (Title.Length, BeatmapId, Difficulty.Length) switch
     {
@@ -179,13 +186,20 @@ public sealed class Mappool
     {
         ArgumentNullException.ThrowIfNull(slot);
 
-        return ForceNoFail && !slot.Mods.HasFlag(Mods.FreeMod)
+        // SuddenDeath and Perfect fail a play on purpose, which NoFail would cancel out.
+        return ForceNoFail && (slot.Mods & (Mods.FreeMod | Mods.SuddenDeath | Mods.Perfect)) == 0
             ? slot.Mods | Mods.NoFail
             : slot.Mods;
     }
 
     /// <summary>Protect, ban and pick order for matches played on this pool.</summary>
     public DraftRules Draft { get; set; } = new();
+
+    /// <summary>
+    /// Where the pool came from when it was imported from the Mappool Builder; <c>null</c> for a
+    /// pool made here. The maps belong to the source, everything else to this file.
+    /// </summary>
+    public MappoolSource? Source { get; set; }
 
     /// <summary>osu! usernames auto-added as referees with <c>!mp addref</c>.</summary>
     public List<string> Referees { get; set; } = [];
@@ -231,4 +245,25 @@ public sealed class Mappool
 
         return $"{prefix}: ({red}) vs ({blue})";
     }
+}
+
+/// <summary>The Mappool Builder pool a local pool was imported from.</summary>
+public sealed class MappoolSource
+{
+    /// <summary>The Mappool Builder's address, e.g. <c>https://pools.jansel.dev</c>.</summary>
+    public string BaseUrl { get; set; } = string.Empty;
+
+    public string PoolId { get; set; } = string.Empty;
+
+    public string OwnerName { get; set; } = string.Empty;
+
+    /// <summary>The pool's <c>updatedAt</c> at the last import, in Unix milliseconds.</summary>
+    public long UpdatedAt { get; set; }
+
+    [JsonIgnore]
+    public DateTimeOffset UpdatedAtTime => DateTimeOffset.FromUnixTimeMilliseconds(UpdatedAt);
+
+    /// <summary>The pool's page, for showing where it lives.</summary>
+    [JsonIgnore]
+    public string PageUrl => $"{BaseUrl.TrimEnd('/')}/pools/{PoolId}";
 }

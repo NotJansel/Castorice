@@ -1,6 +1,7 @@
 using Castorice.Core.Chat;
 using Castorice.Core.Configuration;
 using Castorice.Core.Irc;
+using Castorice.Core.MappoolBuilder;
 using Castorice.Core.Osu;
 using Castorice.Core.Tournament;
 
@@ -24,6 +25,7 @@ public sealed class AppServices : IAsyncDisposable
         Tournament = new TournamentController(Irc, Chat, AvaloniaDispatcher.Instance);
         Mappools = new MappoolStore();
         Api = new OsuApiClient();
+        PoolBuilder = new MappoolBuilderClient();
 
         if (Settings.HasApiCredentials)
         {
@@ -45,11 +47,18 @@ public sealed class AppServices : IAsyncDisposable
 
     public OsuApiClient Api { get; }
 
+    public MappoolBuilderClient PoolBuilder { get; }
+
+    /// <summary>Read fresh on every call, so a changed address or token applies straight away.</summary>
+    public MappoolBuilderConnection PoolBuilderConnection =>
+        new(Settings.MappoolBuilderUrl, Settings.MappoolBuilderToken);
+
     public void SaveSettings() => SettingsStore.Save(Settings);
 
     public async ValueTask DisposeAsync()
     {
         await Irc.DisposeAsync();
         Api.Dispose();
+        PoolBuilder.Dispose();
     }
 }

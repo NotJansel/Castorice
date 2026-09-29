@@ -68,6 +68,25 @@
       </Border>
 
       <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock Classes="h2" Text="Mappool Builder" />
+          <TextBlock Classes="muted" TextWrapping="Wrap" Margin="0,0,0,6"
+                     Text="Import pools from the Mappool Builder on the Tournament page. Public pools need no token; for your own private pools, create a read token under API tokens on the site and paste it here." />
+
+          <TextBlock Classes="label" Text="ADDRESS" />
+          <TextBox Text="{Binding MappoolBuilderUrl}" PlaceholderText="https://pools.jansel.dev" />
+
+          <TextBlock Classes="label" Text="API TOKEN (OPTIONAL)" Margin="0,8,0,0" />
+          <TextBox Text="{Binding MappoolBuilderToken}" PasswordChar="•" PlaceholderText="tpz_…" />
+          <TextBlock Classes="faint" TextWrapping="Wrap"
+                     Text="A read token is enough — Castorice never changes pools. It is stored in the settings file next to the IRC password." />
+
+          <Button Content="Test connection" Command="{Binding TestMappoolBuilderCommand}" Margin="0,12,0,0"
+                  HorizontalAlignment="Left" />
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
         <StackPanel Spacing="12">
           <TextBlock Classes="h2" Text="Application" />
 

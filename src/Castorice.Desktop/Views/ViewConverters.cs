@@ -22,4 +22,8 @@ public static class ViewConverters
     public static IValueConverter TimestampToShortTime => CastoriceConverters.TimestampToShortTime;
 
     public static IValueConverter SparklinePoints => CastoriceConverters.SparklinePoints;
+
+    /// <summary>"Update" for a pool that is already imported, "Import" otherwise.</summary>
+    public static IValueConverter ImportLabel { get; } =
+        new Avalonia.Data.Converters.FuncValueConverter<bool, string>(imported => imported ? "Update" : "Import");
 }

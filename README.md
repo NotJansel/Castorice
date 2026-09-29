@@ -125,6 +125,29 @@ With API credentials configured, **Fetch metadata** fills in title, artist, mapp
 BPM, length and cover art for every pick in one request. `coverUrl` is written back into the pool
 file, so a pool you share arrives with its artwork already set.
 
+### Importing from the Mappool Builder
+
+Pools built on the [Mappool Builder](https://pools.jansel.dev) can be pulled straight in: **Import
+from Mappool Builder** on the Tournament page lists your own pools and recently updated public ones,
+or takes a pool link or id (`https://pools.jansel.dev/pools/Xb3kQ9aZ`, `Xb3kQ9aZ`).
+
+- Public pools need nothing. For your own pools, private ones included, create a **read** token
+  under API tokens on the site and paste it on the **Settings** page; **Test connection** shows
+  whose it is. Castorice only reads, so a read token is all it ever needs. The token is stored in
+  the settings file like the IRC password, and it is only ever sent to the address it was entered
+  for.
+- Picks are labelled the way the Builder labels them — counted per bracket, `NM1`, `NM2`, `HD1` …
+  — and grouped in its bracket order. A lone tiebreaker is `TB`. Titles, mappers, star ratings
+  (with the mod), BPM, length, cover art and notes come along, so no metadata fetch is needed.
+- Brackets become mods: `FM` and `TB` are FreeMod, `SD` is sent without NoFail (the two cancel each
+  other out), everything else gets NoFail per the pool's setting.
+- Team names on the Builder pool fill the Red and Blue boxes when those are still empty.
+- The imported pool is an ordinary pool file that remembers its source. **Update from Mappool
+  Builder** (or importing it again) pulls the current maps: picks that are still there keep their
+  multiplier overrides, and the pool's own settings — room defaults, draft order, multipliers,
+  referees, even a local rename — stay. Nothing is overwritten when a pool of the same name
+  already exists.
+
 ## Running a match
 
 1. Connect on the top bar.
@@ -326,6 +349,7 @@ src/Castorice.Core/        No UI dependencies; all of it is unit-testable
   Bancho/                  !mp command builder, BanchoBot reply parser, live room state
   Tournament/              Mappool model + JSON store, referee controller
   Osu/                     osu! API v2 client (client-credentials grant)
+  MappoolBuilder/          Read-only client and import for the Mappool Builder API
   Configuration/           Settings model, atomic writes, platform paths
 src/Castorice.Desktop/     Avalonia UI (MVVM, CommunityToolkit.Mvvm)
 build/                     package-macos.sh and the Castorice.app template (Info.plist, icon)
@@ -342,7 +366,7 @@ The core library never references Avalonia. UI thread marshalling goes through t
 
 ```bash
 dotnet build              # whole solution
-dotnet test               # 273 tests, no network needed
+dotnet test               # 320 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
 

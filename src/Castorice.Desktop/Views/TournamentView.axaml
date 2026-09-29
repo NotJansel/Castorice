@@ -10,6 +10,32 @@
              x:Class="Castorice.Desktop.Views.TournamentView"
              x:DataType="vm:TournamentViewModel">
 
+  <UserControl.Resources>
+    <DataTemplate x:Key="RemotePoolRow" DataType="vm:RemotePoolItem">
+      <Border Classes="well" Margin="0,0,0,6">
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+              <Border Classes="badge ghost" IsVisible="{Binding IsPrivate}">
+                <TextBlock Text="private" />
+              </Border>
+              <Border Classes="badge ghost" IsVisible="{Binding IsImported}">
+                <TextBlock Text="imported" />
+              </Border>
+            </StackPanel>
+            <TextBlock Classes="faint" Text="{Binding Subtitle}" TextTrimming="CharacterEllipsis" />
+          </StackPanel>
+          <Button Grid.Column="1" Classes="compact" Margin="10,0,0,0" VerticalAlignment="Center"
+                  Content="{Binding IsImported, Converter={x:Static views:ViewConverters.ImportLabel}}"
+                  Command="{Binding $parent[UserControl].((vm:TournamentViewModel)DataContext).ImportRemotePoolCommand}"
+                  CommandParameter="{Binding}"
+                  IsEnabled="{Binding !$parent[UserControl].((vm:TournamentViewModel)DataContext).IsImportBusy}" />
+        </Grid>
+      </Border>
+    </DataTemplate>
+  </UserControl.Resources>
+
   <Grid RowDefinitions="Auto,*,Auto">
 
     <!-- ==================== Lobby bar ==================== -->
@@ -63,13 +89,58 @@
                   <TextBlock Text="{Binding PoolAcronym}" />
                 </Border>
               </StackPanel>
+              <TextBlock Classes="faint" Text="{Binding PoolSourceDisplay}" Margin="0,2,0,0"
+                         TextWrapping="Wrap" IsVisible="{Binding HasPoolSource}" />
             </StackPanel>
             <WrapPanel Orientation="Horizontal" Classes="tight">
               <Button Classes="ghost" Content="Fetch metadata" Command="{Binding FetchMetadataCommand}" />
               <Button Content="Save pool" Command="{Binding SavePoolCommand}" />
               <Button Classes="ghost" Content="New pool" Command="{Binding NewPoolCommand}" />
+              <ToggleButton Content="Import from Mappool Builder" IsChecked="{Binding IsImportOpen}" />
+              <Button Classes="ghost" Content="Update from Mappool Builder"
+                      Command="{Binding UpdateFromSourceCommand}"
+                      IsVisible="{Binding HasPoolSource}"
+                      IsEnabled="{Binding !IsImportBusy}"
+                      ToolTip.Tip="Pull this pool's maps again. Room settings, draft order and multipliers stay as they are." />
             </WrapPanel>
           </StackPanel>
+
+          <!-- Import from the Mappool Builder -->
+          <Border Classes="card" IsVisible="{Binding IsImportOpen}">
+            <StackPanel Spacing="12">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="2">
+                  <TextBlock Classes="h2" Text="Import from Mappool Builder" />
+                  <TextBlock Classes="faint" Text="{Binding PoolBuilderHost}" />
+                </StackPanel>
+                <Button Grid.Column="1" Classes="ghost compact" Content="Refresh list" VerticalAlignment="Top"
+                        Command="{Binding LoadRemotePoolsCommand}" IsEnabled="{Binding !IsImportBusy}" />
+              </Grid>
+
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBox Grid.Column="0" Text="{Binding ImportInput}"
+                         PlaceholderText="Pool link or id, e.g. https://pools.jansel.dev/pools/Xb3kQ9aZ" />
+                <Button Grid.Column="1" Classes="accent" Content="Import" Margin="8,0,0,0"
+                        Command="{Binding ImportFromInputCommand}" IsEnabled="{Binding !IsImportBusy}" />
+              </Grid>
+
+              <TextBlock Classes="muted" Text="{Binding ImportStatus}" TextWrapping="Wrap"
+                         IsVisible="{Binding ImportStatus, Converter={x:Static views:ViewConverters.IsNotEmpty}}" />
+
+              <StackPanel Spacing="6" IsVisible="{Binding HasMyRemotePools}">
+                <TextBlock Classes="label" Text="YOUR POOLS" />
+                <ItemsControl ItemsSource="{Binding MyRemotePools}" ItemTemplate="{StaticResource RemotePoolRow}" />
+              </StackPanel>
+
+              <StackPanel Spacing="6" IsVisible="{Binding HasDiscoverRemotePools}">
+                <TextBlock Classes="label" Text="RECENTLY UPDATED PUBLIC POOLS" />
+                <ItemsControl ItemsSource="{Binding DiscoverRemotePools}" ItemTemplate="{StaticResource RemotePoolRow}" />
+              </StackPanel>
+
+              <TextBlock Classes="faint" TextWrapping="Wrap"
+                         Text="Importing again updates the pool you already have: the maps follow the Builder, while room settings, draft order and multipliers stay." />
+            </StackPanel>
+          </Border>
 
           <ItemsControl ItemsSource="{Binding Groups}">
             <ItemsControl.ItemTemplate>

@@ -72,6 +72,36 @@ public sealed class MappoolStore(string? directory = null)
         return name;
     }
 
+    /// <summary>
+    /// The file already holding the Mappool Builder pool with this id, so importing it twice
+    /// updates that file instead of making a second copy.
+    /// </summary>
+    public string? FindBySource(string baseUrl, string poolId)
+    {
+        var host = HostOf(baseUrl);
+
+        return List()
+            .Select(file => file.FileName)
+            .FirstOrDefault(fileName => Load(fileName)?.Source is { } source &&
+                source.PoolId == poolId &&
+                string.Equals(HostOf(source.BaseUrl), host, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>A file name for a new pool that does not overwrite an existing one.</summary>
+    public string SuggestUnusedFileName(string poolName)
+    {
+        var suggested = SuggestFileName(poolName);
+        var stem = Path.GetFileNameWithoutExtension(suggested);
+
+        var candidate = suggested;
+        for (var n = 2; File.Exists(Path.Combine(_directory, candidate)); n++)
+        {
+            candidate = $"{stem}-{n}.json";
+        }
+
+        return candidate;
+    }
+
     public void Delete(string fileName)
     {
         var path = Path.Combine(_directory, Path.GetFileName(fileName));
@@ -102,6 +132,9 @@ public sealed class MappoolStore(string? directory = null)
 
         return (cleaned.Length == 0 ? "mappool" : cleaned.ToLowerInvariant()) + ".json";
     }
+
+    private static string HostOf(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.Authority : url.Trim().TrimEnd('/');
 
     private static string ReadDisplayName(string path)
     {

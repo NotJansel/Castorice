@@ -352,6 +352,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
         OnPropertyChanged(nameof(EasyMultiplier));
         OnPropertyChanged(nameof(EasyHiddenMultiplier));
         RefreshDraftRules();
+        RefreshPoolSource();
     }
 
     private void RebuildGroups()

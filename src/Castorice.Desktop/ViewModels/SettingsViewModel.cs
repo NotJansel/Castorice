@@ -99,6 +99,18 @@ public sealed partial class SettingsViewModel : ViewModelBase
         set => SetSetting(value, Settings.OsuClientSecret, v => Settings.OsuClientSecret = v);
     }
 
+    public string MappoolBuilderUrl
+    {
+        get => Settings.MappoolBuilderUrl;
+        set => SetSetting(value, Settings.MappoolBuilderUrl, v => Settings.MappoolBuilderUrl = v);
+    }
+
+    public string MappoolBuilderToken
+    {
+        get => Settings.MappoolBuilderToken;
+        set => SetSetting(value, Settings.MappoolBuilderToken, v => Settings.MappoolBuilderToken = v?.Trim() ?? string.Empty);
+    }
+
     public bool ConfirmDestructiveCommands
     {
         get => Settings.ConfirmDestructiveCommands;
@@ -188,6 +200,27 @@ public sealed partial class SettingsViewModel : ViewModelBase
         catch (Exception ex)
         {
             Status = $"API test failed: {ex.Message}";
+        }
+    }
+
+    /// <summary>Asks the Mappool Builder who the token belongs to, which proves address and token.</summary>
+    [RelayCommand]
+    private async Task TestMappoolBuilderAsync()
+    {
+        var connection = _services.PoolBuilderConnection;
+
+        try
+        {
+            var user = await _services.PoolBuilder.GetMeAsync(connection);
+            Status = user is not null
+                ? $"Connected to {connection.Host} as {user.Username}. Your own pools, private ones included, can be imported."
+                : connection.HasToken
+                    ? $"{connection.Host} answered but did not recognise the token."
+                    : $"Connected to {connection.Host} without a token: public pools can be imported.";
+        }
+        catch (Exception ex)
+        {
+            Status = $"Mappool Builder test failed: {ex.Message}";
         }
     }
 

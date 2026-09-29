@@ -1,0 +1,24 @@
+{
+  "id": "Xb3kQ9aZ",
+  "name": "Showmatch Finals",
+  "stage": "Grand Finals",
+  "teamRed": "Team A",
+  "teamBlue": "Team B",
+  "description": "",
+  "isPublic": true,
+  "owner": { "id": 2, "username": "peppy", "avatarUrl": "https://a.ppy.sh/2" },
+  "slots": [
+    { "id": "nm0001", "mod": "NM", "beatmapId": 1001, "beatmapsetId": 501, "artist": "Artist A", "title": "Song A", "version": "Insane", "mapper": "Mapper A", "sr": 5.81, "baseSr": 5.81, "cs": 4, "ar": 9.3, "od": 8.5, "hp": 5, "bpm": 180, "length": 142, "cover": "https://assets.ppy.sh/beatmaps/501/covers/list@2x.jpg" },
+    { "id": "hd0001", "mod": "HD", "beatmapId": 1002, "beatmapsetId": 502, "artist": "Artist B", "title": "Song B", "version": "Extra", "mapper": "Mapper B", "sr": 6.02, "baseSr": 6.02, "cs": 4.2, "ar": 9.5, "od": 9, "hp": 5.5, "bpm": 200, "length": 150, "cover": "https://assets.ppy.sh/beatmaps/502/covers/list@2x.jpg", "note": "Warmup" },
+    { "id": "nm0002", "mod": "NM", "beatmapId": 1003, "beatmapsetId": 503, "artist": "Artist C", "title": "Song C", "version": "Expert", "mapper": "Mapper C", "sr": 6.2, "baseSr": 6.2, "cs": 4, "ar": 9.6, "od": 9, "hp": 6, "bpm": 170, "length": 160, "cover": "https://assets.ppy.sh/beatmaps/503/covers/list@2x.jpg" },
+    { "id": "hr0001", "mod": "HR", "beatmapId": 129891, "beatmapsetId": 39804, "artist": "xi", "title": "FREEDOM DiVE", "version": "FOUR DIMENSIONS", "mapper": "Nakagawa-Kanon", "sr": 8.52, "baseSr": 7.07, "cs": 5.2, "ar": 10, "od": 10, "hp": 8.4, "bpm": 222, "length": 257, "cover": "https://assets.ppy.sh/beatmaps/39804/covers/list@2x.jpg" },
+    { "id": "dt0001", "mod": "DT", "beatmapId": 1005, "beatmapsetId": 505, "artist": "Artist E", "title": "Song E", "version": "Hard", "mapper": "Mapper E", "sr": 6.66, "baseSr": 4.9, "cs": 4, "ar": 10.33, "od": 9.61, "hp": 5, "bpm": 270, "length": 95, "cover": "https://assets.ppy.sh/beatmaps/505/covers/list@2x.jpg" },
+    { "id": "fm0001", "mod": "FM", "beatmapId": 1006, "beatmapsetId": 506, "artist": "Artist F", "title": "Song F", "version": "Insane", "mapper": "Mapper F", "sr": 5.9, "baseSr": 5.9, "cs": 4, "ar": 9, "od": 8, "hp": 5, "bpm": 175, "length": 130, "cover": "https://assets.ppy.sh/beatmaps/506/covers/list@2x.jpg" },
+    { "id": "sd0001", "mod": "SD", "beatmapId": 1007, "beatmapsetId": 507, "artist": "Artist G", "title": "Song G", "version": "Extreme", "mapper": "Mapper G", "sr": 6.1, "baseSr": 6.1, "cs": 4, "ar": 9.4, "od": 9, "hp": 6, "bpm": 190, "length": 120, "cover": "https://assets.ppy.sh/beatmaps/507/covers/list@2x.jpg" },
+    { "id": "tb0001", "mod": "TB", "beatmapId": 1008, "beatmapsetId": 508, "artist": "Artist H", "title": "Song H", "version": "Finale", "mapper": "Mapper H", "sr": 7.1, "baseSr": 7.1, "cs": 4, "ar": 9.7, "od": 9.2, "hp": 6, "bpm": 185, "length": 300, "cover": "https://assets.ppy.sh/beatmaps/508/covers/list@2x.jpg" },
+    { "id": "fm0002", "mod": "FM", "beatmapId": 1009, "beatmapsetId": 509, "artist": "Artist I", "title": "Song I", "version": "Insane", "mapper": "Mapper I", "sr": 5.7, "baseSr": 5.7, "cs": 4, "ar": 9, "od": 8, "hp": 5, "bpm": 160, "length": 140, "cover": "https://assets.ppy.sh/beatmaps/509/covers/list@2x.jpg", "somethingNew": [1, 2, 3] }
+  ],
+  "createdAt": 1790000000000,
+  "updatedAt": 1790000500000,
+  "canEdit": false
+}

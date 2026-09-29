@@ -30,6 +30,15 @@ public sealed class AppSettings
 
     public string OsuClientSecret { get; set; } = string.Empty;
 
+    /// <summary>The Mappool Builder that pools are imported from.</summary>
+    public string MappoolBuilderUrl { get; set; } = "https://pools.jansel.dev";
+
+    /// <summary>
+    /// API token for the Mappool Builder (<c>tpz_…</c>). Optional: without it only public pools can
+    /// be imported. Stored locally in plain text, like the IRC password.
+    /// </summary>
+    public string MappoolBuilderToken { get; set; } = string.Empty;
+
     /// <summary>File name (not path) of the mappool selected in the tournament panel.</summary>
     public string? LastMappoolFile { get; set; }
 
