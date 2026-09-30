@@ -29,3 +29,56 @@ jobs:
 
       - name: Test
         run: dotnet test --no-build -c Release --verbosity normal
+
+  # Signs the app the way a Developer ID build is signed — hardened runtime, the entitlements,
+  # every file inside out — with a throwaway certificate, then starts it. That catches a signing
+  # step or entitlement that would stop the .NET runtime before a real certificate ever meets it.
+  macos-signing:
+    name: Hardened runtime (macOS)
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Make a throwaway signing certificate
+        run: ./build/macos/make-test-certificate.sh
+
+      - name: Set up signing
+        run: ./build/macos/setup-ci-signing.sh
+
+      - name: Package with the hardened runtime
+        env:
+          CASTORICE_SIGN_NO_TIMESTAMP: "1"
+        run: ./build/package-macos.sh osx-arm64
+
+      - name: Check the signature
+        run: |
+          app=artifacts/macos/osx-arm64/Castorice.app
+          codesign --verify --deep --strict --verbose=2 "$app"
+          codesign --display --verbose=4 "$app" 2>&1 | tee signature.txt
+          grep -q "runtime" signature.txt || { echo "::error::The hardened runtime is not enabled."; exit 1; }
+          codesign --display --entitlements - "$app" | grep -q "allow-jit" || { echo "::error::The entitlements are missing."; exit 1; }
+
+      - name: Start the signed app
+        run: |
+          app=artifacts/macos/osx-arm64/Castorice.app
+          "$app/Contents/MacOS/Castorice" > app.log 2>&1 &
+          pid=$!
+          sleep 20
+          if kill -0 "$pid" 2>/dev/null; then
+            echo "Castorice is still running after 20 seconds under the hardened runtime."
+            kill "$pid"
+          else
+            echo "::error::Castorice exited under the hardened runtime."
+            cat app.log
+            exit 1
+          fi
+
+      - name: Remove signing material
+        if: always()
+        run: ./build/macos/cleanup-ci-signing.sh
+

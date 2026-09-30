@@ -68,8 +68,28 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: echo "CASTORICE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
 
+      # Signs with the Developer ID and notarises when these secrets are set (see the README);
+      # without them the app is signed ad hoc, as before.
+      - name: Set up signing
+        env:
+          MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+          MACOS_NOTARY_KEY: ${{ secrets.MACOS_NOTARY_KEY }}
+        run: ./build/macos/setup-ci-signing.sh
+
       - name: Package
+        env:
+          CASTORICE_NOTARY_KEY_ID: ${{ secrets.MACOS_NOTARY_KEY_ID }}
+          CASTORICE_NOTARY_ISSUER: ${{ secrets.MACOS_NOTARY_ISSUER_ID }}
+          CASTORICE_NOTARY_APPLE_ID: ${{ secrets.MACOS_NOTARY_APPLE_ID }}
+          CASTORICE_NOTARY_PASSWORD: ${{ secrets.MACOS_NOTARY_PASSWORD }}
+          CASTORICE_NOTARY_TEAM_ID: ${{ secrets.MACOS_NOTARY_TEAM_ID }}
         run: ./build/package-macos.sh ${{ matrix.rid }}
+
+      - name: Remove signing material
+        if: always()
+        run: ./build/macos/cleanup-ci-signing.sh
 
       - uses: actions/upload-artifact@v4
         with:

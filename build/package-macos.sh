@@ -9,6 +9,22 @@
 # The bundle lands in artifacts/macos/<rid>/Castorice.app and the disk image in
 # artifacts/Castorice-<version>-macos-<arm64|x64>.dmg. CASTORICE_VERSION overrides the version
 # from Directory.Build.props, as CI does for a tagged release.
+#
+# Signing. Without further settings the app is signed ad hoc: it runs on the Mac that built it,
+# but a downloaded copy is stopped by Gatekeeper. For a build other Macs open without a warning:
+#
+#   CASTORICE_SIGN_IDENTITY   "Developer ID Application: Name (TEAMID)" from the keychain;
+#                             signs with the hardened runtime and a secure timestamp
+#
+# and to notarise it with Apple, either an App Store Connect API key
+#
+#   CASTORICE_NOTARY_KEY_PATH, CASTORICE_NOTARY_KEY_ID, CASTORICE_NOTARY_ISSUER
+#
+# or an Apple ID with an app-specific password
+#
+#   CASTORICE_NOTARY_APPLE_ID, CASTORICE_NOTARY_PASSWORD, CASTORICE_NOTARY_TEAM_ID
+#
+# CASTORICE_SIGN_NO_TIMESTAMP=1 skips the timestamp, for test certificates Apple will not stamp.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -70,13 +86,74 @@ else
   cp "$root/build/macos/Castorice.icns" "$contents/Resources/Castorice.icns"
 fi
 
-# Apple silicon refuses to run unsigned code, and adding Info.plist and the icon changes the
-# bundle, so it is signed again ad hoc. That is enough to run it on the Mac that built it.
-if command -v codesign >/dev/null; then
-  codesign --force --deep --sign - "$app"
-else
+identity="${CASTORICE_SIGN_IDENTITY:-}"
+entitlements="$root/build/macos/Castorice.entitlements"
+timestamp=(--timestamp)
+if [[ "${CASTORICE_SIGN_NO_TIMESTAMP:-}" == 1 ]]; then
+  timestamp=(--timestamp=none)
+fi
+
+notary=()
+if [[ -n "${CASTORICE_NOTARY_KEY_PATH:-}" && -n "${CASTORICE_NOTARY_KEY_ID:-}" && -n "${CASTORICE_NOTARY_ISSUER:-}" ]]; then
+  notary=(--key "$CASTORICE_NOTARY_KEY_PATH" --key-id "$CASTORICE_NOTARY_KEY_ID" --issuer "$CASTORICE_NOTARY_ISSUER")
+elif [[ -n "${CASTORICE_NOTARY_APPLE_ID:-}" && -n "${CASTORICE_NOTARY_PASSWORD:-}" && -n "${CASTORICE_NOTARY_TEAM_ID:-}" ]]; then
+  notary=(--apple-id "$CASTORICE_NOTARY_APPLE_ID" --password "$CASTORICE_NOTARY_PASSWORD" --team-id "$CASTORICE_NOTARY_TEAM_ID")
+fi
+
+if [[ -z "$identity" && ${#notary[@]} -gt 0 ]]; then
+  echo "Notarisation settings found but no CASTORICE_SIGN_IDENTITY; Apple only notarises Developer ID builds, so skipping it." >&2
+  notary=()
+fi
+
+sign() {
+  codesign --force "${timestamp[@]}" --options runtime --sign "$identity" "$@"
+}
+
+# Sends a file to Apple and waits for the verdict. notarytool exits 0 even for a rejected
+# submission, so the status is read from its answer, and Apple's log is printed on failure.
+notarise() {
+  local file="$1" result id
+  echo "Notarising $(basename "$file") — this usually takes a few minutes"
+  result="$(xcrun notarytool submit "$file" "${notary[@]}" --wait --timeout 30m --output-format json)" || {
+    echo "$result" >&2
+    return 1
+  }
+  if ! grep -Eq '"status" *: *"Accepted"' <<<"$result"; then
+    echo "Apple did not accept $(basename "$file"): $result" >&2
+    id="$(sed -nE 's/.*"id" *: *"([^"]+)".*/\1/p' <<<"$result" | head -n 1)"
+    [[ -n "$id" ]] && xcrun notarytool log "$id" "${notary[@]}" >&2 || true
+    return 1
+  fi
+}
+
+if ! command -v codesign >/dev/null; then
   echo "codesign not found; sign the bundle on a Mac before running it there:"
   echo "  codesign --force --deep --sign - \"$app\""
+elif [[ -z "$identity" ]]; then
+  # Apple silicon refuses to run unsigned code, and adding Info.plist and the icon changes the
+  # bundle, so it is signed again ad hoc. That is enough to run it on the Mac that built it.
+  codesign --force --deep --sign - "$app"
+else
+  echo "Signing with $identity"
+  # Inside out: every file next to the executable (native libraries and managed assemblies
+  # alike), then the executable with the entitlements the .NET runtime needs, then the bundle.
+  find "$contents/MacOS" -type f ! -path "$contents/MacOS/Castorice" -print0 |
+    while IFS= read -r -d '' file; do
+      sign "$file" >/dev/null
+    done
+  sign --entitlements "$entitlements" "$contents/MacOS/Castorice"
+  sign --entitlements "$entitlements" "$app"
+  codesign --verify --deep --strict --verbose=2 "$app"
+
+  if [[ ${#notary[@]} -gt 0 ]]; then
+    # Notarising the app itself lets its ticket be stapled to it, so it opens without a network
+    # check even once it has been copied out of the disk image.
+    zip="$(mktemp -d)/Castorice.zip"
+    ditto -c -k --keepParent "$app" "$zip"
+    notarise "$zip"
+    rm -rf "$(dirname "$zip")"
+    xcrun stapler staple "$app"
+  fi
 fi
 
 # The disk image: the app next to a shortcut to Applications, the usual drag-to-install window.
@@ -99,6 +176,16 @@ if command -v hdiutil >/dev/null; then
     sleep 5
   done
   rm -rf "$staging"
+
+  if [[ -n "$identity" ]]; then
+    codesign --force "${timestamp[@]}" --sign "$identity" "$dmg"
+    if [[ ${#notary[@]} -gt 0 ]]; then
+      notarise "$dmg"
+      xcrun stapler staple "$dmg"
+      spctl --assess --type open --context context:primary-signature --verbose=2 "$dmg" || true
+    fi
+  fi
+
   echo "Disk image: $dmg"
 else
   echo "hdiutil not found (not on a Mac?); skipping the disk image."

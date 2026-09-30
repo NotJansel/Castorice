@@ -70,11 +70,39 @@ git tag v0.2.0 && git push origin v0.2.0      # a tag with a suffix, e.g. v0.2.0
 All builds are self-contained, so no .NET is needed on the machine. Linux needs the usual desktop
 libraries and ICU (`libicu`), which every desktop distribution ships.
 
-The installers are not signed with a paid certificate, so the systems warn on first start:
-Windows SmartScreen shows **More info → Run anyway**; macOS says it cannot check the app — open it
-with right-click → **Open**, or on macOS 15 and later allow it under **System Settings → Privacy &
-Security → Open Anyway**. Settings, pools and the image cache live in the user's config directory
-and survive an uninstall.
+Windows SmartScreen warns about the installer until it is signed with a paid certificate: **More
+info → Run anyway**. Settings, pools and the image cache live in the user's config directory and
+survive an uninstall.
+
+#### Signing and notarising for macOS
+
+A Mac only opens a downloaded app without complaint when it is signed with a Developer ID and
+notarised by Apple. Until that is set up the app is signed ad hoc, and macOS says it cannot check
+it for malware. To open such a build anyway, try to open it once, then allow it under **System
+Settings → Privacy & Security → Open Anyway** (on macOS 14 and older right-click → **Open** also
+works), or clear the download flag: `xattr -dr com.apple.quarantine /Applications/Castorice.app`.
+
+The Package workflow signs and notarises by itself once these repository secrets exist
+(**Settings → Secrets and variables → Actions**); it needs a membership in the Apple Developer
+Program:
+
+| Secret | What goes in it |
+| --- | --- |
+| `MACOS_CERTIFICATE_P12` | The **Developer ID Application** certificate with its private key, exported from Keychain Access as .p12, then `base64 -i cert.p12 \| pbcopy` |
+| `MACOS_CERTIFICATE_PASSWORD` | The password chosen for that export |
+| `MACOS_NOTARY_KEY` | An App Store Connect API key (Users and Access → Integrations → Keys, access "Developer"): the .p8 file's contents |
+| `MACOS_NOTARY_KEY_ID` | That key's ID |
+| `MACOS_NOTARY_ISSUER_ID` | The issuer ID shown above the keys |
+
+Instead of the API key, an Apple ID works too: `MACOS_NOTARY_APPLE_ID`, `MACOS_NOTARY_PASSWORD`
+(an app-specific password from account.apple.com) and `MACOS_NOTARY_TEAM_ID`.
+`MACOS_SIGNING_IDENTITY` is only needed when the certificate holds more than one identity.
+
+With the certificate alone the app is signed but not notarised, and macOS still warns. With both,
+the app and the disk image are notarised and the tickets stapled, so they open without a network
+check. A CI job signs every build the same way with a throwaway certificate and starts the app, so
+the hardened runtime is known to work before a real certificate is added. Locally the same script
+takes the settings as environment variables; its header lists them.
 
 The same packages can be built locally, each on its own system:
 
@@ -375,7 +403,8 @@ src/Castorice.Core/        No UI dependencies; all of it is unit-testable
   Configuration/           Settings model, atomic writes, platform paths
 src/Castorice.Desktop/     Avalonia UI (MVVM, CommunityToolkit.Mvvm)
 build/                     Installer scripts per system, with their templates (Info.plist,
-                           Inno Setup script, AppImage desktop entry)
+                           entitlements, Inno Setup script, AppImage desktop entry) and the
+                           macOS signing set-up for CI
 tests/Castorice.Core.Tests/
   Fixtures/                Every distinct BanchoBot line from a real bracket match, so the
                            parser is checked against what Bancho says, not what it was assumed to
