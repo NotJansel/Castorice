@@ -1,0 +1,34 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Castorice.Desktop.Views.AboutWindow"
+        Title="About Castorice"
+        Icon="/Assets/castorice.ico"
+        Width="360" SizeToContent="Height"
+        CanResize="False"
+        CanMinimize="False"
+        CanMaximize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource CastoriceBackgroundBrush}">
+
+  <StackPanel Margin="28,30,28,26" Spacing="14" HorizontalAlignment="Center">
+    <Border Width="96" Height="96" HorizontalAlignment="Center"
+            CornerRadius="22" ClipToBounds="True">
+      <Image Source="/Assets/castorice.png" Stretch="UniformToFill"
+             RenderOptions.BitmapInterpolationMode="HighQuality" />
+    </Border>
+
+    <StackPanel Spacing="3" HorizontalAlignment="Center">
+      <TextBlock Classes="h1" Name="AppName" HorizontalAlignment="Center" />
+      <TextBlock Classes="muted" Name="Tagline" HorizontalAlignment="Center" />
+      <TextBlock Classes="faint" Name="VersionText" HorizontalAlignment="Center" Margin="0,4,0,0" />
+    </StackPanel>
+
+    <TextBlock Classes="faint" TextWrapping="Wrap" TextAlignment="Center"
+               Text="Free software under the MIT license." />
+
+    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+      <Button Content="Source code" Click="OnOpenRepository" />
+      <Button Classes="accent" Content="Close" Click="OnClose" IsDefault="True" IsCancel="True" />
+    </StackPanel>
+  </StackPanel>
+</Window>

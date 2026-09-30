@@ -50,24 +50,46 @@ out to be cut short is thrown away and fetched again rather than shown as a blan
 dotnet run --project src/Castorice.Desktop
 ```
 
-### macOS app
+### Installers
 
-To get a `Castorice.app` for the Applications folder, with its icon in Finder, Launchpad and the
-Dock, run on the Mac:
+Every push builds installers for all three systems; open the run under **Actions → Package** and
+download them from its **Artifacts**. Pushing a version tag publishes them as a GitHub release:
 
 ```bash
-build/package-macos.sh              # this Mac's processor; or pass osx-arm64 / osx-x64
+git tag v0.2.0 && git push origin v0.2.0      # a tag with a suffix, e.g. v0.2.0-beta.1, is a pre-release
 ```
 
-The bundle lands in `artifacts/macos/<rid>/Castorice.app`. It is self-contained, so the Mac it
-runs on does not need .NET, and it is signed ad hoc, which is enough to run it on the Mac that
-built it. A copy passed to someone else is not notarised: they open it the first time with
-right-click → **Open**.
+| System | File | Install |
+| --- | --- | --- |
+| Windows | `Castorice-<version>-windows-x64-setup.exe` | Run it. Installs for the current user without an admin prompt, with a Start menu entry and an uninstaller. |
+| Windows | `…-windows-x64-portable.zip` | Unzip anywhere and start `Castorice.exe`. |
+| macOS | `Castorice-<version>-macos-arm64.dmg` (Apple silicon) or `…-macos-x64.dmg` (Intel) | Open it and drag Castorice into Applications. |
+| Linux | `Castorice-<version>-linux-x86_64.AppImage` | `chmod +x` it and start it. Needs FUSE 2 (`libfuse2`); without it, start it with `--appimage-extract-and-run`. |
+| Linux | `…-linux-x86_64.tar.gz` | Unpack anywhere and start `Castorice`. |
 
-The app icon is built from `src/Castorice.Desktop/Assets/castorice-dock.png`, the same artwork the
-Dock uses when the app is started with `dotnet run`. To change it, replace that file (a 512×512
-PNG with a transparent margin, like other Mac icons) and `castorice.ico` / `castorice.png` next to
-it for Windows, Linux and the sidebar.
+All builds are self-contained, so no .NET is needed on the machine. Linux needs the usual desktop
+libraries and ICU (`libicu`), which every desktop distribution ships.
+
+The installers are not signed with a paid certificate, so the systems warn on first start:
+Windows SmartScreen shows **More info → Run anyway**; macOS says it cannot check the app — open it
+with right-click → **Open**, or on macOS 15 and later allow it under **System Settings → Privacy &
+Security → Open Anyway**. Settings, pools and the image cache live in the user's config directory
+and survive an uninstall.
+
+The same packages can be built locally, each on its own system:
+
+```bash
+build/package-macos.sh               # Castorice.app and a .dmg; osx-arm64 / osx-x64 to choose
+build/package-linux.sh               # AppImage and .tar.gz; linux-arm64 for ARM
+```
+
+```powershell
+build\package-windows.ps1            # setup.exe (needs Inno Setup 6) and a portable .zip
+```
+
+The app icon comes from `src/Castorice.Desktop/Assets`: `castorice.ico` for Windows and the
+window, `castorice.png` for Linux and the sidebar, and `castorice-dock.png` (512×512 with a
+transparent margin, like other Mac icons) for the macOS app and Dock.
 
 ### Credentials
 
@@ -352,7 +374,8 @@ src/Castorice.Core/        No UI dependencies; all of it is unit-testable
   MappoolBuilder/          Read-only client and import for the Mappool Builder API
   Configuration/           Settings model, atomic writes, platform paths
 src/Castorice.Desktop/     Avalonia UI (MVVM, CommunityToolkit.Mvvm)
-build/                     package-macos.sh and the Castorice.app template (Info.plist, icon)
+build/                     Installer scripts per system, with their templates (Info.plist,
+                           Inno Setup script, AppImage desktop entry)
 tests/Castorice.Core.Tests/
   Fixtures/                Every distinct BanchoBot line from a real bracket match, so the
                            parser is checked against what Bancho says, not what it was assumed to

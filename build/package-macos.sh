@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-# Builds Castorice.app: a self-contained macOS app bundle with its icon, ready to drag into
-# Applications.
+# Builds Castorice.app, a self-contained macOS app bundle with its icon, and on a Mac also a
+# disk image to install it from.
 #
 #   build/package-macos.sh              # for this Mac's processor
 #   build/package-macos.sh osx-x64      # Intel
 #   build/package-macos.sh osx-arm64    # Apple silicon
 #
-# The result lands in artifacts/macos/<rid>/Castorice.app.
+# The bundle lands in artifacts/macos/<rid>/Castorice.app and the disk image in
+# artifacts/Castorice-<version>-macos-<arm64|x64>.dmg. CASTORICE_VERSION overrides the version
+# from Directory.Build.props, as CI does for a tagged release.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -24,7 +26,7 @@ if [[ "$rid" != osx-* ]]; then
   exit 1
 fi
 
-version="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$root/Directory.Build.props" | head -n 1)"
+version="${CASTORICE_VERSION:-$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$root/Directory.Build.props" | head -n 1)}"
 version="${version:-0.0.0}"
 
 out="$root/artifacts/macos/$rid"
@@ -41,9 +43,12 @@ dotnet publish "$root/src/Castorice.Desktop/Castorice.Desktop.csproj" \
   -r "$rid" \
   --self-contained true \
   -p:UseAppHost=true \
+  -p:Version="$version" \
   -o "$contents/MacOS"
 
-sed "s/@VERSION@/$version/g" "$root/build/macos/Info.plist" > "$contents/Info.plist"
+# macOS wants plain numbers in the bundle version, so a pre-release suffix such as -beta.1 is
+# left out there; the file names keep it.
+sed "s/@VERSION@/${version%%-*}/g" "$root/build/macos/Info.plist" > "$contents/Info.plist"
 printf 'APPL????' > "$contents/PkgInfo"
 
 # The icon is built from the same artwork as the Dock icon, so replacing
@@ -72,6 +77,31 @@ if command -v codesign >/dev/null; then
 else
   echo "codesign not found; sign the bundle on a Mac before running it there:"
   echo "  codesign --force --deep --sign - \"$app\""
+fi
+
+# The disk image: the app next to a shortcut to Applications, the usual drag-to-install window.
+arch="${rid#osx-}"
+dmg="$root/artifacts/Castorice-$version-macos-$arch.dmg"
+if command -v hdiutil >/dev/null; then
+  staging="$(mktemp -d)"
+  cp -R "$app" "$staging/"
+  ln -s /Applications "$staging/Applications"
+  rm -f "$dmg"
+  # hdiutil now and then fails with "Resource busy" on build machines; a retry gets past it.
+  for attempt in 1 2 3; do
+    if hdiutil create -volname "Castorice" -srcfolder "$staging" -fs HFS+ -format UDZO -ov "$dmg" >/dev/null; then
+      break
+    fi
+    if [[ "$attempt" == 3 ]]; then
+      echo "hdiutil could not create the disk image." >&2
+      exit 1
+    fi
+    sleep 5
+  done
+  rm -rf "$staging"
+  echo "Disk image: $dmg"
+else
+  echo "hdiutil not found (not on a Mac?); skipping the disk image."
 fi
 
 echo

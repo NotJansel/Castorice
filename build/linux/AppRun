@@ -1,0 +1,4 @@
+#!/bin/sh
+# Entry point of the AppImage: starts the bundled, self-contained build.
+here="$(dirname "$(readlink -f "$0")")"
+exec "$here/usr/lib/castorice/Castorice" "$@"

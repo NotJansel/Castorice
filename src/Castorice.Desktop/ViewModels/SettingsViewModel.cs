@@ -23,6 +23,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
     public AppSettings Settings { get; }
 
+    public string AppVersion => AppInfo.Version;
+
     public string ConfigDirectory => AppPaths.Root;
 
     public string MappoolDirectory => AppPaths.MappoolDirectory;

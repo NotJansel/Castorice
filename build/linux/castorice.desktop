@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Castorice
+GenericName=osu! IRC client
+Comment=osu! IRC client with tournament tools
+Exec=Castorice
+Icon=castorice
+Terminal=false
+Categories=Network;Chat;
+Keywords=osu;irc;tournament;referee;
+StartupWMClass=Castorice

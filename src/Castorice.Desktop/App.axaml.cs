@@ -11,7 +11,27 @@ namespace Castorice.Desktop;
 
 public partial class App : Application
 {
-    public override void Initialize() => AvaloniaXamlLoader.Load(this);
+    public override void Initialize()
+    {
+        AvaloniaXamlLoader.Load(this);
+
+        // macOS titles the app menu with this, and Avalonia's default is "Avalonia Application".
+        Name = AppInfo.Name;
+    }
+
+    private void OnAboutClicked(object? sender, EventArgs e)
+    {
+        var about = new AboutWindow();
+
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: { IsVisible: true } owner })
+        {
+            _ = about.ShowDialog(owner);
+        }
+        else
+        {
+            about.Show();
+        }
+    }
 
     public override void OnFrameworkInitializationCompleted()
     {

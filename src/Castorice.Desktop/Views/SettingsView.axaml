@@ -98,6 +98,15 @@
           <CheckBox Content="Ask before sending destructive commands (!mp close, kick)"
                     IsChecked="{Binding ConfirmDestructiveCommands}" />
 
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Grid.Column="0" Spacing="4">
+              <TextBlock Classes="label" Text="VERSION" />
+              <TextBlock Text="{Binding AppVersion}" />
+            </StackPanel>
+            <Button Grid.Column="1" Classes="ghost" Content="About Castorice" VerticalAlignment="Center"
+                    Click="OnAboutClicked" />
+          </Grid>
+
           <StackPanel Spacing="4">
             <TextBlock Classes="label" Text="CONFIG DIRECTORY" />
             <SelectableTextBlock Text="{Binding ConfigDirectory}" Classes="muted mono" TextWrapping="Wrap" />

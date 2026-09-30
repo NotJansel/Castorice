@@ -3,6 +3,17 @@
              x:Class="Castorice.Desktop.App"
              RequestedThemeVariant="Dark">
 
+  <!--
+    The macOS app menu. Setting it replaces Avalonia's default, which offers "About Avalonia";
+    Avalonia still adds Services, Hide, Hide Others, Show All and Quit after these items.
+    Ignored on Windows and Linux.
+  -->
+  <NativeMenu.Menu>
+    <NativeMenu>
+      <NativeMenuItem Header="About Castorice" Click="OnAboutClicked" />
+    </NativeMenu>
+  </NativeMenu.Menu>
+
   <Application.Styles>
     <FluentTheme />
     <StyleInclude Source="avares://Castorice/Styles/Castorice.axaml" />
