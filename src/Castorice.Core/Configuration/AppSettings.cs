@@ -44,6 +44,12 @@ public sealed class AppSettings
 
     public string Theme { get; set; } = "Dark";
 
+    /// <summary>Look for a new release on start and every few hours.</summary>
+    public bool CheckForUpdates { get; set; } = true;
+
+    /// <summary>A release the user chose not to be reminded of, e.g. <c>0.3.0</c>.</summary>
+    public string SkippedUpdateVersion { get; set; } = string.Empty;
+
     /// <summary>Ask before sending destructive commands such as <c>!mp close</c>.</summary>
     public bool ConfirmDestructiveCommands { get; set; } = true;
 

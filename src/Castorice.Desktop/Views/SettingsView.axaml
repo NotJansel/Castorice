@@ -103,9 +103,17 @@
               <TextBlock Classes="label" Text="VERSION" />
               <TextBlock Text="{Binding AppVersion}" />
             </StackPanel>
-            <Button Grid.Column="1" Classes="ghost" Content="About Castorice" VerticalAlignment="Center"
-                    Click="OnAboutClicked" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+              <Button Classes="ghost" Content="Check for updates" Command="{Binding Updates.CheckNowCommand}"
+                      IsEnabled="{Binding !Updates.IsChecking}" />
+              <Button Classes="ghost" Content="About Castorice" Click="OnAboutClicked" />
+            </StackPanel>
           </Grid>
+
+          <CheckBox Content="Check for updates automatically" IsChecked="{Binding Updates.CheckForUpdates}"
+                    ToolTip.Tip="Looks for a new release on GitHub when Castorice starts and every few hours, and offers it at the top of the window." />
+          <TextBlock Classes="muted" Text="{Binding Updates.Status}" TextWrapping="Wrap"
+                     IsVisible="{Binding Updates.Status, Converter={x:Static views:ViewConverters.IsNotEmpty}, FallbackValue=False}" />
 
           <StackPanel Spacing="4">
             <TextBlock Classes="label" Text="CONFIG DIRECTORY" />

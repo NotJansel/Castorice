@@ -25,6 +25,9 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
     public string AppVersion => AppInfo.Version;
 
+    /// <summary>Set by the main window, which owns the update check.</summary>
+    public UpdateViewModel? Updates { get; set; }
+
     public string ConfigDirectory => AppPaths.Root;
 
     public string MappoolDirectory => AppPaths.MappoolDirectory;

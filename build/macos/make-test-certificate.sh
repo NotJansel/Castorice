@@ -32,8 +32,11 @@ CNF
 # Trusted for code signing on this machine only, so codesign treats it as a valid identity.
 sudo security add-trusted-cert -d -r trustRoot -p codeSign -k /Library/Keychains/System.keychain "$dir/cert.pem"
 
+p12="$(base64 -i "$dir/cert.p12" | tr -d '\n')"
+# Worthless outside this machine, but kept out of the log all the same.
+echo "::add-mask::$p12"
 {
-  echo "MACOS_CERTIFICATE_P12=$(base64 -i "$dir/cert.p12" | tr -d '\n')"
+  echo "MACOS_CERTIFICATE_P12=$p12"
   echo "MACOS_CERTIFICATE_PASSWORD=castorice-test"
 } >> "$GITHUB_ENV"
 

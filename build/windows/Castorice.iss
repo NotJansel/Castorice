@@ -64,3 +64,5 @@ Name: "{autodesktop}\Castorice"; Filename: "{app}\Castorice.exe"; Tasks: desktop
 
 [Run]
 Filename: "{app}\Castorice.exe"; Description: "{cm:LaunchProgram,Castorice}"; Flags: nowait postinstall skipifsilent
+; An update from inside Castorice runs this setup silently; it starts the new version when done.
+Filename: "{app}\Castorice.exe"; Flags: nowait; Check: WizardSilent

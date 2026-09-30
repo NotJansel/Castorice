@@ -40,6 +40,9 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         Tournament = new TournamentViewModel(_services);
         Profile = new ProfileViewModel(_services);
         Settings = new SettingsViewModel(_services);
+        Updates = new UpdateViewModel(_services);
+        Settings.Updates = Updates;
+        Updates.Start();
 
         Settings.ThemeChanged += (_, variant) => ThemeChanged?.Invoke(this, variant);
         Settings.ApiCredentialsChanged += (_, _) => Profile.NotifyApiConfigurationChanged();
@@ -53,6 +56,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     }
 
     public ChatViewModel Chat { get; }
+
+    public UpdateViewModel Updates { get; }
 
     public TournamentViewModel Tournament { get; }
 
@@ -161,6 +166,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     public async Task ShutdownAsync()
     {
+        Updates.Dispose();
+
         try
         {
             _services.SaveSettings();

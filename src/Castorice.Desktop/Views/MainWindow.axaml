@@ -141,9 +141,38 @@
       </Grid>
     </Border>
 
+    <Grid Grid.Column="1" RowDefinitions="Auto,*">
+
+    <!-- ==================== Update banner ==================== -->
+    <Border Grid.Row="0" IsVisible="{Binding Updates.IsBannerVisible}"
+            Background="{DynamicResource CastoriceSurfaceBrush}"
+            BorderBrush="{DynamicResource CastoriceBorderBrush}" BorderThickness="0,0,0,1"
+            Padding="20,10">
+      <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
+        <Ellipse Grid.Column="0" Width="8" Height="8" Margin="0,0,12,0" VerticalAlignment="Center"
+                 Fill="{DynamicResource CastoriceAccentBrush}" />
+        <TextBlock Grid.Column="1" Text="{Binding Updates.BannerText}" TextWrapping="Wrap"
+                   VerticalAlignment="Center" FontWeight="SemiBold" />
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" Margin="12,0,0,0"
+                    IsEnabled="{Binding !Updates.IsDownloading}">
+          <Button Classes="accent compact" Content="{Binding Updates.InstallLabel}"
+                  Command="{Binding Updates.InstallCommand}" />
+          <Button Classes="ghost compact" Content="What's new"
+                  Command="{Binding Updates.OpenReleaseNotesCommand}" />
+          <Button Classes="ghost compact" Content="Skip this version"
+                  Command="{Binding Updates.SkipVersionCommand}" />
+          <Button Classes="ghost compact" Content="✕" ToolTip.Tip="Remind me next time"
+                  Command="{Binding Updates.DismissCommand}" />
+        </StackPanel>
+        <ProgressBar Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,8,0,0"
+                     Minimum="0" Maximum="100" Value="{Binding Updates.DownloadProgress}"
+                     IsVisible="{Binding Updates.IsDownloading}" />
+      </Grid>
+    </Border>
+
     <!-- ==================== Pages ==================== -->
     <!-- All four stay loaded so chat backlog and scroll position survive a page switch. -->
-    <Panel Grid.Column="1">
+    <Panel Grid.Row="1">
       <ContentControl Classes="page" Classes.shown="{Binding IsChatPage}"
                       Content="{Binding Chat}"
                       ContentTemplate="{StaticResource ChatTemplate}"
@@ -161,6 +190,8 @@
                       ContentTemplate="{StaticResource SettingsTemplate}"
                       IsVisible="{Binding IsSettingsPage}" />
     </Panel>
+
+    </Grid>
 
   </Grid>
 

@@ -74,6 +74,27 @@ Windows SmartScreen warns about the installer until it is signed with a paid cer
 info → Run anyway**. Settings, pools and the image cache live in the user's config directory and
 survive an uninstall.
 
+#### Updates
+
+Castorice looks for a new release on GitHub when it starts and every six hours, and offers it in a
+banner at the top of the window: **Update now**, **What's new**, **Skip this version**, or ✕ to be
+reminded next time. **Settings → Check for updates** asks straight away, and the automatic check
+can be switched off there. Only published releases are offered, never drafts or pre-releases.
+
+**Update now** downloads the installer for the system, checks it against the SHA-256 checksum
+GitHub lists for it, and puts it in place:
+
+| Installed with | What happens |
+| --- | --- |
+| Windows setup | The new setup runs silently over the installation and starts Castorice again. |
+| macOS disk image | Castorice quits, the app in Applications is swapped for the new one, and it starts again. If the folder is not writable, the new disk image opens for dragging in by hand. |
+| Linux AppImage | The AppImage file is replaced and started again. |
+| Portable zip, .tar.gz, `dotnet run` | The release page opens. |
+
+The check asks `api.github.com` for the repository's latest release, so the repository (or at
+least its releases) has to be public. A release's tag is its version: tag `v0.2.0` is offered to
+everything older than 0.2.0.
+
 #### Signing and notarising for macOS
 
 A Mac only opens a downloaded app without complaint when it is signed with a Developer ID and
@@ -418,7 +439,7 @@ The core library never references Avalonia. UI thread marshalling goes through t
 
 ```bash
 dotnet build              # whole solution
-dotnet test               # 320 tests, no network needed
+dotnet test               # 353 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
 

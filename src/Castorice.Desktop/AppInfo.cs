@@ -9,7 +9,10 @@ public static class AppInfo
 
     public const string Tagline = "osu! IRC client with tournament tools";
 
-    public const string Repository = "https://github.com/notjansel/castorice";
+    public const string Repository = "https://github.com/NotJansel/Castorice";
+
+    /// <summary>Where releases, and so updates, come from.</summary>
+    public const string GitHubRepository = "NotJansel/Castorice";
 
     /// <summary>
     /// The version the build was stamped with, e.g. <c>0.1.0</c>. The SDK appends the commit as
