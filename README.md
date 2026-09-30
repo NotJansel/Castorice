@@ -101,6 +101,11 @@ The check asks `api.github.com` for the repository's latest release, so the repo
 least its releases) has to be public. A release's tag is its version: tag `v0.2.0` is offered to
 everything older than 0.2.0, `0.2.0-dev` included.
 
+The app only looks at the release GitHub marks as **Latest**. The packaging workflow gives that
+mark to a release only when it is the highest version published, so a patch for an older line —
+`v0.1.1` tagged after `v0.2.0` is out — goes out without it, and 0.1.x users are still offered
+0.2.0.
+
 #### Signing and notarising for macOS
 
 A Mac only opens a downloaded app without complaint when it is signed with a Developer ID and

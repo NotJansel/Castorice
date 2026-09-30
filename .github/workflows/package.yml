@@ -133,9 +133,39 @@ jobs:
           path: dist
           merge-multiple: true
 
+      # The app updates to whatever GitHub marks as the latest release, which by default is the
+      # newest one published. A patch for an older line (0.1.1 after 0.2.0) must not take that
+      # mark, or 0.1.0 users would be offered 0.1.1 instead of 0.2.0.
+      - name: Decide whether this is the latest release
+        id: latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#v}"
+          if [[ "$version" == *-* ]]; then
+            echo "Pre-release $version is never the latest."
+            echo "make_latest=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Published releases only: drafts, pre-releases and tags without a release do not count.
+          released="$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" \
+            --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name')"
+          highest="$(printf '%s\n' $released "$TAG" | sed 's/^v//' | grep -E '^[0-9]+(\.[0-9]+){0,2}$' | sort -V | tail -n 1)"
+
+          if [[ "$highest" == "$version" ]]; then
+            echo "$version is the highest release: marking it as the latest."
+            echo "make_latest=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "$version is below $highest: $highest stays the latest release."
+            echo "make_latest=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: softprops/action-gh-release@v2
         with:
           files: dist/*
           generate_release_notes: true
           # v1.0.0-beta.1 and the like go out as pre-releases.
           prerelease: ${{ contains(github.ref_name, '-') }}
+          make_latest: ${{ steps.latest.outputs.make_latest }}
