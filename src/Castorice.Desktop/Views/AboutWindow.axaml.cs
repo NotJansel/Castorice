@@ -12,7 +12,7 @@ public partial class AboutWindow : Window
 
         AppName.Text = AppInfo.Name;
         Tagline.Text = AppInfo.Tagline;
-        VersionText.Text = $"Version {AppInfo.Version}";
+        VersionText.Text = $"Version {AppInfo.DisplayVersion}";
     }
 
     private async void OnOpenRepository(object? sender, RoutedEventArgs e)

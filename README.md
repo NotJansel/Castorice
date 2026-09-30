@@ -59,6 +59,12 @@ download them from its **Artifacts**. Pushing a version tag publishes them as a 
 git tag v0.2.0 && git push origin v0.2.0      # a tag with a suffix, e.g. v0.2.0-beta.1, is a pre-release
 ```
 
+A release takes its version from the tag. Everything else — `dotnet run`, a local build, the
+packaging scripts run by hand, the installers from a plain push — is a development build named
+after the release being worked towards, `<VersionPrefix>-dev` from `Directory.Build.props` (e.g.
+`0.2.0-dev`). Settings and About show it with its commit, and it only looks for updates when
+asked. After tagging a release, raise `VersionPrefix` to the next version.
+
 | System | File | Install |
 | --- | --- | --- |
 | Windows | `Castorice-<version>-windows-x64-setup.exe` | Run it. Installs for the current user without an admin prompt, with a Start menu entry and an uninstaller. |
@@ -93,7 +99,7 @@ GitHub lists for it, and puts it in place:
 
 The check asks `api.github.com` for the repository's latest release, so the repository (or at
 least its releases) has to be public. A release's tag is its version: tag `v0.2.0` is offered to
-everything older than 0.2.0.
+everything older than 0.2.0, `0.2.0-dev` included.
 
 #### Signing and notarising for macOS
 
@@ -439,7 +445,7 @@ The core library never references Avalonia. UI thread marshalling goes through t
 
 ```bash
 dotnet build              # whole solution
-dotnet test               # 353 tests, no network needed
+dotnet test               # 361 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
 

@@ -60,13 +60,30 @@ public sealed class ReleaseVersion : IComparable<ReleaseVersion>, IEquatable<Rel
         var numbers = new int[3];
         for (var i = 0; i < parts.Length; i++)
         {
-            if (!int.TryParse(parts[i], NumberStyles.None, CultureInfo.InvariantCulture, out numbers[i]))
+            if (!TryParseNumber(parts[i], out numbers[i]))
             {
                 return null;
             }
         }
 
+        // Pre-release identifiers are letters, digits and hyphens; numeric ones without leading
+        // zeros, so "1" and "01" can never be two spellings of the same version.
+        if (pre.Length > 0 && pre.Split('.').Any(id =>
+                id.Length == 0 ||
+                !id.All(c => char.IsAsciiLetterOrDigit(c) || c == '-') ||
+                (id.All(char.IsAsciiDigit) && !TryParseNumber(id, out _))))
+        {
+            return null;
+        }
+
         return new ReleaseVersion(numbers[0], numbers[1], numbers[2], pre);
+    }
+
+    private static bool TryParseNumber(string text, out int number)
+    {
+        number = 0;
+        return (text.Length == 1 || !text.StartsWith('0')) &&
+            int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out number);
     }
 
     public int CompareTo(ReleaseVersion? other)

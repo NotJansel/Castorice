@@ -23,7 +23,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
     public AppSettings Settings { get; }
 
-    public string AppVersion => AppInfo.Version;
+    public string AppVersion => AppInfo.DisplayVersion;
 
     /// <summary>Set by the main window, which owns the update check.</summary>
     public UpdateViewModel? Updates { get; set; }

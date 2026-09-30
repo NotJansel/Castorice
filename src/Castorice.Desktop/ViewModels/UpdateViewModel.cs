@@ -22,6 +22,7 @@ public sealed partial class UpdateViewModel : ViewModelBase, IDisposable
     private readonly CancellationTokenSource _lifetime = new();
 
     private UpdateInfo? _update;
+    private bool _disposed;
 
     // Dismissed with the ×: not offered again until the next start.
     private string? _dismissedVersion;
@@ -47,14 +48,17 @@ public sealed partial class UpdateViewModel : ViewModelBase, IDisposable
     public UpdateViewModel(AppServices services)
     {
         _services = services;
-    }
 
-    public string CurrentVersion => AppInfo.Version;
+        if (AppInfo.IsDevelopmentBuild)
+        {
+            _status = $"Development build {AppInfo.DisplayVersion}: it only looks for updates when asked.";
+        }
+    }
 
     /// <summary>"Update now" when Castorice can install the update itself, "Download" otherwise.</summary>
     public string InstallLabel => CanInstallInApp ? "Update now" : "Download";
 
-    private bool CanInstallInApp => _update?.Asset is not null && UpdateInstaller.Mode is not UpdateInstallMode.Manual;
+    private bool CanInstallInApp => _update?.Asset is not null && UpdateInstaller.CanInstallInPlace;
 
     public bool CheckForUpdates
     {
@@ -67,13 +71,22 @@ public sealed partial class UpdateViewModel : ViewModelBase, IDisposable
             }
 
             _services.Settings.CheckForUpdates = value;
-            _services.SaveSettings();
+            TrySaveSettings();
             OnPropertyChanged();
         }
     }
 
-    /// <summary>Checks shortly after start and then every few hours, while checking is switched on.</summary>
-    public void Start() => _ = RunPeriodicChecksAsync(_lifetime.Token);
+    /// <summary>
+    /// Checks shortly after start and then every few hours, while checking is switched on. A
+    /// development build leaves it to the button in Settings: every release would pass for newer.
+    /// </summary>
+    public void Start()
+    {
+        if (!AppInfo.IsDevelopmentBuild)
+        {
+            _ = RunPeriodicChecksAsync(_lifetime.Token);
+        }
+    }
 
     private async Task RunPeriodicChecksAsync(CancellationToken cancellationToken)
     {
@@ -128,6 +141,12 @@ public sealed partial class UpdateViewModel : ViewModelBase, IDisposable
         {
             var update = await _checker.CheckAsync(current, UpdateInstaller.Platform, cancellationToken);
 
+            // A download started meanwhile keeps the banner it has.
+            if (IsDownloading)
+            {
+                return;
+            }
+
             if (update is null)
             {
                 if (announceResult)
@@ -148,8 +167,13 @@ public sealed partial class UpdateViewModel : ViewModelBase, IDisposable
 
             Offer(update);
         }
-        catch (UpdateException ex)
+        catch (Exception ex) when (_disposed && ex is OperationCanceledException or ObjectDisposedException)
         {
+            // Castorice is quitting.
+        }
+        catch (Exception ex)
+        {
+            // Anything else only costs this one check; the next one tries again.
             if (announceResult)
             {
                 Status = $"Could not check for updates: {ex.Message}";
@@ -210,8 +234,11 @@ public sealed partial class UpdateViewModel : ViewModelBase, IDisposable
                 }
             }
         }
-        catch (Exception ex) when (ex is UpdateException or IOException or UnauthorizedAccessException
-            or System.ComponentModel.Win32Exception or InvalidOperationException)
+        catch (Exception ex) when (_disposed && ex is OperationCanceledException or ObjectDisposedException)
+        {
+            // Castorice quit during the download; the next start offers the update again.
+        }
+        catch (Exception ex)
         {
             BannerText = $"The update failed: {ex.Message}";
         }
@@ -237,7 +264,7 @@ public sealed partial class UpdateViewModel : ViewModelBase, IDisposable
         if (_update is { } update)
         {
             _services.Settings.SkippedUpdateVersion = update.Version.ToString();
-            _services.SaveSettings();
+            TrySaveSettings();
             Status = $"Skipped {update.Version}. Check now in Settings still offers it.";
         }
 
@@ -252,8 +279,26 @@ public sealed partial class UpdateViewModel : ViewModelBase, IDisposable
         IsBannerVisible = false;
     }
 
+    private void TrySaveSettings()
+    {
+        try
+        {
+            _services.SaveSettings();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Status = $"Could not save settings: {ex.Message}";
+        }
+    }
+
     public void Dispose()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
         _lifetime.Cancel();
         _lifetime.Dispose();
         _checker.Dispose();

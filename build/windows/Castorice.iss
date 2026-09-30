@@ -64,5 +64,12 @@ Name: "{autodesktop}\Castorice"; Filename: "{app}\Castorice.exe"; Tasks: desktop
 
 [Run]
 Filename: "{app}\Castorice.exe"; Description: "{cm:LaunchProgram,Castorice}"; Flags: nowait postinstall skipifsilent
-; An update from inside Castorice runs this setup silently; it starts the new version when done.
-Filename: "{app}\Castorice.exe"; Flags: nowait; Check: WizardSilent
+; An update from inside Castorice runs this setup silently with /CASTORICEUPDATE=1; it starts the
+; new version when done, as the user who started the update even when the setup ran elevated.
+Filename: "{app}\Castorice.exe"; Flags: nowait runasoriginaluser; Check: IsInAppUpdate
+
+[Code]
+function IsInAppUpdate: Boolean;
+begin
+  Result := WizardSilent and (ExpandConstant('{param:CASTORICEUPDATE|0}') = '1');
+end;

@@ -6,9 +6,9 @@
 #   build/package-linux.sh linux-arm64  # ARM64
 #
 # Results land in artifacts/Castorice-<version>-linux-<arch>.AppImage and .tar.gz.
-# CASTORICE_VERSION overrides the version from Directory.Build.props, as CI does for a tagged
-# release. appimagetool is downloaded into artifacts/tools on first use; set APPIMAGETOOL to use
-# one already installed.
+# CASTORICE_VERSION sets the version, as CI does from a v* tag; without it the build is
+# <VersionPrefix from Directory.Build.props>-dev. appimagetool is downloaded into artifacts/tools
+# on first use; set APPIMAGETOOL to use one already installed.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -20,8 +20,12 @@ case "$rid" in
   *) echo "Expected linux-x64 or linux-arm64, got '$rid'." >&2; exit 1 ;;
 esac
 
-version="${CASTORICE_VERSION:-$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$root/Directory.Build.props" | head -n 1)}"
-version="${version:-0.0.0}"
+# Without a version from CI this is a build from source, marked "-dev" like a plain dotnet build.
+if [[ -z "${CASTORICE_VERSION:-}" ]]; then
+  prefix="$(sed -n 's:.*<VersionPrefix>\(.*\)</VersionPrefix>.*:\1:p' "$root/Directory.Build.props" | head -n 1)"
+  CASTORICE_VERSION="${prefix:-0.0.0}-dev"
+fi
+version="$CASTORICE_VERSION"
 
 artifacts="$root/artifacts"
 appdir="$artifacts/linux/$rid/Castorice.AppDir"

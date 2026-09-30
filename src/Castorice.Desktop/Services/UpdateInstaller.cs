@@ -72,6 +72,18 @@ public static class UpdateInstaller
         }
     }
 
+    /// <summary>
+    /// Whether an update can be put in place from inside Castorice. An AppImage needs to be able
+    /// to write to its folder; otherwise the release page is the way.
+    /// </summary>
+    public static bool CanInstallInPlace => Mode switch
+    {
+        UpdateInstallMode.WindowsInstaller => true,
+        UpdateInstallMode.MacBundle => MacBundlePath is not null,
+        UpdateInstallMode.AppImage => AppImagePath is { } appImage && CanWriteNextTo(appImage),
+        _ => false,
+    };
+
     private static string? AppImagePath =>
         Environment.GetEnvironmentVariable("APPIMAGE") is { Length: > 0 } path && File.Exists(path) ? path : null;
 
@@ -106,11 +118,12 @@ public static class UpdateInstaller
         {
             case UpdateInstallMode.WindowsInstaller:
                 // Silent, over the existing installation: the setup keeps the install location and
-                // whether it was for this user or everyone, and starts Castorice again when done.
+                // whether it was for this user or everyone. /CASTORICEUPDATE makes it start
+                // Castorice again when done, as the user rather than elevated.
                 Process.Start(new ProcessStartInfo(downloadedFile)
                 {
                     UseShellExecute = true,
-                    Arguments = "/SILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS",
+                    Arguments = "/SILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /CASTORICEUPDATE=1",
                 });
                 message = $"Installing Castorice {update.Version}…";
                 return true;
@@ -147,9 +160,17 @@ public static class UpdateInstaller
                         UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
                 }
 
-                // A rename, so the running copy keeps its file until it exits.
+                // A rename, so the running copy keeps its file until it exits. The new one starts
+                // only once this one is gone, so the two never log in to Bancho at the same time.
                 File.Move(downloadedFile, appImage, overwrite: true);
-                Process.Start(new ProcessStartInfo(appImage) { UseShellExecute = false });
+
+                var relaunch = new ProcessStartInfo("/bin/sh") { UseShellExecute = false };
+                relaunch.ArgumentList.Add("-c");
+                relaunch.ArgumentList.Add("while kill -0 \"$1\" 2>/dev/null; do sleep 0.5; done; exec \"$2\"");
+                relaunch.ArgumentList.Add("castorice-update");
+                relaunch.ArgumentList.Add(Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                relaunch.ArgumentList.Add(appImage);
+                Process.Start(relaunch);
 
                 message = $"Starting Castorice {update.Version}…";
                 return true;

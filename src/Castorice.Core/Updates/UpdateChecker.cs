@@ -87,9 +87,17 @@ public sealed class UpdateChecker : IDisposable
         _repository = repository.Trim('/');
         _apiBase = apiBase.TrimEnd('/');
         _ownsHttpClient = httpClient is null;
-        _http = httpClient ?? new HttpClient();
-        _http.Timeout = TimeSpan.FromMinutes(10);
+
+        // Time limits come from RequestTimeout and StallTimeout per call, so a download may take as
+        // long as it needs while it keeps moving. A client passed in is left as it is.
+        _http = httpClient ?? new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
     }
+
+    /// <summary>How long GitHub may take to answer a request, before any download starts.</summary>
+    public TimeSpan RequestTimeout { get; init; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>How long a download may go without receiving anything before it is given up.</summary>
+    public TimeSpan StallTimeout { get; init; } = TimeSpan.FromSeconds(60);
 
     /// <summary>
     /// The latest release when it is newer than <paramref name="current"/>; <c>null</c> when the
@@ -109,10 +117,13 @@ public sealed class UpdateChecker : IDisposable
         request.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
         request.Headers.UserAgent.ParseAdd($"Castorice/{current}");
 
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(RequestTimeout);
+
         GitHubRelease? release;
         try
         {
-            using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            using var response = await _http.SendAsync(request, timeout.Token).ConfigureAwait(false);
 
             // No published release yet — or the repository is private, which looks the same.
             if (response.StatusCode is HttpStatusCode.NotFound)
@@ -130,18 +141,18 @@ public sealed class UpdateChecker : IDisposable
                 throw new UpdateException($"GitHub answered {(int)response.StatusCode} {response.ReasonPhrase}.");
             }
 
-            release = await response.Content.ReadFromJsonAsync<GitHubRelease>(Json, cancellationToken)
+            release = await response.Content.ReadFromJsonAsync<GitHubRelease>(Json, timeout.Token)
                 .ConfigureAwait(false);
         }
         catch (HttpRequestException ex)
         {
             throw new UpdateException($"Could not reach GitHub: {ex.Message}", ex);
         }
-        catch (JsonException ex)
+        catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
             throw new UpdateException("GitHub answered in a shape Castorice cannot read.", ex);
         }
-        catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
             throw new UpdateException("GitHub did not answer in time.", ex);
         }
@@ -200,13 +211,17 @@ public sealed class UpdateChecker : IDisposable
 
         var partial = destination + ".part";
 
+        // Cancelled when GitHub takes too long to answer, and later when the data stops coming.
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(RequestTimeout);
+
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, asset.DownloadUrl);
             request.Headers.UserAgent.ParseAdd("Castorice");
 
             using var response = await _http
-                .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token)
                 .ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
@@ -217,15 +232,21 @@ public sealed class UpdateChecker : IDisposable
             var total = response.Content.Headers.ContentLength ?? asset.Size;
 
             using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-            await using (var source = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false))
+            await using (var source = await response.Content.ReadAsStreamAsync(timeout.Token).ConfigureAwait(false))
             await using (var target = File.Create(partial))
             {
                 var buffer = new byte[81920];
                 long received = 0;
-                int read;
 
-                while ((read = await source.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+                while (true)
                 {
+                    timeout.CancelAfter(StallTimeout);
+                    var read = await source.ReadAsync(buffer, timeout.Token).ConfigureAwait(false);
+                    if (read == 0)
+                    {
+                        break;
+                    }
+
                     await target.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
                     hash.AppendData(buffer, 0, read);
                     received += read;
@@ -245,9 +266,9 @@ public sealed class UpdateChecker : IDisposable
         {
             throw new UpdateException($"The download failed: {ex.Message}", ex);
         }
-        catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new UpdateException("The download timed out.", ex);
+            throw new UpdateException("The download stopped moving and was given up; try again.", ex);
         }
         finally
         {

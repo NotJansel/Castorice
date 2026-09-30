@@ -10,7 +10,10 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <Product>Castorice</Product>
     <Company>Castorice</Company>
-    <Version>0.1.0</Version>
+    <!-- The release being worked towards. A build from source is marked "-dev", so it never
+         passes for a release; the packaging workflow stamps the plain version from a v* tag. -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <VersionSuffix Condition="'$(VersionSuffix)' == ''">dev</VersionSuffix>
   </PropertyGroup>
 
 </Project>

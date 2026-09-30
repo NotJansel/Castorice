@@ -7,8 +7,8 @@
   artifacts\Castorice-<version>-windows-<arch>-setup.exe and ...-portable.zip.
 
   Needs Inno Setup 6 (https://jrsoftware.org/isdl.php, or: winget install JRSoftware.InnoSetup).
-  Without it only the portable zip is made. CASTORICE_VERSION overrides the version from
-  Directory.Build.props, as CI does for a tagged release.
+  Without it only the portable zip is made. CASTORICE_VERSION sets the version, as CI
+  does from a v* tag; without it the build is <VersionPrefix from Directory.Build.props>-dev.
 
 .EXAMPLE
   build\package-windows.ps1
@@ -27,7 +27,9 @@ $arch = $Runtime -replace '^win-', ''
 $version = $env:CASTORICE_VERSION
 if (-not $version) {
     $props = Get-Content (Join-Path $root 'Directory.Build.props') -Raw
-    $version = if ($props -match '<Version>([^<]+)</Version>') { $Matches[1] } else { '0.0.0' }
+    # A build from source, marked "-dev" like a plain dotnet build.
+    $prefix = if ($props -match '<VersionPrefix>([^<]+)</VersionPrefix>') { $Matches[1] } else { '0.0.0' }
+    $version = "$prefix-dev"
 }
 
 $artifacts = Join-Path $root 'artifacts'

@@ -7,8 +7,8 @@
 #   build/package-macos.sh osx-arm64    # Apple silicon
 #
 # The bundle lands in artifacts/macos/<rid>/Castorice.app and the disk image in
-# artifacts/Castorice-<version>-macos-<arm64|x64>.dmg. CASTORICE_VERSION overrides the version
-# from Directory.Build.props, as CI does for a tagged release.
+# artifacts/Castorice-<version>-macos-<arm64|x64>.dmg. CASTORICE_VERSION sets the version, as CI
+# does from a v* tag; without it the build is <VersionPrefix from Directory.Build.props>-dev.
 #
 # Signing. Without further settings the app is signed ad hoc: it runs on the Mac that built it,
 # but a downloaded copy is stopped by Gatekeeper. For a build other Macs open without a warning:
@@ -42,8 +42,12 @@ if [[ "$rid" != osx-* ]]; then
   exit 1
 fi
 
-version="${CASTORICE_VERSION:-$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$root/Directory.Build.props" | head -n 1)}"
-version="${version:-0.0.0}"
+# Without a version from CI this is a build from source, marked "-dev" like a plain dotnet build.
+if [[ -z "${CASTORICE_VERSION:-}" ]]; then
+  prefix="$(sed -n 's:.*<VersionPrefix>\(.*\)</VersionPrefix>.*:\1:p' "$root/Directory.Build.props" | head -n 1)"
+  CASTORICE_VERSION="${prefix:-0.0.0}-dev"
+fi
+version="$CASTORICE_VERSION"
 
 out="$root/artifacts/macos/$rid"
 app="$out/Castorice.app"

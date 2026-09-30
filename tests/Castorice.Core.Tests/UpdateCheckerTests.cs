@@ -47,6 +47,7 @@ public class UpdateCheckerTests : IDisposable
     [InlineData("1.2", "1.2.0")]
     [InlineData("v1.0.0-beta.2", "1.0.0-beta.2")]
     [InlineData("0.1.0+abc123", "0.1.0")]
+    [InlineData("0.2.0-dev+abc123", "0.2.0-dev")]
     public void Reads_release_tags(string tag, string expected) =>
         Assert.Equal(expected, ReleaseVersion.TryParse(tag)?.ToString());
 
@@ -56,6 +57,10 @@ public class UpdateCheckerTests : IDisposable
     [InlineData("v1.x")]
     [InlineData("1.2.3.4")]
     [InlineData("1.0.0-")]
+    [InlineData("01.0.0")]
+    [InlineData("1.0.0-01")]
+    [InlineData("1.0.0-beta..1")]
+    [InlineData("1.0.0-beta_1")]
     public void Rejects_what_is_not_a_version(string tag) => Assert.Null(ReleaseVersion.TryParse(tag));
 
     [Theory]
@@ -66,6 +71,7 @@ public class UpdateCheckerTests : IDisposable
     [InlineData("1.0.0-beta.10", "1.0.0-beta.2")]
     [InlineData("1.0.0-beta.1", "1.0.0-beta")]
     [InlineData("1.0.0-beta", "1.0.0-7")]
+    [InlineData("0.2.0", "0.2.0-dev")]
     public void Orders_versions_the_semantic_way(string newer, string older)
     {
         Assert.True(V(newer) > V(older));
@@ -73,7 +79,11 @@ public class UpdateCheckerTests : IDisposable
     }
 
     [Fact]
-    public void Treats_equal_versions_as_equal() => Assert.Equal(V("v0.2.0"), V("0.2.0+build"));
+    public void Treats_equal_versions_as_equal()
+    {
+        Assert.Equal(V("v0.2.0"), V("0.2.0+build"));
+        Assert.Equal(V("v0.2.0-beta.1").GetHashCode(), V("0.2.0-beta.1+build").GetHashCode());
+    }
 
     // ---- checking --------------------------------------------------------------
 
@@ -201,9 +211,89 @@ public class UpdateCheckerTests : IDisposable
         Assert.True(File.Exists(target));
     }
 
+    [Fact]
+    public async Task Gives_up_a_download_that_stops_moving()
+    {
+        var asset = new UpdateAsset { Name = "setup.exe", DownloadUrl = "https://example/setup.exe" };
+        using var checker = new UpdateChecker("o/r", new HttpClient(new StallingHandler()))
+        {
+            StallTimeout = TimeSpan.FromMilliseconds(200),
+        };
+        var target = Path.Combine(_directory, "setup.exe");
+
+        var ex = await Assert.ThrowsAsync<UpdateException>(() => checker.DownloadAsync(asset, target));
+
+        Assert.Contains("stopped", ex.Message);
+        Assert.False(File.Exists(target));
+        Assert.False(File.Exists(target + ".part"));
+    }
+
+    [Fact]
+    public void Leaves_a_client_it_was_given_as_it_is()
+    {
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+        using var checker = new UpdateChecker("o/r", http);
+
+        Assert.Equal(TimeSpan.FromSeconds(5), http.Timeout);
+    }
+
     private sealed class SynchronousProgress(Action<double> report) : IProgress<double>
     {
         public void Report(double value) => report(value);
+    }
+
+    /// <summary>Answers at once, then sends a few bytes and nothing more.</summary>
+    private sealed class StallingHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(new StallingStream()) });
+    }
+
+    private sealed class StallingStream : Stream
+    {
+        private bool _sent;
+
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            if (!_sent)
+            {
+                _sent = true;
+                buffer.Span[0] = 42;
+                return 1;
+            }
+
+            await Task.Delay(Timeout.Infinite, cancellationToken);
+            return 0;
+        }
+
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
+            ReadAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
+
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 
     private sealed class CannedHandler : HttpMessageHandler
