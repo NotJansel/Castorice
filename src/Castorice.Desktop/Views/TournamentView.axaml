@@ -696,16 +696,27 @@
             <!-- ========== Log ========== -->
             <StackPanel Spacing="8">
               <TextBlock Classes="label" Text="LOBBY LOG" />
-              <Border Classes="well" MinHeight="130">
-                <ItemsControl ItemsSource="{Binding RoomLog}">
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="sys:String">
-                      <TextBlock Text="{Binding}" Classes="mono"
-                                 Foreground="{DynamicResource CastoriceMutedTextBrush}"
-                                 TextWrapping="Wrap" Margin="0,1" />
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
+              <!-- A fixed height with its own scrolling, so a long match neither stretches the panel
+                   nor pushes the newest lines out of sight; it follows them unless scrolled up. -->
+              <Border Classes="well" Padding="0" Height="260">
+                <Panel>
+                <ScrollViewer Name="LobbyLogScroller" Padding="10" HorizontalScrollBarVisibility="Disabled"
+                              svc:AutoScroll.IsEnabled="True">
+                  <ItemsControl ItemsSource="{Binding RoomLog}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="sys:String">
+                        <SelectableTextBlock Text="{Binding}" Classes="mono"
+                                             Foreground="{DynamicResource CastoriceMutedTextBrush}"
+                                             TextWrapping="Wrap" Margin="0,1" />
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+                <Button Classes="accent pill compact" Content="Jump to latest ↓"
+                        HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,10"
+                        IsVisible="{Binding #LobbyLogScroller.(svc:AutoScroll.IsPaused)}"
+                        Click="OnJumpToLatestLog" />
+                </Panel>
               </Border>
               <TextBlock Classes="faint" TextWrapping="Wrap"
                          Text="What the panel posts to the lobby by itself is set under Settings → Lobby messages." />
