@@ -70,6 +70,22 @@ public sealed partial class TournamentViewModel : ViewModelBase
     [ObservableProperty]
     private bool _autoFreeModCheck = true;
 
+    /// <summary>
+    /// The pool's settings — draft order, room defaults, FreeMod rule and multipliers — in place of
+    /// its picks. They are set up before a match, so they stay out of the way while it runs.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isSetupOpen;
+
+    /// <summary>The other side of <see cref="IsSetupOpen"/>, for the tab that shows the picks.</summary>
+    public bool IsPicksOpen
+    {
+        get => !IsSetupOpen;
+        set => IsSetupOpen = !value;
+    }
+
+    partial void OnIsSetupOpenChanged(bool value) => OnPropertyChanged(nameof(IsPicksOpen));
+
     public TournamentViewModel(AppServices services)
     {
         _services = services;

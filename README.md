@@ -22,14 +22,21 @@ window belongs to whichever page is open:
 │ C Castorice  │ [Mappool ▾][Red team][Blue team][Create lobby][id][Attach]   │
 │              ├───────────────────────────────────────┬──────────────────────┤
 │ ▍Chat        │ Castorice Cup — Finals                │ LOBBY                │
-│  Tournament  │ NoMod    ┌────────┐┌────────┐         │ RED 2  vs  BLUE 1    │
-│  Profile     │          │NM1  NM │││NM2  NM│         │ MATCH CONTROL        │
-│  Settings    │          │cover…  ││cover…  │         │ [Start][Abort][Timer]│
-│              │ Hidden   └────────┘└────────┘         │ PLAYERS / LOBBY LOG  │
-│ ● BANCHO     │          ┌────────┐                   │                      │
-│  [Connect]   │          │HD1  HD │                   │                      │
+│  Tournament  │ (Mappool)(Pool setup)   [Import][Save]│ RED 2  vs  BLUE 1    │
+│  Profile     │ NoMod    ┌────────┐┌────────┐         │ [Warmup][Auto-score] │
+│  Settings    │          │NM1  NM ││NM2  NM │         │ MATCH CONTROL        │
+│              │          │cover…  ││cover…  │         │ [Start] [Start now]  │
+│              │ Hidden   └────────┘└────────┘         │ DRAFT · Red bans 1/2 │
+│ ● BANCHO     │          ┌────────┐                   │ PLAYERS              │
+│  [Connect]   │          │HD1  HD │                   │ LOBBY LOG            │
 └──────────────┴───────────────────────────────────────┴──────────────────────┘
 ```
+
+The Tournament page keeps running a match apart from preparing one. The **Mappool** tab shows the
+picks; **Pool setup** holds everything that is set before a match — adding picks, the draft order,
+room defaults, the FreeMod rule and its multipliers. The lobby panel on the right is ordered by
+how often a referee reaches for it: the score and the match switches, the lobby buttons, the draft,
+then the players and BanchoBot's log.
 
 Pick tiles show the beatmap's cover art behind the title, mods and difficulty stats, and the
 profile page loads avatars and banners the same way. Images are fetched once and kept on disk
@@ -254,7 +261,7 @@ or takes a pool link or id (`https://pools.jansel.dev/pools/Xb3kQ9aZ`, `Xb3kQ9aZ
 
 ### Draft order: protects, bans and picks
 
-Every pool carries its bracket's draft order, edited in the **Draft order** card and saved with the
+Every pool carries its bracket's draft order, edited in the **Draft order** card under **Pool setup** and saved with the
 pool:
 
 | Setting | Options |
@@ -299,8 +306,8 @@ next.
 
 ### Lobby messages
 
-Everything the panel posts on its own can be switched off line by line under **Post to the lobby
-automatically**, and the choice is remembered:
+Everything the panel posts on its own can be switched off line by line under **Settings → Lobby
+messages**, and the choice is remembered:
 
 | Switch | Example |
 | --- | --- |
@@ -333,8 +340,8 @@ It stays quiet when the lobby is fine, and **Check FreeMod** runs it on demand. 
 towards the first group they match, which is why HDHR fills the HardRock slot rather than the
 Hidden one. NoFail is tolerated on top of anything but never fills a slot by itself.
 
-The quota and the set of mods allowed at all live in the pool file; the minimums are editable on
-the Tournament page:
+The quota and the set of mods allowed at all live in the pool file; the minimums are editable under
+**Pool setup → FreeMod rule**:
 
 ```json
 {
@@ -371,7 +378,7 @@ totalled. Easy and Easy+Hidden carry separate factors, because Hidden already ea
 bonus.
 
 Multipliers are set **per FreeMod pick** — a map where Easy barely helps can be scored differently
-from one where it does a lot. The Tournament page lists every FreeMod pick with its own two boxes,
+from one where it does a lot. **Pool setup → FreeMod multipliers** lists every FreeMod pick with its own two boxes,
 and each pick is marked `pool default` or `custom`:
 
 ```json

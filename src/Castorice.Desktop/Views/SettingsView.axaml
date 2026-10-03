@@ -13,7 +13,7 @@
 
       <StackPanel Spacing="2">
         <TextBlock Classes="display" Text="Settings" />
-        <TextBlock Classes="muted" Text="Credentials, connection and appearance." />
+        <TextBlock Classes="muted" Text="Credentials, connection, lobby messages and appearance." />
       </StackPanel>
 
       <Border Classes="card">
@@ -86,6 +86,29 @@
         </StackPanel>
       </Border>
 
+      <Border Classes="card" IsVisible="{Binding Messages, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <StackPanel Spacing="6">
+          <TextBlock Classes="h2" Text="Lobby messages" />
+          <TextBlock Classes="muted" TextWrapping="Wrap" Margin="0,0,0,6"
+                     Text="What the tournament panel posts into the lobby by itself. Changes apply straight away; Post score and the draft's Post always send." />
+          <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="2">
+            <CheckBox Grid.Row="0" Grid.Column="0" Content="Map result" IsChecked="{Binding Messages.MapResult}"
+                      ToolTip.Tip="NM1 | Red 1,234,567 - 1,000,000 Blue | Red wins by 234,567" />
+            <CheckBox Grid.Row="0" Grid.Column="1" Content="FreeMod multipliers" IsChecked="{Binding Messages.Multipliers}"
+                      ToolTip.Tip="Multipliers: player EZ x1.75 (500,000 -> 875,000)" />
+            <CheckBox Grid.Row="1" Grid.Column="0" Content="Match score after each map" IsChecked="{Binding Messages.MatchScore}"
+                      ToolTip.Tip="Match score: Red 3 - 2 Blue (first to 7), or who won the match" />
+            <CheckBox Grid.Row="1" Grid.Column="1" Content="Match score after +1" IsChecked="{Binding Messages.ScoreOnManualPoint}"
+                      ToolTip.Tip="Also post the score when a point is awarded by hand." />
+            <CheckBox Grid.Row="2" Grid.Column="0" Content="Protects, bans and picks" IsChecked="{Binding Messages.DraftActions}"
+                      ToolTip.Tip="Red bans NM2 · Blue picks DT1: Artist - Title [Diff]" />
+            <CheckBox Grid.Row="2" Grid.Column="1" Content="Whose turn is next" IsChecked="{Binding Messages.NextTurn}"
+                      ToolTip.Tip="Next: Blue bans (2/4) — after each protect or ban and after each scored map." />
+            <CheckBox Grid.Row="3" Grid.Column="0" Content="FreeMod check warnings" IsChecked="{Binding Messages.FreeModWarnings}"
+                      ToolTip.Tip="The automatic check's warning when someone's mods break the rule. The Check FreeMod button always posts." />
+          </Grid>
+        </StackPanel>
+      </Border>
       <Border Classes="card">
         <StackPanel Spacing="12">
           <TextBlock Classes="h2" Text="Application" />

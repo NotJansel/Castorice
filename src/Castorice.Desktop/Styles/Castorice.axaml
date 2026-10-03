@@ -395,6 +395,51 @@
     <Setter Property="Padding" Value="13,7" />
   </Style>
 
+  <!-- ==================== Tabs ==================== -->
+
+  <!-- A row of tabs in a sunken track; the open one is raised. Radio buttons, so one is always open. -->
+  <Style Selector="Border.segmented">
+    <Setter Property="Background" Value="{DynamicResource CastoriceWellBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CastoriceBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
+    <Setter Property="Padding" Value="3" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+  </Style>
+
+  <Style Selector="RadioButton.tab">
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceMutedTextBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="PART_Tab" Background="Transparent" Padding="16,6"
+                CornerRadius="{DynamicResource RadiusSmall}">
+          <ContentPresenter Content="{TemplateBinding Content}"
+                            Foreground="{TemplateBinding Foreground}"
+                            HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+
+  <!-- The caption is a TextBlock, which the app-wide TextBlock style would otherwise colour. -->
+  <Style Selector="RadioButton.tab TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceMutedTextBrush}" />
+  </Style>
+
+  <Style Selector="RadioButton.tab:pointerover TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceTextBrush}" />
+  </Style>
+
+  <Style Selector="RadioButton.tab:checked TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource CastoriceOnAccentBrush}" />
+  </Style>
+
+  <Style Selector="RadioButton.tab:checked /template/ Border#PART_Tab">
+    <Setter Property="Background" Value="{DynamicResource CastoriceAccentGradient}" />
+  </Style>
+
   <!-- ==================== Lists ==================== -->
 
   <Style Selector="ListBox.targets">

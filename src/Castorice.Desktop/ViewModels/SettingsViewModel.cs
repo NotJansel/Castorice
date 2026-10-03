@@ -28,6 +28,9 @@ public sealed partial class SettingsViewModel : ViewModelBase
     /// <summary>Set by the main window, which owns the update check.</summary>
     public UpdateViewModel? Updates { get; set; }
 
+    /// <summary>What the tournament panel posts on its own; shared with it and saved on every change.</summary>
+    public LobbyMessagesViewModel? Messages { get; set; }
+
     public string ConfigDirectory => AppPaths.Root;
 
     public string MappoolDirectory => AppPaths.MappoolDirectory;

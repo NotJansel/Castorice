@@ -42,6 +42,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         Settings = new SettingsViewModel(_services);
         Updates = new UpdateViewModel(_services);
         Settings.Updates = Updates;
+        Settings.Messages = Tournament.Messages;
         Updates.Start();
 
         Settings.ThemeChanged += (_, variant) => ThemeChanged?.Invoke(this, variant);

@@ -72,6 +72,9 @@ public sealed partial class TournamentViewModel
     }
 
     [RelayCommand]
+    private void CloseImport() => IsImportOpen = false;
+
+    [RelayCommand]
     private async Task LoadRemotePoolsAsync()
     {
         if (IsImportBusy)
