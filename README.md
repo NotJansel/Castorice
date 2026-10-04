@@ -289,15 +289,20 @@ the lobby panel, set after the roll. The panel then always shows whose turn it i
 credited to the team in turn; once both teams are one point short the tiebreaker is called, and
 the draft ends with the match.
 
-Protects and bans can also be given up:
+Protects, bans and picks can also be given up:
 
 - **Skip** — while a protect or ban is due, a button lets the team in turn pass on it
   (`Poland skips their protect`, `Germany skips a ban`) and the draft moves on.
+- **Skip pick** — while a pick is due, the same button takes it away from the team in turn
+  (`Skip Poland's pick`), as brackets rule after repeated pick-timer violations
+  (`Poland loses their pick`). The other team picks instead; after that map the pick order
+  carries on as usual, and under loser or winner picks the next result decides again.
 - **Late show** — **… loses bans** takes away every ban that team has left, second round
   included, as brackets rule for a team that shows up late (`Poland forfeits 2 bans`). The other
   team's bans then run back to back.
 
-Skips and forfeits are listed in the draft (`Bans: Germany NM1, Poland forfeited 2`), posted like
+Skips and forfeits are listed in the draft (`Bans: Germany NM1, Poland forfeited 2`,
+`Picks: NM2 (Germany), Poland lost a pick, HD1 (Germany)`), posted like
 any other draft action, and **Undo** takes them back — a forfeit as a whole. **Undo** takes back the newest mark without posting anything.
 
 The draft counts each team's own marks rather than the position in the sequence, so if a ban is
@@ -457,7 +462,7 @@ The core library never references Avalonia. UI thread marshalling goes through t
 
 ```bash
 dotnet build              # whole solution
-dotnet test               # 361 tests, no network needed
+dotnet test               # 368 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
 

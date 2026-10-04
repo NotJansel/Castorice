@@ -601,7 +601,7 @@
                           Content="{Binding SkipTurnLabel}"
                           Command="{Binding SkipTurnCommand}"
                           IsVisible="{Binding CanSkipTurn}"
-                          ToolTip.Tip="The team in turn passes on this protect or ban; the draft moves on." />
+                          ToolTip.Tip="{Binding SkipTurnTip}" />
                 </StackPanel>
               </Border>
 

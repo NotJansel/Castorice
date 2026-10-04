@@ -21,8 +21,9 @@ public sealed partial class TournamentViewModel
     // Hands out ever-increasing stamps so Undo can find the newest mark.
     private long _markCounter;
 
-    // Protects and bans a team passed on or forfeited this match, stamped like the marks so Undo
-    // can take them back. A forfeit adds one entry per ban, all sharing a stamp, so it undoes whole.
+    // Protects and bans a team passed on or forfeited, and picks it lost, this match; stamped like
+    // the marks so Undo can take them back. A forfeit adds one entry per ban, all sharing a stamp,
+    // so it undoes whole.
     private readonly List<(DraftSkip Skip, long Stamp)> _skips = [];
 
     // Set while clearing or undoing, which should never post anything into the lobby.
@@ -174,6 +175,7 @@ public sealed partial class TournamentViewModel
             BlueBans = slots.Count(s => s.Availability is SlotAvailability.BannedByBlue)
                 + SkipCount(DraftPhase.Ban, TeamColour.Blue),
             Picks = slots.Where(s => s.IsPicked).OrderBy(s => s.PickStamp).Select(s => s.PickedBy).ToList(),
+            SkippedPicks = _skips.Select(s => s.Skip).Where(s => s.Phase is DraftPhase.Pick).ToList(),
             MapWinners = _mapWinners.ToList(),
             RedScore = RedScore,
             BlueScore = BlueScore,
@@ -195,15 +197,24 @@ public sealed partial class TournamentViewModel
     private int SkipCount(DraftPhase phase, TeamColour team) =>
         _skips.Count(s => s.Skip.Phase == phase && s.Skip.Team == team);
 
-    /// <summary>True while a protect or ban is due, so the team in turn can pass on it.</summary>
-    public bool CanSkipTurn => CurrentDraft.Next is { IsMark: true, Team: not null };
+    /// <summary>
+    /// True while a protect, ban or pick is due to a known team: it can pass on the protect or
+    /// ban, or lose the pick as a penalty.
+    /// </summary>
+    public bool CanSkipTurn => CurrentDraft.Next is
+        { Phase: DraftPhase.Protect or DraftPhase.Ban or DraftPhase.Pick, Team: not null };
 
     public string SkipTurnLabel => CurrentDraft.Next switch
     {
         { Phase: DraftPhase.Protect, Team: { } team } => $"{Names.For(team)} skips protect",
         { Phase: DraftPhase.Ban, Team: { } team } => $"{Names.For(team)} skips ban",
+        { Phase: DraftPhase.Pick, Team: { } team } => $"Skip {Names.For(team)}'s pick",
         _ => "Skip",
     };
+
+    public string SkipTurnTip => CurrentDraft.Next.Phase is DraftPhase.Pick
+        ? "The team in turn loses this pick, e.g. after running over the pick timer again, and the other team picks instead. Undo gives it back."
+        : "The team in turn passes on this protect or ban; the draft moves on.";
 
     /// <summary>Whether the pool has bans at all, which is when a late team can lose them.</summary>
     public bool HasBans => Pool.Draft.BansOwedPerTeam > 0;
@@ -231,6 +242,7 @@ public sealed partial class TournamentViewModel
         OnPropertyChanged(nameof(DraftSummary));
         OnPropertyChanged(nameof(CanSkipTurn));
         OnPropertyChanged(nameof(SkipTurnLabel));
+        OnPropertyChanged(nameof(SkipTurnTip));
         OnPropertyChanged(nameof(HasBans));
         OnPropertyChanged(nameof(CanForfeitRedBans));
         OnPropertyChanged(nameof(CanForfeitBlueBans));
@@ -422,17 +434,21 @@ public sealed partial class TournamentViewModel
         slot.Category.Equals("TB", StringComparison.OrdinalIgnoreCase)
         || slot.Category.Equals("Tiebreaker", StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>The team in turn passes on its protect or ban; the draft moves on as if it had made it.</summary>
+    /// <summary>
+    /// The team in turn passes on its protect or ban, or loses its pick; the draft moves on as if
+    /// it had made it, so a lost pick goes to the other team.
+    /// </summary>
     [RelayCommand]
     private void SkipTurn()
     {
-        if (CurrentDraft.Next is not { IsMark: true, Team: { } team } next)
+        if (!CanSkipTurn || CurrentDraft.Next is not { Team: { } team } next)
         {
-            Status = "No protect or ban is due.";
+            Status = "No protect, ban or pick is due.";
             return;
         }
 
-        _skips.Add((new DraftSkip(next.Phase, team), ++_markCounter));
+        var picksMade = AllSlots.Count(s => s.IsPicked && s.PickedBy is not null);
+        _skips.Add((new DraftSkip(next.Phase, team, AfterPicks: picksMade), ++_markCounter));
         RefreshDraft();
         AnnounceDraftStep(MatchAnnouncer.SkipLine(next.Phase, team, Names));
     }
@@ -541,6 +557,7 @@ public sealed partial class TournamentViewModel
             {
                 { Forfeited: true } => $"Gave {Names.For(newest.Skip.Team)} back {undone} forfeited {(undone == 1 ? "ban" : "bans")}.",
                 { Phase: DraftPhase.Protect } => $"Took back {Names.For(newest.Skip.Team)}'s skipped protect.",
+                { Phase: DraftPhase.Pick } => $"Gave {Names.For(newest.Skip.Team)} back the lost pick.",
                 _ => $"Took back {Names.For(newest.Skip.Team)}'s skipped ban.",
             };
             return;

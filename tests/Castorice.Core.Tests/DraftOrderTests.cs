@@ -391,4 +391,126 @@ public class DraftOrderTests
         var after = Next(rules, new DraftProgress { RedBans = 2, BlueBans = 2, Picks = [R, B], PointsToWin = 7 });
         Assert.Equal(DraftPhase.Pick, after.Phase);
     }
+
+    // ---- lost picks ----------------------------------------------------------
+
+    private static DraftSkip LostPick(TeamColour team, int afterPicks) => new(DraftPhase.Pick, team, AfterPicks: afterPicks);
+
+    [Fact]
+    public void A_lost_pick_goes_to_the_other_team_under_alternating_picks()
+    {
+        var rules = Rules(bans: 0);
+
+        // Red opens and loses the pick: Blue picks instead.
+        var state = DraftOrder.Evaluate(rules, DraftStart.Red, new DraftProgress
+        {
+            SkippedPicks = [LostPick(R, 0)],
+            PointsToWin = 7,
+        });
+        Assert.Equal(new DraftTurn(DraftPhase.Pick, B, 2), state.Next);
+
+        // After Blue's map the order carries on from there: Red's turn again.
+        var after = DraftOrder.Evaluate(rules, DraftStart.Red, new DraftProgress
+        {
+            Picks = [B],
+            SkippedPicks = [LostPick(R, 0)],
+            MapWinners = [B],
+            BlueScore = 1,
+            PointsToWin = 7,
+        });
+        Assert.Equal(R, after.NextPicker);
+    }
+
+    [Fact]
+    public void A_lost_pick_moves_a_snake_on_by_one_turn()
+    {
+        // A B B A: Blue loses its first pick, so Blue's second turn comes straight after.
+        var rules = Rules(bans: 0, pickOrder: PickOrder.Snake);
+
+        var state = DraftOrder.Evaluate(rules, DraftStart.Red, new DraftProgress
+        {
+            Picks = [R],
+            SkippedPicks = [LostPick(B, 1)],
+            MapWinners = [R],
+            RedScore = 1,
+            PointsToWin = 7,
+        });
+
+        Assert.Equal(B, state.NextPicker);
+        Assert.Equal(3, state.Next.Number);
+    }
+
+    [Theory]
+    [InlineData(PickOrder.LoserPicks)]
+    [InlineData(PickOrder.WinnerPicks)]
+    public void A_lost_pick_overrides_the_last_result_once(PickOrder order)
+    {
+        var rules = Rules(bans: 0, pickOrder: order);
+
+        // Blue won the first map; under either rule the turn lands on one team, which then loses it.
+        var dueAfterMap = DraftOrder.Evaluate(rules, DraftStart.Red, new DraftProgress
+        {
+            Picks = [R],
+            MapWinners = [B],
+            BlueScore = 1,
+            PointsToWin = 7,
+        }).NextPicker!.Value;
+
+        var lost = DraftOrder.Evaluate(rules, DraftStart.Red, new DraftProgress
+        {
+            Picks = [R],
+            SkippedPicks = [LostPick(dueAfterMap, 1)],
+            MapWinners = [B],
+            BlueScore = 1,
+            PointsToWin = 7,
+        });
+        Assert.Equal(dueAfterMap.Other(), lost.NextPicker);
+
+        // Once that map is played, the result decides again.
+        var next = DraftOrder.Evaluate(rules, DraftStart.Red, new DraftProgress
+        {
+            Picks = [R, dueAfterMap.Other()],
+            SkippedPicks = [LostPick(dueAfterMap, 1)],
+            MapWinners = [B, R],
+            BlueScore = 1,
+            RedScore = 1,
+            PointsToWin = 7,
+        });
+        Assert.Equal(order is PickOrder.LoserPicks ? B : R, next.NextPicker);
+    }
+
+    [Fact]
+    public void The_first_pick_can_be_lost_under_loser_picks_too()
+    {
+        var state = DraftOrder.Evaluate(Rules(bans: 0, pickOrder: PickOrder.LoserPicks), DraftStart.Red, new DraftProgress
+        {
+            SkippedPicks = [LostPick(R, 0)],
+            PointsToWin = 7,
+        });
+
+        Assert.Equal(B, state.NextPicker);
+    }
+
+    [Fact]
+    public void Lost_picks_are_listed_where_they_happened()
+    {
+        var names = TeamNames.From("Germany", "Poland");
+        var line = MatchAnnouncer.DraftSummaryLine(
+            [],
+            [("NM1", R), ("HD1", B), ("DT1", R)],
+            names,
+            [LostPick(B, 1), LostPick(R, 3)]);
+
+        Assert.Equal("Picks: NM1 (Germany), Poland lost a pick, HD1 (Poland), DT1 (Germany), Germany lost a pick", line);
+        Assert.Equal("Poland loses their pick", MatchAnnouncer.SkipLine(DraftPhase.Pick, B, names));
+    }
+
+    [Fact]
+    public void A_lost_pick_does_not_count_as_a_ban_or_protect()
+    {
+        var names = TeamNames.From("Germany", "Poland");
+        var line = MatchAnnouncer.DraftSummaryLine([("NM2", SlotAvailability.BannedByRed)], [], names, [LostPick(B, 0)]);
+
+        Assert.Equal("Bans: Germany NM2 | Picks: Poland lost a pick", line);
+    }
 }

@@ -90,10 +90,15 @@ public sealed class DraftRules
 }
 
 /// <summary>
-/// A protect or ban a team gave up. <see cref="Forfeited"/> marks bans lost as a penalty, such as
-/// for showing up late, rather than a turn the team chose to pass on.
+/// A protect, ban or pick a team gave up. <see cref="Forfeited"/> marks bans lost as a penalty,
+/// such as for showing up late, rather than a turn the team chose to pass on.
 /// </summary>
-public sealed record DraftSkip(DraftPhase Phase, TeamColour Team, bool Forfeited = false);
+/// <remarks>
+/// A skipped pick is one the team lost, typically for running over the pick timer again: the turn
+/// counts as used and the other team picks instead. <see cref="AfterPicks"/> is how many maps had
+/// been picked when it happened, which places it among the picks.
+/// </remarks>
+public sealed record DraftSkip(DraftPhase Phase, TeamColour Team, bool Forfeited = false, int AfterPicks = 0);
 
 /// <summary>Which team opens each phase. Settled per match, usually by the roll.</summary>
 public sealed record DraftStart(TeamColour FirstProtect, TeamColour FirstBan, TeamColour FirstPick)
@@ -115,6 +120,9 @@ public sealed record DraftProgress
 
     /// <summary>The picking team of every pick, oldest first; <c>null</c> for the tiebreaker.</summary>
     public IReadOnlyList<TeamColour?> Picks { get; init; } = [];
+
+    /// <summary>Picks a team lost, oldest first. Only entries for <see cref="DraftPhase.Pick"/> count.</summary>
+    public IReadOnlyList<DraftSkip> SkippedPicks { get; init; } = [];
 
     /// <summary>The winner of every scored map, oldest first; <c>null</c> for a tie.</summary>
     public IReadOnlyList<TeamColour?> MapWinners { get; init; } = [];
@@ -204,11 +212,14 @@ public static class DraftOrder
 
         var protects = new Tally(progress.RedProtects, progress.BlueProtects);
         var bans = new Tally(progress.RedBans, progress.BlueBans);
+        var skippedPicks = progress.SkippedPicks.Where(s => s.Phase is DraftPhase.Pick).ToList();
+        var picksMade = progress.Picks.Count(t => t is not null);
+
+        // A lost pick uses up that team's turn just like a map would, so the other team is next.
         var teamPicks = new Tally(
-            progress.Picks.Count(t => t is TeamColour.Red),
-            progress.Picks.Count(t => t is TeamColour.Blue));
-        var picksMade = teamPicks.Red + teamPicks.Blue;
-        var dynamicPicksLeft = picksMade;
+            progress.Picks.Count(t => t is TeamColour.Red) + skippedPicks.Count(s => s.Team is TeamColour.Red),
+            progress.Picks.Count(t => t is TeamColour.Blue) + skippedPicks.Count(s => s.Team is TeamColour.Blue));
+        var dynamicPicksLeft = picksMade + skippedPicks.Count;
 
         DraftTurn? next = null;
 
@@ -239,7 +250,7 @@ public static class DraftOrder
                 continue;
             }
 
-            var picker = step.Team ?? DynamicPicker(rules.PickOrder, start, progress, picksMade);
+            var picker = step.Team ?? DynamicPicker(rules.PickOrder, start, progress, picksMade, skippedPicks);
             next ??= step with { Team = picker };
             return new DraftState(ApplyScore(next, progress), picker);
         }
@@ -270,8 +281,16 @@ public static class DraftOrder
         PickOrder order,
         DraftStart start,
         DraftProgress progress,
-        int picksMade)
+        int picksMade,
+        List<DraftSkip> skippedPicks)
     {
+        // A pick lost since the last map was picked goes to the other team, whatever the last
+        // result says; after that map the usual rule takes over again.
+        if (skippedPicks.Count > 0 && skippedPicks[^1].AfterPicks >= picksMade)
+        {
+            return skippedPicks[^1].Team.Other();
+        }
+
         if (picksMade == 0)
         {
             return start.FirstPick;

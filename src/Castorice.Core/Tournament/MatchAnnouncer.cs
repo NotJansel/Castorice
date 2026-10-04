@@ -118,14 +118,17 @@ public static class MatchAnnouncer
         };
     }
 
-    /// <summary>A team passing on the protect or ban that was due.</summary>
+    /// <summary>A team passing on the protect or ban that was due, or losing its pick.</summary>
     public static string SkipLine(DraftPhase phase, TeamColour team, TeamNames names)
     {
         ArgumentNullException.ThrowIfNull(names);
 
-        return phase is DraftPhase.Protect
-            ? $"{names.For(team)} skips their protect"
-            : $"{names.For(team)} skips a ban";
+        return phase switch
+        {
+            DraftPhase.Protect => $"{names.For(team)} skips their protect",
+            DraftPhase.Pick => $"{names.For(team)} loses their pick",
+            _ => $"{names.For(team)} skips a ban",
+        };
     }
 
     /// <summary>A team losing its remaining bans, e.g. <c>Poland forfeits 2 bans</c>.</summary>
@@ -203,11 +206,18 @@ public static class MatchAnnouncer
             parts.Add("Bans: " + string.Join(", ", bans));
         }
 
-        var pickList = picks.ToList();
+        // Lost picks go in where they happened, after the maps picked before them.
+        var pickList = picks
+            .Select(p => p.Team is null ? p.Label : $"{p.Label} ({names.For(p.Team)})")
+            .ToList();
+        foreach (var skip in skipList.Where(s => s.Phase is DraftPhase.Pick).Reverse().OrderByDescending(s => s.AfterPicks))
+        {
+            pickList.Insert(Math.Clamp(skip.AfterPicks, 0, pickList.Count), $"{names.For(skip.Team)} lost a pick");
+        }
+
         if (pickList.Count > 0)
         {
-            parts.Add("Picks: " + string.Join(", ", pickList.Select(p =>
-                p.Team is null ? p.Label : $"{p.Label} ({names.For(p.Team)})")));
+            parts.Add("Picks: " + string.Join(", ", pickList));
         }
 
         return parts.Count == 0 ? "No protects, bans or picks yet." : string.Join(" | ", parts);
