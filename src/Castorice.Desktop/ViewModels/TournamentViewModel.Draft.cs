@@ -40,7 +40,7 @@ public sealed partial class TournamentViewModel
 
     /// <summary>
     /// While a protect or ban is due, clicking a map marks it for the team in turn instead of
-    /// sending it to the lobby. Warmup picks always go to the lobby.
+    /// sending it to the lobby — in warmup too, since the draft starting means warmup is over.
     /// </summary>
     [ObservableProperty]
     private bool _clickFollowsDraft = true;
@@ -326,6 +326,8 @@ public sealed partial class TournamentViewModel
             return;
         }
 
+        var warmupNote = e.Added ? EndWarmupForDraft() : string.Empty;
+
         if (!e.Added)
         {
             Status = e.Kind is DraftMarkKind.Pick ? $"Cleared the pick on {slot.Label}." : $"Cleared {slot.Label}.";
@@ -343,7 +345,7 @@ public sealed partial class TournamentViewModel
             ? MatchAnnouncer.NextTurnLine(CurrentDraft.Next, Names)
             : null;
 
-        Status = next is null ? $"{action}." : $"{action}. {next}.";
+        Status = (next is null ? $"{action}." : $"{action}. {next}.") + warmupNote;
 
         var parts = new List<string>(2);
         if (Messages.DraftActions)
@@ -371,7 +373,7 @@ public sealed partial class TournamentViewModel
     /// </summary>
     private bool TryMarkFromClick(MappoolSlotViewModel slot)
     {
-        if (IsWarmup || !ClickFollowsDraft)
+        if (!ClickFollowsDraft)
         {
             return false;
         }
@@ -450,7 +452,7 @@ public sealed partial class TournamentViewModel
         var picksMade = AllSlots.Count(s => s.IsPicked && s.PickedBy is not null);
         _skips.Add((new DraftSkip(next.Phase, team, AfterPicks: picksMade), ++_markCounter));
         RefreshDraft();
-        AnnounceDraftStep(MatchAnnouncer.SkipLine(next.Phase, team, Names));
+        AnnounceDraftStep(MatchAnnouncer.SkipLine(next.Phase, team, Names), EndWarmupForDraft());
     }
 
     [RelayCommand]
@@ -479,14 +481,30 @@ public sealed partial class TournamentViewModel
         }
 
         RefreshDraft();
-        AnnounceDraftStep(MatchAnnouncer.BansForfeitedLine(team, remaining, Names));
+        AnnounceDraftStep(MatchAnnouncer.BansForfeitedLine(team, remaining, Names), EndWarmupForDraft());
+    }
+
+    /// <summary>
+    /// Warmups are played before the draft, so the first protect, ban or skip switches warmup off:
+    /// a referee who forgot the switch still gets the match scored. Returns a note for the status
+    /// bar when it did.
+    /// </summary>
+    private string EndWarmupForDraft()
+    {
+        if (!IsWarmup)
+        {
+            return string.Empty;
+        }
+
+        IsWarmup = false;
+        return " Warmup is over: the draft has started.";
     }
 
     /// <summary>Reports a skip or forfeit in the status bar and, per the switches, in the lobby.</summary>
-    private void AnnounceDraftStep(string action)
+    private void AnnounceDraftStep(string action, string note = "")
     {
         var next = MatchAnnouncer.NextTurnLine(CurrentDraft.Next, Names);
-        Status = next is null ? $"{action}." : $"{action}. {next}.";
+        Status = (next is null ? $"{action}." : $"{action}. {next}.") + note;
 
         var parts = new List<string>(2);
         if (Messages.DraftActions)

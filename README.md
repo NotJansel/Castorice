@@ -370,7 +370,8 @@ Match score: Red 3 - 2 Blue (first to 7)
 ```
 
 - **Warmup** is on when the page opens and blocks scoring entirely, so a warmup can never take a
-  point by accident. Turn it off when the match proper starts.
+  point by accident. It switches itself off with the first protect, ban or skip — warmups come
+  before the draft — and can be turned off by hand for a bracket without protects or bans.
 - **Best of** sets the target; `13` means first to 7.
 - A failed score counts as zero, the way bracket rules treat it.
 - If the map ends and no scores arrive, nothing is awarded and the status bar says so rather than

@@ -529,7 +529,7 @@
 
               <WrapPanel Orientation="Horizontal" Classes="tight">
                 <ToggleButton Classes="compact" Content="Warmup" IsChecked="{Binding IsWarmup}"
-                              ToolTip.Tip="On until you turn it off: while it is on, a finished map is never scored." />
+                              ToolTip.Tip="While it is on, a finished map is never scored. Turns itself off with the first protect or ban, since warmups come before the draft." />
                 <ToggleButton Classes="compact" Content="Auto-score" IsChecked="{Binding AutoScore}"
                               ToolTip.Tip="Total the map when it ends, award the point and post the result to the lobby." />
                 <ToggleButton Classes="compact" Content="FreeMod check" IsChecked="{Binding AutoFreeModCheck}"
