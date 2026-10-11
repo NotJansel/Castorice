@@ -8,5 +8,5 @@ public partial class TournamentView : UserControl
 {
     public TournamentView() => InitializeComponent();
 
-    private void OnJumpToLatestLog(object? sender, RoutedEventArgs e) => AutoScroll.ScrollToLatest(LobbyLogScroller);
+    private void OnJumpToLatestChat(object? sender, RoutedEventArgs e) => AutoScroll.ScrollToLatest(LobbyChatScroller);
 }

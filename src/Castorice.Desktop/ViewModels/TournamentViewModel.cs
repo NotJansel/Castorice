@@ -155,8 +155,6 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
     public bool HasFreeModSlots => FreeModSlots.Count > 0;
 
-    public ObservableCollection<string> RoomLog { get; } = [];
-
     /// <summary>
     /// The pool's own fields are wrapped rather than bound through <c>Pool.Name</c> directly:
     /// <see cref="Mappool"/> raises no change notifications, so a rename would otherwise update the
@@ -911,21 +909,11 @@ public sealed partial class TournamentViewModel : ViewModelBase
         // A different lobby starts from its own score, so the map history goes with the old one.
         _mapWinners.Clear();
         RefreshDraft();
-
-        if (room is null)
-        {
-            RoomLog.Clear();
-        }
+        ShowLobbyChat(room);
     }
 
     private void OnRoomEvent(BanchoEvent evt)
     {
-        RoomLog.Add($"{DateTimeOffset.Now:HH:mm:ss}  {evt.Raw}");
-        while (RoomLog.Count > 300)
-        {
-            RoomLog.RemoveAt(0);
-        }
-
         SyncPlayers();
 
         OnPropertyChanged(nameof(RoomTitle));

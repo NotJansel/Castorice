@@ -34,5 +34,11 @@ public sealed partial class RoomPlayerViewModel : ViewModelBase
         ? $"{score:N0}{(Model.LastScorePassed ? string.Empty : " (failed)")}"
         : "-";
 
+    /// <summary>The second line of the player's row, e.g. <c>Ready · HD · 659,084</c>.</summary>
+    public string Details => string.Join(
+        " · ",
+        new[] { Status, ModsDisplay, Model.LastScore is null ? string.Empty : ScoreDisplay }
+            .Where(part => part.Length > 0));
+
     public string ProfileUrl => Model.UserId > 0 ? $"https://osu.ppy.sh/users/{Model.UserId}" : string.Empty;
 }

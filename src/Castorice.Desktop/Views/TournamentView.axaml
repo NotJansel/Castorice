@@ -6,6 +6,7 @@
              xmlns:vm="clr-namespace:Castorice.Desktop.ViewModels"
              xmlns:views="clr-namespace:Castorice.Desktop.Views"
              xmlns:svc="clr-namespace:Castorice.Desktop.Services"
+             xmlns:chat="clr-namespace:Castorice.Core.Chat;assembly=Castorice.Core"
              mc:Ignorable="d" d:DesignWidth="1120" d:DesignHeight="860"
              x:Class="Castorice.Desktop.Views.TournamentView"
              x:DataType="vm:TournamentViewModel">
@@ -70,7 +71,9 @@
         The scroll viewer alone does not stop a wide child from overflowing, so the content is
         clamped to the viewport width. Padding lives on this border so it counts against that width.
       -->
-      <ScrollViewer Grid.Column="0" Name="PoolScroller" HorizontalScrollBarVisibility="Disabled">
+      <!-- The pool above, the lobby's chat below; the splitter between them sets the share. -->
+      <Grid Grid.Column="0" RowDefinitions="*,Auto,260">
+      <ScrollViewer Grid.Row="0" Name="PoolScroller" HorizontalScrollBarVisibility="Disabled">
         <Border Padding="20,18" MaxWidth="{Binding #PoolScroller.Viewport.Width}">
         <StackPanel Spacing="16">
 
@@ -466,6 +469,60 @@
         </Border>
       </ScrollViewer>
 
+      <GridSplitter Grid.Row="1" Height="5" ResizeDirection="Rows" Background="{DynamicResource CastoriceBorderBrush}"
+                    ToolTip.Tip="Drag to give the chat more or less room." />
+
+      <!-- ==================== Lobby chat ==================== -->
+      <Border Grid.Row="2" MinHeight="120" Background="{DynamicResource CastoriceRailBrush}">
+        <Grid RowDefinitions="Auto,*,Auto">
+          <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="20,10,20,4">
+            <TextBlock Classes="label" Text="LOBBY CHAT" VerticalAlignment="Center" />
+            <TextBlock Classes="faint" Text="{Binding LobbyChat.Name, FallbackValue=''}" VerticalAlignment="Center" />
+          </StackPanel>
+
+          <Panel Grid.Row="1">
+            <TextBlock Classes="faint" Margin="20,4" TextWrapping="Wrap"
+                       Text="Create or attach a lobby to see its chat here."
+                       IsVisible="{Binding !HasLobbyChat}" />
+            <ScrollViewer Name="LobbyChatScroller" Padding="20,2,20,6" HorizontalScrollBarVisibility="Disabled"
+                          svc:AutoScroll.IsEnabled="True" IsVisible="{Binding HasLobbyChat}">
+              <ItemsControl ItemsSource="{Binding LobbyChat.Messages, FallbackValue={x:Null}}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="chat:ChatMessage">
+                    <Grid ColumnDefinitions="44,130,*" Margin="0,1">
+                      <TextBlock Grid.Column="0" Classes="faint" VerticalAlignment="Top" Margin="0,1,0,0"
+                                 Text="{Binding Timestamp, Converter={x:Static views:ViewConverters.TimestampToShortTime}}" />
+                      <TextBlock Grid.Column="1" Text="{Binding Sender}" TextTrimming="CharacterEllipsis"
+                                 HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,10,0"
+                                 FontSize="12.5" FontWeight="SemiBold"
+                                 Foreground="{Binding Kind, Converter={x:Static views:ViewConverters.MessageKindToBrush}}" />
+                      <SelectableTextBlock Grid.Column="2" Text="{Binding Text}" TextWrapping="Wrap" FontSize="12.5"
+                                           Foreground="{Binding Kind, Converter={x:Static views:ViewConverters.MessageKindToBrush}}" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+            <Button Classes="accent pill compact" Content="Jump to latest ↓"
+                    HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,6"
+                    IsVisible="{Binding #LobbyChatScroller.(svc:AutoScroll.IsPaused)}"
+                    Click="OnJumpToLatestChat" />
+          </Panel>
+
+          <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="20,4,20,12">
+            <TextBox Grid.Column="0" Text="{Binding LobbyChatDraft}" IsEnabled="{Binding HasLobbyChat}"
+                     PlaceholderText="Message the lobby, or an !mp command">
+              <TextBox.KeyBindings>
+                <KeyBinding Gesture="Enter" Command="{Binding SendLobbyChatCommand}" />
+              </TextBox.KeyBindings>
+            </TextBox>
+            <Button Grid.Column="1" Classes="accent" Content="Send" Margin="6,0,0,0"
+                    Command="{Binding SendLobbyChatCommand}" />
+          </Grid>
+        </Grid>
+      </Border>
+      </Grid>
+
       <!-- ==================== Lobby panel ==================== -->
       <!--
         Ordered by how often a referee reaches for it during a match: the score and the match
@@ -648,44 +705,51 @@
               <ItemsControl ItemsSource="{Binding Players}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate DataType="vm:RoomPlayerViewModel">
+                    <!-- One line per player; moving and kicking sit behind the ⋯ button. -->
                     <Border Background="{DynamicResource CastoriceSurfaceBrush}"
                             BorderBrush="{DynamicResource CastoriceBorderBrush}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusMedium}"
-                            Padding="10,8" Margin="0,0,0,6">
-                      <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
-                        <Border Grid.Column="0" Grid.RowSpan="2" Width="3"
-                                CornerRadius="{StaticResource RadiusPill}"
-                                Margin="0,0,10,0"
+                            Padding="8,6" Margin="0,0,0,4">
+                      <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+                        <Border Grid.Column="0" Width="3" CornerRadius="{StaticResource RadiusPill}" Margin="0,0,8,0"
                                 Background="{Binding Team, Converter={x:Static views:ViewConverters.TeamToBrush}}" />
-                        <StackPanel Grid.Column="1" Spacing="1">
-                          <TextBlock Text="{Binding Username}" FontWeight="SemiBold" FontSize="12.5" />
-                          <TextBlock Classes="faint">
-                            <Run Text="Slot" /><Run Text=" " /><Run Text="{Binding Slot}" />
-                            <Run Text=" · " /><Run Text="{Binding Status}" />
-                            <Run Text=" · " /><Run Text="{Binding ScoreDisplay}" />
-                          </TextBlock>
+                        <Border Grid.Column="1" Classes="badge ghost" MinWidth="24" Margin="0,0,8,0"
+                                VerticalAlignment="Center" ToolTip.Tip="Slot">
+                          <TextBlock Text="{Binding Slot}" HorizontalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="2" Spacing="0" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding Username}" FontWeight="SemiBold" FontSize="12.5"
+                                     TextTrimming="CharacterEllipsis" />
+                          <TextBlock Classes="faint" Text="{Binding Details}" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Top">
-                          <Button Classes="ghost compact" Content="Team"
-                                  ToolTip.Tip="Move to the other team"
-                                  Command="{Binding $parent[UserControl].((vm:TournamentViewModel)DataContext).SetTeamCommand}"
-                                  CommandParameter="{Binding}" />
-                          <Button Classes="danger compact" Content="Kick"
-                                  Command="{Binding $parent[UserControl].((vm:TournamentViewModel)DataContext).KickCommand}"
-                                  CommandParameter="{Binding}" />
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
-                                    Orientation="Horizontal" Spacing="6" Margin="0,8,0,0">
-                          <TextBlock Classes="label" Text="SLOT" VerticalAlignment="Center" />
-                          <NumericUpDown Width="104" Minimum="1" Maximum="16" Increment="1"
-                                         FormatString="0" Value="{Binding TargetSlot}" />
-                          <Button Classes="ghost compact" Content="Move"
-                                  ToolTip.Tip="Send this player to the slot on the left"
-                                  Command="{Binding $parent[UserControl].((vm:TournamentViewModel)DataContext).MoveCommand}"
-                                  CommandParameter="{Binding}" />
-                        </StackPanel>
+                        <Button Grid.Column="3" Classes="ghost compact" Content="Team" Margin="6,0,0,0"
+                                VerticalAlignment="Center"
+                                ToolTip.Tip="Move to the other team"
+                                Command="{Binding $parent[UserControl].((vm:TournamentViewModel)DataContext).SetTeamCommand}"
+                                CommandParameter="{Binding}" />
+                        <Button Grid.Column="4" Classes="ghost compact" Content="⋯" Margin="4,0,0,0"
+                                VerticalAlignment="Center" ToolTip.Tip="Move to another slot, or kick">
+                          <Button.Flyout>
+                            <Flyout Placement="BottomEdgeAlignedRight">
+                              <StackPanel Spacing="10" Margin="2">
+                                <TextBlock Classes="label" Text="MOVE TO SLOT" />
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                  <NumericUpDown Width="110" Minimum="1" Maximum="16" Increment="1"
+                                                 FormatString="0" Value="{Binding TargetSlot}" />
+                                  <Button Content="Move"
+                                          Command="{Binding $parent[UserControl].((vm:TournamentViewModel)DataContext).MoveCommand}"
+                                          CommandParameter="{Binding}" />
+                                </StackPanel>
+                                <Separator />
+                                <Button Classes="danger" Content="Kick from the lobby" HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Center"
+                                        Command="{Binding $parent[UserControl].((vm:TournamentViewModel)DataContext).KickCommand}"
+                                        CommandParameter="{Binding}" />
+                              </StackPanel>
+                            </Flyout>
+                          </Button.Flyout>
+                        </Button>
                       </Grid>
                     </Border>
                   </DataTemplate>
@@ -693,34 +757,8 @@
               </ItemsControl>
             </StackPanel>
 
-            <!-- ========== Log ========== -->
-            <StackPanel Spacing="8">
-              <TextBlock Classes="label" Text="LOBBY LOG" />
-              <!-- A fixed height with its own scrolling, so a long match neither stretches the panel
-                   nor pushes the newest lines out of sight; it follows them unless scrolled up. -->
-              <Border Classes="well" Padding="0" Height="260">
-                <Panel>
-                <ScrollViewer Name="LobbyLogScroller" Padding="10" HorizontalScrollBarVisibility="Disabled"
-                              svc:AutoScroll.IsEnabled="True">
-                  <ItemsControl ItemsSource="{Binding RoomLog}">
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate x:DataType="sys:String">
-                        <SelectableTextBlock Text="{Binding}" Classes="mono"
-                                             Foreground="{DynamicResource CastoriceMutedTextBrush}"
-                                             TextWrapping="Wrap" Margin="0,1" />
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                </ScrollViewer>
-                <Button Classes="accent pill compact" Content="Jump to latest ↓"
-                        HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,10"
-                        IsVisible="{Binding #LobbyLogScroller.(svc:AutoScroll.IsPaused)}"
-                        Click="OnJumpToLatestLog" />
-                </Panel>
-              </Border>
-              <TextBlock Classes="faint" TextWrapping="Wrap"
-                         Text="What the panel posts to the lobby by itself is set under Settings → Lobby messages." />
-            </StackPanel>
+            <TextBlock Classes="faint" TextWrapping="Wrap"
+                       Text="The lobby's chat, BanchoBot included, runs below the pool. What the panel posts there by itself is set under Settings → Lobby messages." />
 
           </StackPanel>
           </Border>

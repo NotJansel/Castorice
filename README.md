@@ -27,8 +27,9 @@ window belongs to whichever page is open:
 │  Settings    │          │NM1  NM ││NM2  NM │         │ MATCH CONTROL        │
 │              │          │cover…  ││cover…  │         │ [Start] [Start now]  │
 │              │ Hidden   └────────┘└────────┘         │ DRAFT · Red bans 1/2 │
-│ ● BANCHO     │          ┌────────┐                   │ PLAYERS              │
-│  [Connect]   │          │HD1  HD │                   │ LOBBY LOG            │
+│              ├─ LOBBY CHAT ──────────────────────────┤ PLAYERS              │
+│ ● BANCHO     │ BanchoBot  All players are ready      │ 1 Akuma   [Team][⋯]  │
+│  [Connect]   │ [Message the lobby…          ][Send]  │ 2 Zyrix   [Team][⋯]  │
 └──────────────┴───────────────────────────────────────┴──────────────────────┘
 ```
 
@@ -36,7 +37,12 @@ The Tournament page keeps running a match apart from preparing one. The **Mappoo
 picks; **Pool setup** holds everything that is set before a match — adding picks, the draft order,
 room defaults, the FreeMod rule and its multipliers. The lobby panel on the right is ordered by
 how often a referee reaches for it: the score and the match switches, the lobby buttons, the draft,
-then the players and BanchoBot's log.
+then the players, one compact row each.
+
+The attached lobby's chat runs under the pool, so the players' messages and BanchoBot's replies stay
+in view during the match; drag the bar above it to give it more or less room. It is the same
+`#mp_` conversation as on the Chat page, and anything typed there goes to the lobby as written,
+`!mp` commands included.
 
 Pick tiles show the beatmap's cover art behind the title, mods and difficulty stats, and the
 profile page loads avatars and banners the same way. Images are fetched once and kept on disk
@@ -256,7 +262,8 @@ or takes a pool link or id (`https://pools.jansel.dev/pools/Xb3kQ9aZ`, `Xb3kQ9aZ
 5. **Start** runs the pool's countdown; **Start now** skips it; **Abort timer** and
    **Abort match** are one click away.
 6. The panel tracks slots, teams and per-player scores as BanchoBot reports them. Each player row
-   can **Move** them to a slot, swap their **Team** or **Kick** them, and **+1 Red** / **+1 Blue**
+   shows the slot, the ready state, mods and last score; **Team** swaps their team, and **⋯** moves
+   them to another slot or kicks them, and **+1 Red** / **+1 Blue**
    keep the running score by hand whenever you want them to.
 
 ### Draft order: protects, bans and picks
