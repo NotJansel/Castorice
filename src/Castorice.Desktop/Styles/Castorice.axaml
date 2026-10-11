@@ -390,6 +390,19 @@
     <Setter Property="CornerRadius" Value="{DynamicResource RadiusMediumInnerRight}" />
   </Style>
 
+  <!--
+    Fluent gives a spinner button at its limit (down at the minimum, up at the maximum) a lighter
+    fill than the working one, which reads as the opposite: as if that were the button to press.
+    A spent button fades out instead.
+  -->
+  <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:disabled">
+    <Setter Property="Opacity" Value="0.3" />
+  </Style>
+
+  <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:disabled /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+
   <Style Selector="ToggleButton">
     <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
     <Setter Property="Padding" Value="13,7" />
