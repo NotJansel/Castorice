@@ -9,13 +9,13 @@ public class ReconnectPlanTests
     [Fact]
     public void A_first_connect_joins_the_configured_channels()
     {
-        Assert.Equal(["#osu"], ReconnectPlan.ChannelsToJoin(["#osu"], [], null));
+        Assert.Equal(["#osu"], ReconnectPlan.ChannelsToJoin(["#osu"], [], []));
     }
 
     [Fact]
     public void A_reconnect_rejoins_the_attached_lobby()
     {
-        var joined = ReconnectPlan.ChannelsToJoin(["#osu"], [T("#osu"), T("#mp_12345")], "#mp_12345");
+        var joined = ReconnectPlan.ChannelsToJoin(["#osu"], [T("#osu"), T("#mp_12345")], ["#mp_12345"]);
 
         Assert.Equal(["#osu", "#mp_12345"], joined);
     }
@@ -24,13 +24,13 @@ public class ReconnectPlanTests
     public void Rejoins_the_lobby_even_when_its_tab_was_closed()
     {
         // The referee buttons still aim at the attached lobby, tab or no tab.
-        Assert.Contains("#mp_777", ReconnectPlan.ChannelsToJoin([], [], "#mp_777"));
+        Assert.Contains("#mp_777", ReconnectPlan.ChannelsToJoin([], [], ["#mp_777"]));
     }
 
     [Fact]
     public void Rejoins_channels_joined_by_hand_not_just_the_configured_ones()
     {
-        var joined = ReconnectPlan.ChannelsToJoin(["#osu"], [T("#osu"), T("#german")], null);
+        var joined = ReconnectPlan.ChannelsToJoin(["#osu"], [T("#osu"), T("#german")], []);
 
         Assert.Equal(["#osu", "#german"], joined);
     }
@@ -41,7 +41,7 @@ public class ReconnectPlanTests
         var joined = ReconnectPlan.ChannelsToJoin(
             [],
             [T("BanchoBot"), T("SomePlayer"), new ChatTarget("Server", ChatTargetKind.Server)],
-            null);
+            []);
 
         Assert.Empty(joined);
     }
@@ -49,8 +49,16 @@ public class ReconnectPlanTests
     [Fact]
     public void Joins_each_channel_once_whatever_its_case_or_source()
     {
-        var joined = ReconnectPlan.ChannelsToJoin(["#osu", "osu"], [T("#OSU"), T("#mp_1")], "#mp_1");
+        var joined = ReconnectPlan.ChannelsToJoin(["#osu", "osu"], [T("#OSU"), T("#mp_1")], ["#mp_1"]);
 
         Assert.Equal(["#osu", "#mp_1"], joined);
+    }
+
+    [Fact]
+    public void Rejoins_every_lobby_being_refereed()
+    {
+        var joined = ReconnectPlan.ChannelsToJoin([], [T("#mp_1")], ["#mp_1", null, "#mp_2"]);
+
+        Assert.Equal(["#mp_1", "#mp_2"], joined);
     }
 }

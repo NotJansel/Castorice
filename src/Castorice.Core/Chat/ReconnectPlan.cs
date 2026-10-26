@@ -8,26 +8,25 @@ namespace Castorice.Core.Chat;
 public static class ReconnectPlan
 {
     /// <summary>
-    /// The configured auto-joins, every channel tab still open, and the attached lobby even if its
-    /// tab was closed. Each appears once, in that order; private conversations need no join.
+    /// The configured auto-joins, every channel tab still open, and every attached lobby even if its
+    /// chat tab was closed. Each appears once, in that order; private conversations need no join.
     /// </summary>
     public static IReadOnlyList<string> ChannelsToJoin(
         IEnumerable<string> autoJoinChannels,
         IEnumerable<ChatTarget> openTargets,
-        string? attachedLobbyChannel)
+        IEnumerable<string?> attachedLobbyChannels)
     {
         ArgumentNullException.ThrowIfNull(autoJoinChannels);
         ArgumentNullException.ThrowIfNull(openTargets);
+        ArgumentNullException.ThrowIfNull(attachedLobbyChannels);
 
         var open = openTargets
             .Where(t => t.Kind is ChatTargetKind.Channel or ChatTargetKind.MultiplayerRoom)
             .Select(t => t.Name);
 
-        var lobby = string.IsNullOrWhiteSpace(attachedLobbyChannel) ? [] : new[] { attachedLobbyChannel };
-
         return autoJoinChannels
             .Concat(open)
-            .Concat(lobby)
+            .Concat(attachedLobbyChannels.OfType<string>())
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .Select(name => name.StartsWith('#') ? name : '#' + name)
             .Distinct(StringComparer.OrdinalIgnoreCase)

@@ -47,7 +47,7 @@
       <WrapPanel Orientation="Horizontal" Classes="spaced">
         <ComboBox ItemsSource="{Binding PoolFiles}"
                   SelectedItem="{Binding SelectedPoolFile}"
-                  MinWidth="210"
+                  MinWidth="210" MaxWidth="230"
                   PlaceholderText="Mappool" />
         <TextBox Text="{Binding RedTeam}" PlaceholderText="Red team" Width="150" />
         <TextBox Text="{Binding BlueTeam}" PlaceholderText="Blue team" Width="150" />

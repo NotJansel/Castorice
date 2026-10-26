@@ -22,7 +22,6 @@ public sealed class AppServices : IAsyncDisposable
             : OutboundRateLimiter.ForPlayerAccount());
 
         Chat = new ChatService(Irc, AvaloniaDispatcher.Instance);
-        Tournament = new TournamentController(Irc, Chat, AvaloniaDispatcher.Instance);
         Mappools = new MappoolStore();
         Api = new OsuApiClient();
         PoolBuilder = new MappoolBuilderClient();
@@ -41,7 +40,6 @@ public sealed class AppServices : IAsyncDisposable
 
     public ChatService Chat { get; }
 
-    public TournamentController Tournament { get; }
 
     public MappoolStore Mappools { get; }
 

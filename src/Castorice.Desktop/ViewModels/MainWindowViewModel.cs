@@ -37,12 +37,12 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _services = services ?? new AppServices();
 
         Chat = new ChatViewModel(_services);
-        Tournament = new TournamentViewModel(_services);
+        Tournaments = new TournamentTabsViewModel(_services);
         Profile = new ProfileViewModel(_services);
         Settings = new SettingsViewModel(_services);
         Updates = new UpdateViewModel(_services);
         Settings.Updates = Updates;
-        Settings.Messages = Tournament.Messages;
+        Settings.Messages = Tournaments.Messages;
         Updates.Start();
 
         Settings.ThemeChanged += (_, variant) => ThemeChanged?.Invoke(this, variant);
@@ -60,7 +60,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     public UpdateViewModel Updates { get; }
 
-    public TournamentViewModel Tournament { get; }
+    /// <summary>One tab per lobby being refereed.</summary>
+    public TournamentTabsViewModel Tournaments { get; }
 
     public ProfileViewModel Profile { get; }
 
@@ -113,12 +114,12 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             });
 
             // On a reconnect this also brings back every channel that was open before the drop,
-            // the attached lobby included; the server let go of all of them when the link died.
-            var lobby = _services.Tournament.Room;
+            // every attached lobby included; the server let go of all of them when the link died.
+            var lobbies = Tournaments.Attached.ToList();
             var channels = ReconnectPlan.ChannelsToJoin(
                 _services.Settings.AutoJoinChannels,
                 _services.Chat.Targets,
-                lobby?.ChannelName);
+                lobbies.Select(tab => tab.Room?.ChannelName));
 
             foreach (var channel in channels)
             {
@@ -129,13 +130,10 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             // BanchoBot is where !mp make is answered, so keep that conversation open from the start.
             _services.Chat.Open(ChatTarget.BanchoBot);
 
-            if (lobby is not null)
+            foreach (var tab in lobbies)
             {
                 // Players may have joined, left or changed mods while we were away.
-                await _services.Tournament.RefreshSettingsAsync();
-                _services.Chat.AppendClientNotice(
-                    _services.Chat.Open(lobby.ChannelName),
-                    "Reconnected — rejoined the lobby and asked BanchoBot for its current settings.");
+                await tab.CatchUpAfterReconnectAsync();
             }
         }
         catch (IrcAuthenticationException ex)
@@ -168,6 +166,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     public async Task ShutdownAsync()
     {
         Updates.Dispose();
+        Tournaments.Dispose();
 
         try
         {

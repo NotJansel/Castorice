@@ -18,8 +18,8 @@
     <DataTemplate x:Key="ChatTemplate" DataType="vm:ChatViewModel">
       <views:ChatView />
     </DataTemplate>
-    <DataTemplate x:Key="TournamentTemplate" DataType="vm:TournamentViewModel">
-      <views:TournamentView />
+    <DataTemplate x:Key="TournamentTemplate" DataType="vm:TournamentTabsViewModel">
+      <views:TournamentTabsView />
     </DataTemplate>
     <DataTemplate x:Key="ProfileTemplate" DataType="vm:ProfileViewModel">
       <views:ProfileView />
@@ -178,7 +178,7 @@
                       ContentTemplate="{StaticResource ChatTemplate}"
                       IsVisible="{Binding IsChatPage}" />
       <ContentControl Classes="page" Classes.shown="{Binding IsTournamentPage}"
-                      Content="{Binding Tournament}"
+                      Content="{Binding Tournaments}"
                       ContentTemplate="{StaticResource TournamentTemplate}"
                       IsVisible="{Binding IsTournamentPage}" />
       <ContentControl Classes="page" Classes.shown="{Binding IsProfilePage}"

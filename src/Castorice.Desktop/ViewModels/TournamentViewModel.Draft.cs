@@ -272,9 +272,17 @@ public sealed partial class TournamentViewModel
 
     partial void OnFirstPickChanged(TeamColour value) => RefreshDraft();
 
-    partial void OnRedTeamChanged(string value) => RefreshDraft();
+    partial void OnRedTeamChanged(string value)
+    {
+        RefreshDraft();
+        OnPropertyChanged(nameof(TabTitle));
+    }
 
-    partial void OnBlueTeamChanged(string value) => RefreshDraft();
+    partial void OnBlueTeamChanged(string value)
+    {
+        RefreshDraft();
+        OnPropertyChanged(nameof(TabTitle));
+    }
 
     private void SetDraftRule<T>(
         T current,
@@ -655,17 +663,17 @@ public sealed partial class TournamentViewModel
 
     [RelayCommand]
     private Task PostScoreAsync() => RunAsync(
-        () => _services.Tournament.SendAsync(MatchAnnouncer.MatchScoreLine(CurrentStanding())),
+        () => _tournament.SendAsync(MatchAnnouncer.MatchScoreLine(CurrentStanding())),
         "Posted the match score.");
 
     [RelayCommand]
     private Task PostDraftAsync() => RunAsync(
         async () =>
         {
-            await _services.Tournament.SendAsync(BuildDraftSummary());
+            await _tournament.SendAsync(BuildDraftSummary());
             if (MatchAnnouncer.NextTurnLine(CurrentDraft.Next, Names) is { } next)
             {
-                await _services.Tournament.SendAsync(next);
+                await _tournament.SendAsync(next);
             }
         },
         "Posted the draft.");
@@ -676,7 +684,7 @@ public sealed partial class TournamentViewModel
     /// </summary>
     private async Task PostQuietlyAsync(IReadOnlyList<string> messages)
     {
-        if (messages.Count == 0 || !_services.Tournament.IsAttached)
+        if (messages.Count == 0 || !_tournament.IsAttached)
         {
             return;
         }
@@ -685,7 +693,7 @@ public sealed partial class TournamentViewModel
         {
             foreach (var message in messages)
             {
-                await _services.Tournament.SendAsync(message);
+                await _tournament.SendAsync(message);
             }
         }
         catch (Exception ex)

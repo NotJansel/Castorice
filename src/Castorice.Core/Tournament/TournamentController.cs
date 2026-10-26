@@ -9,7 +9,11 @@ namespace Castorice.Core.Tournament;
 /// currently attached room, sends <c>!mp</c> commands through the rate-limited IRC client, and
 /// feeds BanchoBot's replies back into <see cref="MultiplayerRoom"/>.
 /// </summary>
-public sealed class TournamentController
+/// <remarks>
+/// Several can run side by side on one connection, one per lobby being refereed: each only
+/// listens to its own room's channel, and they share the client's rate limit.
+/// </remarks>
+public sealed class TournamentController : IDisposable
 {
     private readonly IrcClient _client;
     private readonly ChatService _chat;
@@ -57,7 +61,8 @@ public sealed class TournamentController
                 return;
             }
 
-            if (BanchoBotParser.Parse(message.Trailing) is MatchCreated evt)
+            // With several lobbies being made at once, each waits for the reply naming its own.
+            if (BanchoBotParser.Parse(message.Trailing) is MatchCreated evt && IsReplyFor(evt, roomName))
             {
                 created.TrySetResult(evt);
             }
@@ -229,10 +234,10 @@ public sealed class TournamentController
             return;
         }
 
-        // Accept the room's own channel, plus the PM where "!mp make" is answered.
+        // Only the room's own channel. BanchoBot's private replies (such as to "!mp make") would
+        // otherwise land in every lobby being refereed at once.
         var destination = message.ParameterAt(0);
-        if (destination.StartsWith('#') &&
-            !destination.Equals(room.ChannelName, StringComparison.OrdinalIgnoreCase))
+        if (!destination.Equals(room.ChannelName, StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
@@ -242,6 +247,23 @@ public sealed class TournamentController
             _dispatcher.Post(() => RoomEvent?.Invoke(this, evt));
         }
     }
+
+    /// <summary>
+    /// Whether BanchoBot's "Created the tournament match" names the room this call asked for.
+    /// Bancho may shorten a long name, so a cut-off version of it counts too.
+    /// </summary>
+    internal static bool IsReplyFor(MatchCreated created, string roomName)
+    {
+        var asked = roomName.Trim();
+        var named = created.RoomName.Trim();
+
+        return named.Length > 0 &&
+            (named.Equals(asked, StringComparison.OrdinalIgnoreCase) ||
+             asked.StartsWith(named, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>Stops listening to the connection; the lobby itself stays open on Bancho.</summary>
+    public void Dispose() => _client.MessageReceived -= OnIrcMessage;
 
     private static bool IsFromBanchoBot(IrcMessage message) =>
         string.Equals(message.Nick, ChatTarget.BanchoBot, StringComparison.OrdinalIgnoreCase);

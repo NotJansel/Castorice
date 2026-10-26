@@ -39,6 +39,13 @@ room defaults, the FreeMod rule and its multipliers. The lobby panel on the righ
 how often a referee reaches for it: the score and the match switches, the lobby buttons, the draft,
 then the players, one compact row each.
 
+Several matches can be refereed at once: **+ New match** above the page opens another tab, each
+with its own lobby, pool, teams, draft, score and chat. A tab is named after its teams, and a green
+dot marks the ones following a lobby. They share the connection and its send quota, so commands
+from all tabs together stay within osu!'s limit. Closing a tab that follows a lobby asks first; the
+lobby itself stays open on Bancho and can be attached again by its id. After a dropped connection
+every tab's lobby is rejoined.
+
 The attached lobby's chat runs under the pool, so the players' messages and BanchoBot's replies stay
 in view during the match; drag the bar above it to give it more or less room. It is the same
 `#mp_` conversation as on the Chat page, and anything typed there goes to the lobby as written,
@@ -470,7 +477,7 @@ The core library never references Avalonia. UI thread marshalling goes through t
 
 ```bash
 dotnet build              # whole solution
-dotnet test               # 368 tests, no network needed
+dotnet test               # 374 tests, no network needed
 dotnet run --project src/Castorice.Desktop
 ```
 

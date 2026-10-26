@@ -8,10 +8,14 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace Castorice.Desktop.ViewModels;
 
-/// <summary>Mappool picks and referee controls for the attached lobby.</summary>
-public sealed partial class TournamentViewModel : ViewModelBase
+/// <summary>
+/// Mappool picks and referee controls for one lobby. Each tournament tab is one of these, with a
+/// lobby, pool, teams and draft of its own.
+/// </summary>
+public sealed partial class TournamentViewModel : ViewModelBase, IDisposable
 {
     private readonly AppServices _services;
+    private readonly TournamentController _tournament;
 
     // Set while re-selecting the file the pool was just written to, so the save does not bounce
     // back through a reload and throw away the in-memory state.
@@ -86,13 +90,17 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
     partial void OnIsSetupOpenChanged(bool value) => OnPropertyChanged(nameof(IsPicksOpen));
 
-    public TournamentViewModel(AppServices services)
+    /// <param name="messages">The lobby message switches, which every tab shares.</param>
+    /// <param name="number">Names the tab until its teams or lobby give it a better name.</param>
+    public TournamentViewModel(AppServices services, LobbyMessagesViewModel messages, int number = 1)
     {
         _services = services;
-        Messages = new LobbyMessagesViewModel(_services.Settings.Announcements, _services.SaveSettings);
+        Messages = messages;
+        Number = number;
+        _tournament = new TournamentController(_services.Irc, _services.Chat, AvaloniaDispatcher.Instance);
 
-        _services.Tournament.RoomChanged += (_, room) => OnRoomChanged(room);
-        _services.Tournament.RoomEvent += (_, evt) => OnRoomEvent(evt);
+        _tournament.RoomChanged += (_, room) => OnRoomChanged(room);
+        _tournament.RoomEvent += (_, evt) => OnRoomEvent(evt);
 
         RefreshPoolList();
 
@@ -110,6 +118,61 @@ public sealed partial class TournamentViewModel : ViewModelBase
     }
 
     public ObservableCollection<MappoolFile> PoolFiles { get; } = [];
+
+    public int Number { get; }
+
+    /// <summary>Whether this tab is the one on screen; only that one's view is shown.</summary>
+    [ObservableProperty]
+    private bool _isSelected;
+
+    /// <summary>The tab's name: the teams once both are typed in, else the lobby, else a number.</summary>
+    public string TabTitle =>
+        !string.IsNullOrWhiteSpace(RedTeam) && !string.IsNullOrWhiteSpace(BlueTeam)
+            ? $"{RedTeam.Trim()} vs {BlueTeam.Trim()}"
+            : Room is { } room
+                ? room.ChannelName
+                : $"Match {Number}";
+
+    /// <summary>The lobby's channel for the tab's tooltip, or a note that none is attached.</summary>
+    public string TabTip => Room is { } room ? $"{room.RoomName} ({room.ChannelName})" : "No lobby attached";
+
+    /// <summary>
+    /// Picks up pools another tab saved or imported, without reloading this tab's own pool: the
+    /// in-memory draft and edits stay.
+    /// </summary>
+    public void RefreshPoolListQuietly()
+    {
+        _suppressPoolReload = true;
+        try
+        {
+            RefreshPoolList();
+        }
+        finally
+        {
+            _suppressPoolReload = false;
+        }
+    }
+
+    /// <summary>After a reconnect: asks BanchoBot for the lobby's current state and says so in its chat.</summary>
+    public async Task CatchUpAfterReconnectAsync()
+    {
+        if (Room is not { } room)
+        {
+            return;
+        }
+
+        await _tournament.RefreshSettingsAsync();
+        _services.Chat.AppendClientNotice(
+            _services.Chat.Open(room.ChannelName),
+            "Reconnected — rejoined the lobby and asked BanchoBot for its current settings.");
+    }
+
+    /// <summary>Stops following the lobby. The lobby stays open on Bancho and can be attached again.</summary>
+    public void Dispose()
+    {
+        _scoringCts?.Cancel();
+        _tournament.Dispose();
+    }
 
     /// <summary>Picks grouped by bracket, so the UI can lay out one row per category.</summary>
     public ObservableCollection<SlotGroupViewModel> Groups { get; } = [];
@@ -262,7 +325,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
     public string MatchTargetDisplay => $"First to {Pool.PointsToWin}";
 
-    public MultiplayerRoom? Room => _services.Tournament.Room;
+    public MultiplayerRoom? Room => _tournament.Room;
 
     public bool IsAttached => Room is not null;
 
@@ -352,7 +415,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
     private void ApplyPool(Mappool pool)
     {
         Pool = pool;
-        _services.Tournament.Pool = pool;
+        _tournament.Pool = pool;
         RebuildGroups();
 
         OnPropertyChanged(nameof(Pool));
@@ -438,7 +501,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
         try
         {
             var name = Pool.BuildRoomName(RedTeam, BlueTeam);
-            var room = await _services.Tournament.CreateRoomAsync(name);
+            var room = await _tournament.CreateRoomAsync(name);
             Status = room is null
                 ? "BanchoBot did not confirm the lobby. Check the private message with BanchoBot."
                 : $"Created {room.ChannelName}.";
@@ -469,7 +532,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            await _services.Tournament.AttachAsync(matchId);
+            await _tournament.AttachAsync(matchId);
             Status = $"Attached to #mp_{matchId}.";
         }
         catch (Exception ex)
@@ -485,18 +548,18 @@ public sealed partial class TournamentViewModel : ViewModelBase
     [RelayCommand]
     private void Detach()
     {
-        _services.Tournament.Detach();
+        _tournament.Detach();
         Status = "Detached from the lobby. It is still open on Bancho.";
     }
 
     [RelayCommand]
     private Task CloseRoomAsync() => RunAsync(
-        () => _services.Tournament.CloseAsync(),
+        () => _tournament.CloseAsync(),
         "Closed the lobby.");
 
     [RelayCommand]
     private Task ApplySettingsAsync() => RunAsync(
-        () => _services.Tournament.ApplyPoolSettingsAsync(),
+        () => _tournament.ApplyPoolSettingsAsync(),
         "Pushed the pool's room settings.");
 
     // ---- referee controls ------------------------------------------------
@@ -524,7 +587,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
         return RunAsync(
             async () =>
             {
-                await _services.Tournament.PickAsync(slot.Model);
+                await _tournament.PickAsync(slot.Model);
 
                 foreach (var candidate in AllSlots)
                 {
@@ -538,43 +601,43 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
     [RelayCommand]
     private Task StartAsync() => RunAsync(
-        () => _services.Tournament.StartAsync(),
+        () => _tournament.StartAsync(),
         $"Starting in {Pool.StartTimerSeconds}s.");
 
     [RelayCommand]
     private Task StartNowAsync() => RunAsync(
-        () => _services.Tournament.StartNowAsync(),
+        () => _tournament.StartNowAsync(),
         "Started the match.");
 
     [RelayCommand]
     private Task AbortTimerAsync() => RunAsync(
-        () => _services.Tournament.AbortStartTimerAsync(),
+        () => _tournament.AbortStartTimerAsync(),
         "Aborted the countdown.");
 
     [RelayCommand]
     private Task AbortAsync() => RunAsync(
-        () => _services.Tournament.AbortAsync(),
+        () => _tournament.AbortAsync(),
         "Aborted the match.");
 
     [RelayCommand]
     private Task TimerAsync() => RunAsync(
-        () => _services.Tournament.TimerAsync(),
+        () => _tournament.TimerAsync(),
         $"Started a {Pool.ReadyTimerSeconds}s timer.");
 
     [RelayCommand]
     private Task RefreshRoomAsync() => RunAsync(
-        () => _services.Tournament.RefreshSettingsAsync(),
+        () => _tournament.RefreshSettingsAsync(),
         "Requested !mp settings.");
 
     [RelayCommand]
-    private Task LockAsync() => RunAsync(() => _services.Tournament.LockAsync(), "Locked the slots.");
+    private Task LockAsync() => RunAsync(() => _tournament.LockAsync(), "Locked the slots.");
 
     [RelayCommand]
-    private Task UnlockAsync() => RunAsync(() => _services.Tournament.UnlockAsync(), "Unlocked the slots.");
+    private Task UnlockAsync() => RunAsync(() => _tournament.UnlockAsync(), "Unlocked the slots.");
 
     [RelayCommand]
     private Task ClearHostAsync() => RunAsync(
-        () => _services.Tournament.ClearHostAsync(),
+        () => _tournament.ClearHostAsync(),
         "Cleared the host.");
 
     [RelayCommand]
@@ -587,7 +650,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
         }
 
         InviteName = string.Empty;
-        return RunAsync(() => _services.Tournament.InviteAsync(name), $"Invited {name}.");
+        return RunAsync(() => _tournament.InviteAsync(name), $"Invited {name}.");
     }
 
     [RelayCommand]
@@ -604,7 +667,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
             {
                 foreach (var referee in Pool.Referees)
                 {
-                    await _services.Tournament.InviteAsync(referee);
+                    await _tournament.InviteAsync(referee);
                 }
             },
             $"Invited {Pool.Referees.Count} referee(s).");
@@ -621,7 +684,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
         // Toggle: whichever team they are not on now.
         var next = player.Team is TeamColour.Red ? TeamColour.Blue : TeamColour.Red;
         return RunAsync(
-            () => _services.Tournament.SetTeamAsync(player.Username, next),
+            () => _tournament.SetTeamAsync(player.Username, next),
             $"Moved {player.Username} to {next}.");
     }
 
@@ -630,14 +693,14 @@ public sealed partial class TournamentViewModel : ViewModelBase
         player is null
             ? Task.CompletedTask
             : RunAsync(
-                () => _services.Tournament.MoveAsync(player.Username, player.TargetSlot),
+                () => _tournament.MoveAsync(player.Username, player.TargetSlot),
                 $"Moved {player.Username} to slot {player.TargetSlot}.");
 
     [RelayCommand]
     private Task KickAsync(RoomPlayerViewModel? player) =>
         player is null
             ? Task.CompletedTask
-            : RunAsync(() => _services.Tournament.KickAsync(player.Username), $"Kicked {player.Username}.");
+            : RunAsync(() => _tournament.KickAsync(player.Username), $"Kicked {player.Username}.");
 
     /// <summary>
     /// Refreshes the lobby, then checks every player against the pool's FreeMod rule. Only
@@ -646,7 +709,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
     [RelayCommand]
     private async Task CheckFreeModAsync()
     {
-        if (!_services.Tournament.IsAttached)
+        if (!_tournament.IsAttached)
         {
             Status = "No lobby is attached.";
             return;
@@ -654,7 +717,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
         try
         {
-            await _services.Tournament.RefreshSettingsAsync();
+            await _tournament.RefreshSettingsAsync();
             await Task.Delay(ScoreSettleDelay);
             await RunFreeModCheckAsync(announce: true);
         }
@@ -698,7 +761,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
         if (announce || (!result.IsClean && Messages.FreeModWarnings))
         {
-            await _services.Tournament.SendAsync(result.Summary, cancellationToken);
+            await _tournament.SendAsync(result.Summary, cancellationToken);
         }
 
         return result.IsClean;
@@ -877,7 +940,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
     private async Task RunAsync(Func<Task> action, string successStatus)
     {
-        if (!_services.Tournament.IsAttached)
+        if (!_tournament.IsAttached)
         {
             Status = "No lobby is attached.";
             return;
@@ -900,6 +963,8 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
         OnPropertyChanged(nameof(Room));
         OnPropertyChanged(nameof(IsAttached));
+        OnPropertyChanged(nameof(TabTitle));
+        OnPropertyChanged(nameof(TabTip));
         OnPropertyChanged(nameof(RoomTitle));
         OnPropertyChanged(nameof(CurrentMapDisplay));
         OnPropertyChanged(nameof(CurrentModsDisplay));
@@ -915,6 +980,11 @@ public sealed partial class TournamentViewModel : ViewModelBase
     private void OnRoomEvent(BanchoEvent evt)
     {
         SyncPlayers();
+
+        if (evt is RoomHeader)
+        {
+            OnPropertyChanged(nameof(TabTip));
+        }
 
         OnPropertyChanged(nameof(RoomTitle));
         OnPropertyChanged(nameof(CurrentMapDisplay));
@@ -965,7 +1035,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
             Status = "Map finished — collecting scores…";
 
             // Refreshes each player's team and mods, which the FreeMod multipliers depend on.
-            await _services.Tournament.RefreshSettingsAsync(cts.Token);
+            await _tournament.RefreshSettingsAsync(cts.Token);
             await Task.Delay(ScoreSettleDelay, cts.Token);
 
             await ScoreFinishedMapAsync(cts.Token);
@@ -993,7 +1063,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
             .ToList();
 
         // The multipliers belong to the pick that is on the board, not to the pool as a whole.
-        var pick = _services.Tournament.CurrentPick;
+        var pick = _tournament.CurrentPick;
         var result = MatchScoring.Score(inputs, room.CurrentMods, Pool.MultipliersFor(pick));
 
         if (!result.HasScores)
@@ -1038,7 +1108,7 @@ public sealed partial class TournamentViewModel : ViewModelBase
 
         foreach (var message in messages)
         {
-            await _services.Tournament.SendAsync(message, cancellationToken);
+            await _tournament.SendAsync(message, cancellationToken);
         }
 
         Status = result.Winner is { } winner
